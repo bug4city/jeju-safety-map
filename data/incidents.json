@@ -1,0 +1,66 @@
+{
+  "updated": "2026-08-25",
+  "note": "좌표는 피해자 보호를 위해 읍면 중심 수준으로 뭉갠 값이다. 정확한 지점이 아니다.",
+  "stats": {
+    "unresolvedAdultMissing": 15,
+    "statPeriod": "2023년 ~ 2026년 7월 (제주경찰청 전수조사)",
+    "source": "https://news.nate.com/view/20260824n33174"
+  },
+  "incidents": [
+    {
+      "id": "hallim-2026-05",
+      "title": "한림읍 37세 여성 실종 (장미란 씨)",
+      "area": "제주시 한림읍",
+      "lat": 33.414,
+      "lng": 126.269,
+      "date": "2026-05-12",
+      "status": "사망 확인",
+      "summary": "5월 12~13일 밤 휴대폰과 슬리퍼만 챙겨 나간 뒤 실종. 담당 경찰이 신고 2시간 30분 만에 허위 종결해 골든타임을 놓쳤고, 8월 24일 한림읍 인근 농장에서 시신으로 발견됐다. 해당 경찰은 긴급체포됐다.",
+      "sources": [
+        {"name": "MBC", "url": "https://imnews.imbc.com/replay/2026/nw1200/article/6846831_36967.html"},
+        {"name": "뉴시스", "url": "https://www.newsis.com/view/NISX20260818_0003752382"},
+        {"name": "나무위키", "url": "https://namu.wiki/w/%EC%9E%A5%EB%AF%B8%EB%9E%80%20%EC%8B%A4%EC%A2%85%20%EC%82%AC%EA%B1%B4"}
+      ]
+    },
+    {
+      "id": "gujwa-2026-07",
+      "title": "구좌읍 60대 남성 실종",
+      "area": "제주시 구좌읍 송당리",
+      "lat": 33.465,
+      "lng": 126.77,
+      "date": "2026-07-02",
+      "status": "사망 확인",
+      "summary": "7월 2일 실종 신고. 같은 경찰이 이 건도 허위 종결한 것으로 조사됐다. 8월 22일 백골 상태로 발견됐다.",
+      "sources": [
+        {"name": "MBC", "url": "https://imnews.imbc.com/replay/2026/nwtoday/article/6846611_37012.html"},
+        {"name": "네이트뉴스(경향)", "url": "https://news.nate.com/view/20260824n33174"}
+      ]
+    },
+    {
+      "id": "jocheon-2026-08",
+      "title": "조천읍 70대 남성 실종",
+      "area": "제주시 조천읍 신흥리",
+      "lat": 33.54,
+      "lng": 126.66,
+      "date": "2026-08-22",
+      "status": "사망 확인",
+      "summary": "8월 22일 신고 접수, 이튿날 신흥리 인근 해상에서 발견됐다.",
+      "sources": [
+        {"name": "네이트뉴스(경향)", "url": "https://news.nate.com/view/20260824n33174"}
+      ]
+    },
+    {
+      "id": "aewol-2026-08",
+      "title": "애월읍 실종자",
+      "area": "제주시 애월읍",
+      "lat": 33.463,
+      "lng": 126.331,
+      "date": "2026-08",
+      "status": "사망 확인",
+      "summary": "실종 신고가 접수돼 있던 실종자가 8월 24일 오전 애월읍 계곡 인근에서 숨진 채 발견됐다.",
+      "sources": [
+        {"name": "서울신문", "url": "https://www.seoul.co.kr/news/society/accident/2026/08/24/20260824500104"}
+      ]
+    }
+  ]
+}

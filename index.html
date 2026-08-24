@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>제주 안전지도 - 실종 사건 지도</title>
+<meta name="description" content="제주 실종 사건과 안전 정보를 지도에서 확인하세요. 언론 보도 기반, 출처 링크 포함.">
+<meta property="og:title" content="제주 안전지도">
+<meta property="og:description" content="제주에서 최근 어디서 실종 사건이 있었는지 지도로 확인하세요.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<!-- GA4: 측정 ID 발급 후 G-XXXXXXXXXX 교체 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-XXXXXXXXXX');
+</script>
+<style>
+:root { --ink:#1c1c1e; --sub:#6e6e73; --accent:#c0392b; --card:#ffffff; }
+* { box-sizing:border-box; margin:0; }
+html,body { height:100%; }
+body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; color:var(--ink); }
+#map { position:fixed; inset:0; }
+.banner {
+  position:fixed; top:calc(12px + env(safe-area-inset-top)); left:12px; right:12px; z-index:1000;
+  background:var(--card); border-radius:14px; padding:12px 16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+}
+.banner h1 { font-size:16px; }
+.banner p { font-size:13px; color:var(--sub); margin-top:4px; line-height:1.45; }
+.banner strong { color:var(--accent); }
+.sheet {
+  position:fixed; left:0; right:0; bottom:0; z-index:1100;
+  background:var(--card); border-radius:18px 18px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  box-shadow:0 -6px 24px rgba(0,0,0,.2);
+  transform:translateY(110%); transition:transform .25s ease;
+  max-height:60vh; overflow-y:auto;
+}
+.sheet.open { transform:translateY(0); }
+.sheet .status { display:inline-block; font-size:12px; font-weight:700; color:#fff; background:var(--accent); border-radius:6px; padding:2px 8px; margin-bottom:8px; }
+.sheet h2 { font-size:17px; margin-bottom:2px; }
+.sheet .area { font-size:13px; color:var(--sub); margin-bottom:10px; }
+.sheet .summary { font-size:14px; line-height:1.6; margin-bottom:12px; }
+.sheet .src { font-size:13px; }
+.sheet .src a { color:#0a66c2; text-decoration:none; margin-right:10px; }
+.sheet .close { position:absolute; top:10px; right:14px; border:0; background:none; font-size:22px; color:var(--sub); cursor:pointer; }
+.foot {
+  position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:12px; right:12px; z-index:900;
+  font-size:11px; color:var(--sub); background:rgba(255,255,255,.88); border-radius:10px; padding:8px 12px; line-height:1.5;
+}
+.pin-dot { background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<header class="banner">
+  <h1>제주 안전지도</h1>
+  <p>최근 3년 7개월간 제주 성인 실종 미해결 <strong id="stat-count">15명</strong> (제주경찰청 전수조사).
+  아래 핀은 언론 보도로 확인된 사건입니다.</p>
+</header>
+
+<section class="sheet" id="sheet" aria-live="polite">
+  <button class="close" id="sheet-close" aria-label="닫기">&times;</button>
+  <span class="status" id="s-status"></span>
+  <h2 id="s-title"></h2>
+  <div class="area" id="s-area"></div>
+  <div class="summary" id="s-summary"></div>
+  <div class="src" id="s-sources"></div>
+</section>
+
+<footer class="foot">
+  사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시했습니다. 정확한 지점이 아닙니다.
+  모든 정보는 언론 보도를 출처와 함께 정리한 것입니다.
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map', { zoomControl:false }).setView([33.38, 126.53], 10);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+const sheet = document.getElementById('sheet');
+document.getElementById('sheet-close').onclick = () => sheet.classList.remove('open');
+map.on('click', () => sheet.classList.remove('open'));
+
+function openSheet(inc) {
+  document.getElementById('s-status').textContent = inc.status;
+  document.getElementById('s-title').textContent = inc.title;
+  document.getElementById('s-area').textContent = inc.area + ' · ' + inc.date;
+  document.getElementById('s-summary').textContent = inc.summary;
+  document.getElementById('s-sources').innerHTML =
+    '출처: ' + inc.sources.map(s => `<a href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`).join('');
+  sheet.classList.add('open');
+  gtag('event', 'incident_open', { incident_id: inc.id });
+}
+
+fetch('data/incidents.json')
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById('stat-count').textContent = d.stats.unresolvedAdultMissing + '명';
+    d.incidents.forEach(inc => {
+      const m = L.marker([inc.lat, inc.lng], {
+        icon: L.divIcon({ className:'pin-dot', iconSize:[18,18] })
+      }).addTo(map);
+      m.on('click', () => openSheet(inc));
+    });
+    gtag('event', 'map_loaded', { incident_count: d.incidents.length });
+  });
+</script>
+</body>
+</html>
