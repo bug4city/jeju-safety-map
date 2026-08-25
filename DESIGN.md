@@ -11,24 +11,29 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 - Shadow: `--shadow-1` controls and chips, `--shadow-2` fixed panels and floating primary controls.
 - Type: `--fs-title`, `--fs-body`, `--fs-ui`, `--fs-sub`, `--fs-cap`.
 - Spacing: `--sp-1` 4px, `--sp-2` 8px, `--sp-3` 12px, `--sp-4` 16px.
+- App header: `--header-h` fixed top chrome height. Header uses `--panel-muted` over a `--line` bottom hairline, with dark pill actions for external community/profile links.
 
 ## 3. Layout
 
-- Desktop uses a 360px fixed left panel and keeps map tools outside the panel offset by `--panel-w`.
+- Desktop uses a 360px fixed left panel below the fixed app header and keeps map tools outside the panel offset by `--panel-w`.
 - Mobile uses the existing bottom sheet, with the search and utility actions staying at the top of the sheet.
 - The list owns vertical scrolling; the map remains fixed.
 
 ## 4. Components
 
-- `SearchBox`: full-width rounded input with icon, clear button, and CJK-safe placeholder text.
-- `PanelActions`: current location and tab-aware reset buttons in a two-column grid.
-- `ResultMeta`: compact row showing the current result count or empty-search state.
+- `SafetySearchBox`: full-width rounded input with icon, clear button, and CJK-safe placeholder text for hotel, accommodation, restaurant, cafe, beach, or attraction lookup. It is the primary conversion path and opens a shareable safety-check card, not a list filter.
+- `PanelActions`: current location and map-reset buttons in a two-column grid.
+- `ResultMeta`: compact row that explains the safety-check search action while preserving the browsable incident/region list below.
 - `ResultItem`: list row with semantic color dot, primary label, secondary label, optional metric, and selected-state background.
 - `LocationMarker`: map-native blue marker/ring for the browser geolocation result.
+- `ReturnJejuButton`: floating map button shown after the user leaves the 제주 overview via current location or place search; one tap returns to the 제주 center and restores the island-level map.
+- `AppHeader`: fixed top brand bar with favicon + 제주안전맵 on the left and compact external action pills on the right. Mobile preserves the brand and collapses long labels before icons.
 
 ## 5. States
 
-- Search filters the active tab only and updates count text immediately.
+- Safety search submits on Enter, shows a loading state, pans the map to the matched place, and renders a shareable card with nearby incidents, regional crowding, and caveat copy.
 - Empty state explains no matching item was found without replacing the search controls.
 - Current location button shows locating, success, unsupported, and permission/error states through label text and toast.
+- Return-to-Jeju stays hidden on the 제주 overview and appears after current-location or place-search navigation.
 - Focus states use the brand or blue outline and never remove keyboard visibility.
+- Header links open external destinations in a new tab, have visible focus rings, and expose clear Korean `aria-label` text for icon-only actions.
