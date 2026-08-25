@@ -19,13 +19,13 @@ gtag('config', 'G-FSQNRGNQ5Z');
   /* 미니 디자인 토큰 — 색은 여기서만 정의한다 */
   --ink:#1c1c1e; --sub:#6e6e73; --card:#ffffff; --line:#ececf0;
   --accent:#c0392b;            /* 사건(빨강) — 데이터 의미 전용 */
-  --brand:#2e6be6;             /* 인터랙션·선택·링크 전용 (데이터 색과 안 겹침) */
-  --brand-soft:#eaf1fd;
-  --calm:#0e7c7b; --quiet:#e07b00;
+  --brand:#00a05a;             /* 안전=초록. 인터랙션·선택·링크 전용, 데이터 색과 안 겹침 */
+  --brand-soft:#e6f6ee;
+  --line-strong:#d1d1d6;
   --r-sm:10px; --r-lg:16px;
   --shadow-1:0 1px 6px rgba(0,0,0,.1);
   --shadow-2:0 4px 20px rgba(0,0,0,.14);
-  --fs-title:17px; --fs-body:14px; --fs-sub:12.5px; --fs-cap:11px;
+  --fs-title:17px; --fs-body:14px; --fs-ui:13.5px; --fs-sub:12.5px; --fs-cap:11px;
   --panel-w:360px; --sheet-peek:112px; --sheet-half:46vh;
 }
 * { box-sizing:border-box; margin:0; }
@@ -45,13 +45,13 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .panel.half { transform:translateY(calc(100% - var(--sheet-half))); }
 .panel.full { transform:translateY(calc(8px + env(safe-area-inset-top))); }
 .grab { padding:10px 0 4px; cursor:grab; flex:none; }
-.grab::before { content:''; display:block; width:44px; height:5px; border-radius:3px; background:#d8d8dd; margin:0 auto; }
+.grab::before { content:''; display:block; width:44px; height:5px; border-radius:3px; background:var(--line-strong); margin:0 auto; }
 .panel-head { padding:2px 18px 10px; flex:none; }
 .panel-head h1 { font-size:var(--fs-title); }
 .panel-head p { font-size:var(--fs-sub); color:var(--sub); margin-top:3px; line-height:1.5; }
 .panel-head strong { color:var(--accent); }
 .tabs { display:flex; gap:6px; padding:0 14px 10px; flex:none; }
-.tab { flex:1; font-size:13.5px; padding:8px 0; border:1px solid var(--line); background:#fff; color:var(--sub); border-radius:var(--r-sm); cursor:pointer; }
+.tab { flex:1; font-size:var(--fs-ui); padding:8px 0; border:1px solid var(--line); background:#fff; color:var(--sub); border-radius:var(--r-sm); cursor:pointer; }
 .tab.on { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); font-weight:600; }
 .panel-body { flex:1; overflow-y:auto; overscroll-behavior:contain; padding:0 14px calc(20px + env(safe-area-inset-bottom)); }
 
@@ -59,11 +59,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .item .dot { flex:none; width:12px; height:12px; border-radius:50%; }
 .item .t { flex:1; min-width:0; }
 .item .t b { display:block; font-size:14.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.item .t span { font-size:12.5px; color:var(--sub); }
+.item .t span { font-size:var(--fs-sub); color:var(--sub); }
 .item .badge { flex:none; font-size:11.5px; font-weight:700; border-radius:6px; padding:3px 7px; color:#fff; }
 .bar-wrap { flex:none; width:74px; }
-.bar-wrap small { display:block; font-size:11px; color:var(--sub); text-align:right; margin-bottom:3px; }
-.bar { height:6px; border-radius:3px; background:#f0f0f4; overflow:hidden; }
+.bar-wrap small { display:block; font-size:var(--fs-cap); color:var(--sub); text-align:right; margin-bottom:3px; }
+.bar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
 .bar i { display:block; height:100%; border-radius:3px; }
 
 /* 상세 뷰 */
@@ -113,18 +113,19 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 }
 .check-btn[hidden] { display:none; }
 .card-input { display:flex; gap:8px; margin:10px 0 14px; }
-.card-input input { flex:1; min-width:0; font-size:15px; border:1px solid #d1d1d6; border-radius:var(--r-sm); padding:10px 12px; }
+.card-input input { flex:1; min-width:0; font-size:15px; border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:10px 12px; }
+.card-input input:focus { outline:none; border-color:var(--brand); }
 .card-input button { font-size:var(--fs-body); border:0; border-radius:var(--r-sm); padding:10px 14px; background:var(--brand); color:#fff; cursor:pointer; }
-.safety-card { border:1px solid #e5e5ea; border-radius:var(--r-lg); padding:16px; background:#fff; }
+.safety-card { border:1px solid var(--line); border-radius:var(--r-lg); padding:16px; background:#fff; }
 .safety-card h3 { font-size:15.5px; margin-bottom:2px; }
 .safety-card .addr { font-size:var(--fs-cap); color:var(--sub); margin-bottom:10px; }
-.safety-card .row { display:flex; justify-content:space-between; gap:12px; font-size:13.5px; padding:7px 0; border-top:1px solid #f2f2f7; }
+.safety-card .row { display:flex; justify-content:space-between; gap:12px; font-size:var(--fs-ui); padding:7px 0; border-top:1px solid var(--line); }
 .safety-card .row:first-of-type { border-top:0; }
 .safety-card .row b { text-align:right; white-space:nowrap; }
 .safety-card .tagchip { display:inline-block; font-size:11.5px; font-weight:700; color:#fff; border-radius:6px; padding:2px 7px; }
 .safety-card .brand { margin-top:10px; font-size:var(--fs-cap); color:var(--sub); }
 .card-actions { display:flex; gap:8px; margin-top:12px; }
-.card-actions button { flex:1; font-size:13.5px; border:1px solid #d1d1d6; background:#fff; border-radius:var(--r-sm); padding:10px 0; cursor:pointer; }
+.card-actions button { flex:1; font-size:var(--fs-ui); border:1px solid var(--line-strong); background:#fff; border-radius:var(--r-sm); padding:10px 0; cursor:pointer; }
 .card-actions .kakao { background:#FEE500; border-color:#FEE500; font-weight:600; }
 .card-hint { font-size:var(--fs-sub); color:var(--sub); margin-top:8px; line-height:1.5; }
 
@@ -170,7 +171,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   <b style="font-size:11px">지역 붐빔도 <small style="font-weight:400;color:var(--sub)">통신사 유동인구</small></b>
   <div style="display:flex;align-items:center;gap:5px;margin:5px 0 2px">
     <span style="font-size:10.5px">한적</span>
-    <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#63b3ab,#0e7c7b);min-width:84px"></span>
+    <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8);min-width:84px"></span>
     <span style="font-size:10.5px">붐빔</span>
   </div>
   <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
@@ -203,8 +204,9 @@ function popStyle(regions) {
   const totals = regions.map(r => r.total).sort((a, b) => a - b);
   const q = p => totals[Math.min(totals.length - 1, Math.floor(totals.length * p))];
   const cuts = [q(.2), q(.4), q(.6), q(.8)];
-  // 5단계: 진한 주황(가장 한적) → 진한 청록(가장 붐빔). 중간 회색을 없애야 경계가 보인다.
-  const COLORS = ['#d35400', '#f0a35e', '#d9d4c5', '#63b3ab', '#0e7c7b'];
+  // 5단계: 진한 주황(가장 한적) → 진한 파랑(가장 붐빔). 색약에도 안전한 조합.
+  // 초록 계열은 브랜드 전용이므로 데이터 색에서 뺀다. 범례 그라데이션과 함께 갱신할 것.
+  const COLORS = ['#d35400', '#f0a35e', '#d9d4c5', '#7fa8d9', '#2a5ca8'];
   const tier = t => cuts.findIndex(c => t < c) === -1 ? 4 : cuts.findIndex(c => t < c);
   return { color: t => COLORS[tier(t)],
            tag: t => ['가장 한적', '한적', '보통', '붐빔', '가장 붐빔'][tier(t)] };
@@ -329,7 +331,7 @@ function setupCard(map, cfg) {
         <h3>${loc.name}</h3>
         <div class="addr">${loc.addr}</div>
         <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${near.length ? 'var(--accent)' : 'inherit'}">${near.length ? near.length + '건 (최근접 ' + near[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
-        <div class="row"><span>지역 붐빔도 (${region.name})</span><b><span class="tagchip" style="background:${c}">${tag}</span></b></div>
+              <div class="row"><span>지역 붐빔도 (${region.name})</span><b><span class="tagchip" style="background:${c}">${tag}</span></b></div>
         <div class="row"><span>하루 유동인구</span><b>약 ${region.total.toLocaleString()}명</b></div>
         <div class="row"><span>한적한 순위</span><b>43곳 중 ${rank}위</b></div>
         <div class="brand">제주 안전지도 · jeju.kimyukah.com · ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 + 언론 보도 기준</div>
