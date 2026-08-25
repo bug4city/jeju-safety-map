@@ -137,8 +137,12 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 </aside>
 
 <div class="legend" id="legend" hidden>
-  <div><i style="background:var(--quiet)"></i>한적 (유동인구 하위 1/3)</div>
-  <div><i style="background:var(--calm)"></i>붐빔 (유동인구 상위 1/3)</div>
+  <b style="font-size:11px">지역 붐빔도 <small style="font-weight:400;color:var(--sub)">통신사 유동인구</small></b>
+  <div style="display:flex;align-items:center;gap:5px;margin:5px 0 2px">
+    <span style="font-size:10.5px">한적</span>
+    <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#63b3ab,#0e7c7b);min-width:84px"></span>
+    <span style="font-size:10.5px">붐빔</span>
+  </div>
   <div><i style="background:#fff;border:2px solid var(--accent);width:7px;height:7px"></i>실종 사건 발생 지역</div>
 </div>
 
@@ -165,10 +169,13 @@ function haversineKm(a, b) {
 function fmt(n) { return n >= 10000 ? (n / 10000).toFixed(1).replace(/\.0$/, '') + '만' : n.toLocaleString(); }
 function popStyle(regions) {
   const totals = regions.map(r => r.total).sort((a, b) => a - b);
-  const q = p => totals[Math.floor(totals.length * p)];
-  const [lo, hi] = [q(1 / 3), q(2 / 3)];
-  return { color: t => t >= hi ? '#0e7c7b' : t >= lo ? '#8e8e93' : '#e07b00',
-           tag: t => t >= hi ? '붐빔' : t >= lo ? '보통' : '한적' };
+  const q = p => totals[Math.min(totals.length - 1, Math.floor(totals.length * p))];
+  const cuts = [q(.2), q(.4), q(.6), q(.8)];
+  // 5단계: 진한 주황(가장 한적) → 진한 청록(가장 붐빔). 중간 회색을 없애야 경계가 보인다.
+  const COLORS = ['#d35400', '#f0a35e', '#d9d4c5', '#63b3ab', '#0e7c7b'];
+  const tier = t => cuts.findIndex(c => t < c) === -1 ? 4 : cuts.findIndex(c => t < c);
+  return { color: t => COLORS[tier(t)],
+           tag: t => ['가장 한적', '한적', '보통', '붐빔', '가장 붐빔'][tier(t)] };
 }
 
 // ── 패널(목록/상세) : 거지맵 패턴 — 목록 항목 ↔ 지도 이동 연동, 상세는 같은 패널에서 전환 ──
@@ -205,8 +212,9 @@ function regionDetail(r, style, rank, n) {
   showDetail(`
     <span class="status" style="background:${style.color(r.total)}">${style.tag(r.total)}</span>
     <h2>${r.name}</h2>
-    <div class="area">유동인구 ${r.total.toLocaleString()}명 · 43개 중 한적한 순 ${rank}위</div>
-    <div class="summary">${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 기준, 통신사 빅데이터(제주 인구정책 통합플랫폼).<br>
+    <div class="area">43개 지역 중 한적한 순 ${rank}위</div>
+    <div class="summary">하루 동안 이 지역을 오간 사람이 약 <b>${r.total.toLocaleString()}명</b>입니다
+    (${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 ${+state.pop.day.slice(6,8)}일, 통신사 빅데이터 기준).<br>
     ${near.length ? `반경 8km 내 보도 확인 사건 ${near.length}건 (가장 가까운 곳 ${near[0].km.toFixed(1)}km)` : '반경 8km 내 보도 확인 사건 없음'}</div>`);
   gtag('event', 'region_open', { region: r.name });
 }
@@ -305,7 +313,7 @@ async function initKakao(cfg) {
           path: toPaths(f.geometry),
           strokeWeight: inc ? 2.5 : 1, strokeColor: inc ? '#c0392b' : '#8e8e93',
           strokeOpacity: inc ? .95 : .5,
-          fillColor: style.color(r.total), fillOpacity: .22
+          fillColor: style.color(r.total), fillOpacity: .35
         });
         kakao.maps.event.addListener(p, 'click', () => {
           regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length);
@@ -313,6 +321,7 @@ async function initKakao(cfg) {
         polygons.push(p);
       });
     } catch (e) {}
+    let popOn = false;
     const overlays = state.pop.regions.map(r => {
       const el = document.createElement('div');
       el.className = 'pop-num'; el.style.borderColor = style.color(r.total); el.style.color = style.color(r.total);
@@ -320,17 +329,21 @@ async function initKakao(cfg) {
       const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(r.lat, r.lng), content: el, yAnchor: .5, zIndex: 20 });
       return { ov, el, r };
     });
+    // 축소: 색만(라벨 숨김) / 중간: 지역명 / 확대: 지역명+맥락 있는 숫자.
+    // 숫자만 단독으로 띄우면 무슨 수인지 알 수 없다는 피드백 반영.
     const relabel = () => {
-      const zoomedOut = map.getLevel() >= 10;
-      overlays.forEach(({ el, r }) => {
-        el.innerHTML = zoomedOut ? fmt(r.total) : `${r.name} <small>${fmt(r.total)}명</small>`;
+      const lv = map.getLevel();
+      overlays.forEach(({ ov, el, r }) => {
+        if (lv >= 10) { ov.setMap(null); return; }
+        if (popOn) ov.setMap(map);
+        el.innerHTML = lv >= 8 ? r.name : `${r.name} <small>· 사람 ${fmt(r.total)}</small>`;
       });
     };
     kakao.maps.event.addListener(map, 'zoom_changed', relabel);
-    relabel();
     wireChip('chip-pop', on => {
-      overlays.forEach(o => o.ov.setMap(on ? map : null));
+      popOn = on;
       polygons.forEach(p => p.setMap(on ? map : null));
+      if (on) relabel(); else overlays.forEach(o => o.ov.setMap(null));
       document.getElementById('legend').hidden = !on;
       gtag('event', 'layer_toggle', { layer: 'population', on });
     }, true);
@@ -390,7 +403,7 @@ async function initLeaflet(cfg) {
         style: f => {
           const r = byName[f.properties.name], inc = hasIncident.has(f.properties.name);
           return { color: inc ? '#c0392b' : '#8e8e93', weight: inc ? 2.5 : 1, opacity: inc ? .95 : .5,
-                   fillColor: r ? style.color(r.total) : '#ccc', fillOpacity: .22 };
+                   fillColor: r ? style.color(r.total) : '#ccc', fillOpacity: .35 };
         },
         onEachFeature: (f, l) => l.on('click', () => {
           const r = byName[f.properties.name]; if (!r) return;
