@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>제주 안전지도 - 실종 사건 지도</title>
 <meta name="description" content="제주 실종 사건과 안전 정보를 지도에서 확인하세요. 언론 보도 기반, 출처 링크 포함.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/favicon.png">
 <meta property="og:title" content="제주 안전지도">
 <meta property="og:description" content="제주에서 최근 어디서 실종 사건이 있었는지 지도로 확인하세요.">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FSQNRGNQ5Z"></script>
@@ -84,13 +86,28 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .chip { flex:none; font-size:13px; border:1px solid var(--line); background:#fff; color:var(--sub); border-radius:999px; padding:7px 13px; cursor:pointer; box-shadow:var(--shadow-1); }
 .chip.on { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600; }
 .chip[hidden] { display:none; }
-.legend {
+.legend-stack {
   position:fixed; right:10px; bottom:calc(var(--sheet-peek) + 12px); z-index:900;
+  display:flex; flex-direction:column; align-items:flex-end; gap:var(--sp-2); max-width:56vw;
+}
+.legend {
   background:rgba(255,255,255,.93); border-radius:var(--r-sm); padding:7px 11px; font-size:11.5px;
   box-shadow:var(--shadow-1); line-height:1.7;
 }
 .legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
 .legend[hidden] { display:none; }
+.legend .sub-note { font-size:10px; color:var(--sub); line-height:1.4; margin-top:2px; }
+
+/* 레이어를 처음 켰을 때 한 번만 띄우는 안내 */
+.toast {
+  position:fixed; left:50%; transform:translateX(-50%) translateY(-8px);
+  top:calc(56px + env(safe-area-inset-top)); z-index:1200;
+  max-width:min(88vw, 420px); background:rgba(28,28,30,.92); color:#fff;
+  border-radius:var(--r-sm); padding:10px 14px; font-size:var(--fs-sub); line-height:1.55;
+  box-shadow:var(--shadow-2); opacity:0; transition:opacity .3s, transform .3s; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast[hidden] { display:none; }
 
 .pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
 .pop-num {
@@ -136,7 +153,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
     border-radius:0; transform:none !important; box-shadow:var(--shadow-2); }
   .grab { display:none; }
   .chips { left:calc(var(--panel-w) + 14px); }
-  .legend { bottom:18px; }
+  .legend-stack { bottom:18px; }
   .foot-note { left:calc(var(--panel-w) + 14px); bottom:18px; max-width:360px; }
 }
 </style>
@@ -168,19 +185,32 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   </div>
 </aside>
 
-<div class="legend" id="legend" hidden>
-  <b style="font-size:11px">지역 붐빔도 <small style="font-weight:400;color:var(--sub)">통신사 유동인구</small></b>
-  <div style="display:flex;align-items:center;gap:5px;margin:5px 0 2px">
-    <span style="font-size:10.5px">한적</span>
-    <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8);min-width:84px"></span>
-    <span style="font-size:10.5px">붐빔</span>
+<div class="legend-stack">
+  <div class="legend" id="crime-legend" hidden>
+    <b style="font-size:11px">범죄주의구간 <small style="font-weight:400;color:var(--sub)">경찰청 최근 1년</small></b>
+    <div style="display:flex;align-items:center;gap:5px;margin:5px 0 2px">
+      <span style="font-size:10.5px">주의 낮음</span>
+      <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#ffe27a,#f5a623,#e2573b,#b81d13);min-width:84px"></span>
+      <span style="font-size:10.5px">높음</span>
+    </div>
+    <div class="sub-note">5대 범죄(살인·강도·성폭력·절도·폭력)<br>신고 밀집도 — 위험도 판정 아님</div>
   </div>
-  <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
+  <div class="legend" id="legend" hidden>
+    <b style="font-size:11px">지역 붐빔도 <small style="font-weight:400;color:var(--sub)">통신사 유동인구</small></b>
+    <div style="display:flex;align-items:center;gap:5px;margin:5px 0 2px">
+      <span style="font-size:10.5px">한적</span>
+      <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8);min-width:84px"></span>
+      <span style="font-size:10.5px">붐빔</span>
+    </div>
+    <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
+  </div>
 </div>
+
+<div class="toast" id="toast" hidden></div>
 
 <button class="check-btn" id="check-btn" hidden>🔍 내 숙소 안전 점검</button>
 
-<div class="foot-note">사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시. 언론 보도·공공데이터 기반, 출처 표기.</div>
+<div class="foot-note">사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시. 언론 보도·공공데이터 기반, 출처 표기.<span id="crime-src" hidden><br>범죄주의구간: 행정안전부 생활안전지도(safemap.go.kr)</span></div>
 
 <script>
 const CENTER = { lat: 33.38, lng: 126.53 };
@@ -287,6 +317,20 @@ document.getElementById('tabs').onclick = e => {
   state.tab = t.dataset.tab; renderList();
   gtag('event', 'tab_switch', { tab: state.tab });
 };
+
+// 범죄주의구간 부속 UI: 범례·출처는 켠 동안, 오해 방지 안내는 최초 1회만
+function crimeUi(on) {
+  document.getElementById('crime-legend').hidden = !on;
+  document.getElementById('crime-src').hidden = !on;
+  if (on && !localStorage.getItem('crimeHintShown')) {
+    localStorage.setItem('crimeHintShown', '1');
+    const t = document.getElementById('toast');
+    t.textContent = '색이 진할수록 최근 1년간 범죄 신고가 밀집했던 구간이에요. 실제 위험도 판정이 아니라, 유동인구가 많은 번화가일수록 진하게 나타납니다.';
+    t.hidden = false;
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => { t.hidden = true; }, 350); }, 8000);
+  }
+}
 
 function wireChip(id, onToggle, defaultOn) {
   const chip = document.getElementById(id);
@@ -509,6 +553,7 @@ async function initKakao(cfg) {
         if (map.getLevel() >= 9) { map.setLevel(7); map.panTo(new kakao.maps.LatLng(33.505, 126.525)); }
         refresh();
       } else overlay.setMap(null);
+      crimeUi(on);
       gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
     });
   }
@@ -568,7 +613,7 @@ async function initLeaflet(cfg) {
       format: 'image/png', transparent: true, version: '1.1.1',
       serviceKey: cfg.safemapKey, opacity: .55
     });
-    wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); });
+    wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); crimeUi(on); });
   }
   return 'osm';
 }
