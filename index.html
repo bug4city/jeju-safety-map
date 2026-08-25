@@ -280,6 +280,24 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 .toast[hidden] { display:none; }
 
+/* 선택한 장소 핀: 지역 라벨(zIndex 20)·히트맵 점 위에 항상 보이도록 이름표+포인터로 강조 */
+.place-pin { display:flex; flex-direction:column; align-items:center; pointer-events:none; }
+.place-pin .pin-name {
+  max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  background:var(--brand); color:#fff; border:2px solid #fff; border-radius:999px;
+  padding:5px 12px; font-size:var(--fs-sub); font-weight:900; box-shadow:0 3px 12px rgba(0,0,0,.35);
+}
+.place-pin .pin-stem { width:3px; height:14px; background:var(--brand); box-shadow:0 0 0 1px rgba(255,255,255,.9); }
+.place-pin .pin-base {
+  width:14px; height:14px; margin-top:-4px; border-radius:50%;
+  background:var(--brand); border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.4);
+  animation:pin-pulse 1.6s ease-out infinite;
+}
+@keyframes pin-pulse {
+  0% { box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 0 rgba(0,160,90,.45); }
+  100% { box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 14px rgba(0,160,90,0); }
+}
+
 .pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
 .incident-marker {
   appearance:none; border:0; background:transparent; padding:0; cursor:pointer;
@@ -382,9 +400,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .safety-card .context-box span, .detail .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
 .safety-card .context-box b, .detail .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
 .safety-card .context-box small, .detail .context-box small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
-/* 도움 장소 타일: 장소 이름을 주 정보로, 종류·거리를 보조로 한 줄씩 */
-.context-box .help-place { display:block; margin-top:3px; color:var(--sub); font-size:var(--fs-cap); line-height:1.4; }
-.context-box .help-place b { display:inline; margin:0; font-size:var(--fs-ui); color:var(--ink); }
+/* 도움 장소 타일: 장소 이름을 주 정보로, 종류·거리를 보조로 한 줄씩. 이름은 지도 이동 버튼 */
+.context-box .help-place { display:flex; align-items:baseline; gap:var(--sp-1); margin-top:3px; }
+.context-box .help-place button { border:0; background:none; padding:0; text-align:left; cursor:pointer; color:var(--sub); font-size:var(--fs-cap); line-height:1.4; }
+.context-box .help-place b { display:inline; margin:0; font-size:var(--fs-ui); color:var(--brand); text-decoration:underline; text-underline-offset:2px; }
+.context-box .help-place a { color:var(--brand); text-decoration:none; font-size:var(--fs-ui); }
 /* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
 .rank-scale { margin:var(--sp-3) 0 var(--sp-2); }
 .rank-scale .track { position:relative; height:10px; border-radius:5px; background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
@@ -1135,8 +1155,20 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   const shareUrl = placeShareUrl(loc);
   const summaryText = `${loc.name} 안전 점검: ${incidents.detail}. ${region.name}은 통신사 유동인구 기준 "${pop.tag}", 한적한 순 ${pop.quietRank}위 지역입니다.`;
   const helpFallback = fallbackNearestHelp(loc);
-  const helpLine = places => places.filter(Boolean)
-    .map(p => `<span class="help-place"><b>${escapeHtml(p.name)}</b> ${helpTypeLabel(p.type)} · ${formatDistance(p, loc)}</span>`).join('');
+  // 도움 장소 줄: 이름을 누르면 지도가 그 위치로 이동, ↗는 카카오맵 상세(검색 결과일 때만)
+  let shownHelp = helpFallback.filter(Boolean);
+  const helpLine = places => places
+    .map((p, i) => `<span class="help-place">
+      <button type="button" data-help-i="${i}"><b>${escapeHtml(p.name)}</b> ${helpTypeLabel(p.type)} · ${formatDistance(p, loc)}</button>
+      ${p.id ? `<a href="https://place.map.kakao.com/${encodeURIComponent(p.id)}" target="_blank" rel="noopener" aria-label="카카오맵에서 ${escapeHtml(p.name)} 열기">↗</a>` : ''}
+    </span>`).join('');
+  const bindHelpTile = () => document.querySelectorAll('#help-tile [data-help-i]').forEach(button => {
+    button.onclick = () => {
+      const p = shownHelp[Number(button.dataset.helpI)];
+      mapApi.panTo(p.lat, p.lng, 5);
+      gtag('event', 'help_place_focus', { type: p.type });
+    };
+  });
   document.getElementById('card-result').innerHTML = `
     <div class="safety-card" id="the-card">
       <div class="card-media" id="card-media" hidden data-html2canvas-ignore>
@@ -1155,7 +1187,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
           <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
           <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · 최근접 ${cctv.nearestM}m` : '행정안전부 표준데이터 기준'}</small></div>
         <div class="context-box"><span>가까운 도움 장소</span>
-          <div id="help-tile">${helpLine(helpFallback)}</div></div>
+          <div id="help-tile">${helpLine(shownHelp)}</div></div>
       </div>
       <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
       <div class="row"><span>범죄주의구간 (최근 1년 신고 밀집)</span><b id="crime-row">확인 중…</b></div>
@@ -1191,10 +1223,13 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
 
   // 도움 장소: 폴백을 먼저 그려두고, 장소검색 결과가 오면 갈아끼운다.
   const helpTile = document.getElementById('help-tile');
+  bindHelpTile();
   mapApi.nearestHelp(loc).then(places => {
     const found = (places || []).filter(Boolean);
     if (!helpTile.isConnected || !found.length) return;
+    shownHelp = found;
     helpTile.innerHTML = helpLine(found);
+    bindHelpTile();
   }).catch(() => {});
   if (mapApi.mountRoadview) mapApi.mountRoadview(document.getElementById('card-media'), loc);
 
@@ -1339,7 +1374,12 @@ function setupCard(map, cfg) {
   function renderCard(loc) {
     renderSafetyCard(loc, cfg, place => {
       if (marker) marker.setMap(null);
-      marker = new kakao.maps.Marker({ position: new kakao.maps.LatLng(place.lat, place.lng), map });
+      marker = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(place.lat, place.lng),
+        content: `<div class="place-pin"><span class="pin-name">${escapeHtml(place.name)}</span><span class="pin-stem"></span><span class="pin-base"></span></div>`,
+        yAnchor: 1, zIndex: 60
+      });
+      marker.setMap(map);
       map.setLevel(6);
       map.panTo(new kakao.maps.LatLng(place.lat, place.lng));
     });
@@ -1465,6 +1505,7 @@ async function initKakao(cfg) {
   mapApi.clearNearestHelp = clearHelpOverlays;
   const toHelpPlace = (type, place) => ({
     type,
+    id: place.id,
     name: place.place_name,
     addr: place.road_address_name || place.address_name,
     lat: Number(place.y),
@@ -1860,9 +1901,12 @@ async function initLeaflet(cfg) {
     }, true);
     let placeMarker = null;
     const renderFallbackCard = loc => renderSafetyCard(loc, cfg, place => {
-      const icon = L.divIcon({ html: '<span class="user-loc-dot" aria-label="검색한 장소"></span>', className: '', iconSize: [18, 18] });
-      if (!placeMarker) placeMarker = L.marker([place.lat, place.lng], { icon, zIndexOffset: 900 }).addTo(map);
-      else placeMarker.setLatLng([place.lat, place.lng]);
+      const icon = L.divIcon({
+        html: `<div class="place-pin" style="transform:translate(-50%,-100%)" aria-label="검색한 장소"><span class="pin-name">${escapeHtml(place.name)}</span><span class="pin-stem"></span><span class="pin-base"></span></div>`,
+        className: '', iconSize: [0, 0], iconAnchor: [0, 0]
+      });
+      if (placeMarker) map.removeLayer(placeMarker);
+      placeMarker = L.marker([place.lat, place.lng], { icon, zIndexOffset: 900 }).addTo(map);
       map.setView([place.lat, place.lng], 12);
     });
     mapApi.openPlaceCard = loc => {
