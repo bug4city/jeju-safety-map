@@ -143,7 +143,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
     <span style="flex:1;height:8px;border-radius:4px;background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#63b3ab,#0e7c7b);min-width:84px"></span>
     <span style="font-size:10.5px">붐빔</span>
   </div>
-  <div><i style="background:#fff;border:2px solid var(--accent);width:7px;height:7px"></i>실종 사건 발생 지역</div>
+  <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
 </div>
 
 <div class="foot-note">사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시. 언론 보도·공공데이터 기반, 출처 표기.</div>
@@ -300,7 +300,6 @@ async function initKakao(cfg) {
     const style = popStyle(state.pop.regions);
     const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
     const byName = Object.fromEntries(state.pop.regions.map(r => [r.name, r]));
-    const hasIncident = new Set(state.data.incidents.map(i => i.area.split(' ').pop()));
     let polygons = [];
     try {
       const geo = await (await fetch('data/regions.geojson')).json();
@@ -308,11 +307,9 @@ async function initKakao(cfg) {
         .map(poly => poly[0].map(([lng, lat]) => new kakao.maps.LatLng(lat, lng)));
       geo.features.forEach(f => {
         const r = byName[f.properties.name]; if (!r) return;
-        const inc = hasIncident.has(f.properties.name);
         const p = new kakao.maps.Polygon({
           path: toPaths(f.geometry),
-          strokeWeight: inc ? 2.5 : 1, strokeColor: inc ? '#c0392b' : '#8e8e93',
-          strokeOpacity: inc ? .95 : .5,
+          strokeWeight: 1, strokeColor: '#8e8e93', strokeOpacity: .5,
           fillColor: style.color(r.total), fillOpacity: .35
         });
         kakao.maps.event.addListener(p, 'click', () => {
@@ -395,14 +392,13 @@ async function initLeaflet(cfg) {
     const style = popStyle(state.pop.regions);
     const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
     const byName = Object.fromEntries(state.pop.regions.map(r => [r.name, r]));
-    const hasIncident = new Set(state.data.incidents.map(i => i.area.split(' ').pop()));
     const layer = L.layerGroup();
     try {
       const geo = await (await fetch('data/regions.geojson')).json();
       L.geoJSON(geo, {
         style: f => {
-          const r = byName[f.properties.name], inc = hasIncident.has(f.properties.name);
-          return { color: inc ? '#c0392b' : '#8e8e93', weight: inc ? 2.5 : 1, opacity: inc ? .95 : .5,
+          const r = byName[f.properties.name];
+          return { color: '#8e8e93', weight: 1, opacity: .5,
                    fillColor: r ? style.color(r.total) : '#ccc', fillOpacity: .35 };
         },
         onEachFeature: (f, l) => l.on('click', () => {
