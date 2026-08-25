@@ -246,12 +246,24 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .legend .scale-crime { background:linear-gradient(to right,#ffe27a,#f5a623,#e2573b,#b81d13); }
 .legend .scale-pop { background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
 .legend .sub-note { font-size:var(--fs-cap); color:var(--sub); line-height:1.4; margin-top:2px; }
-.cctv-dot {
-  display:flex; align-items:center; justify-content:center; width:18px; height:18px;
-  border:2px solid #fff; border-radius:50%; background:var(--cctv); color:#fff;
-  box-shadow:0 1px 6px rgba(0,0,0,.35); font-size:9px; font-weight:800; cursor:pointer;
+.legend .legend-cctv-icon {
+  display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;
+  margin-right:var(--sp-2); border:2px solid #fff; border-radius:50%; background:var(--card);
+  color:var(--cctv); box-shadow:0 1px 4px rgba(0,0,0,.2); vertical-align:-5px;
 }
-.cctv-dot.count { width:auto; min-width:28px; padding:0 var(--sp-1); border-radius:999px; }
+.legend .legend-cctv-icon svg { width:12px; height:12px; }
+.cctv-dot {
+  appearance:none; display:flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0;
+  border:2px solid #fff; border-radius:50%; background:var(--card); color:var(--cctv);
+  box-shadow:0 2px 8px rgba(0,0,0,.34); cursor:pointer;
+}
+.cctv-dot svg { flex:none; width:17px; height:17px; }
+.cctv-dot.count {
+  width:auto; min-width:44px; gap:3px; padding:0 6px; border-radius:999px;
+}
+.cctv-dot .count-label {
+  font-size:10px; font-weight:900; line-height:1; color:var(--ink);
+}
 .help-marker {
   display:flex; align-items:center; justify-content:center; min-width:42px; height:28px; padding:0 var(--sp-2);
   border:2px solid #fff; border-radius:999px; color:#fff; box-shadow:0 2px 10px rgba(0,0,0,.28);
@@ -512,7 +524,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   </div>
   <div class="legend" id="cctv-legend" hidden>
     <b class="legend-title">공공 CCTV <small>행정안전부 표준데이터</small></b>
-    <div><i style="background:var(--cctv);border:2px solid #fff"></i>공공 CCTV 위치</div>
+    <div><span class="legend-cctv-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5v-9Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 10 4-2.5v9L16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>공공 CCTV 위치</div>
     <div class="sub-note">방범·교통·시설물·재난 목적을 함께 표시합니다.</div>
   </div>
   <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="true">ⓘ 범례</button>
@@ -920,6 +932,11 @@ function cctvUi(on) {
     localStorage.setItem('cctvHintShown', '1');
     showToast('공공 CCTV 위치를 표시합니다. 방범 전용이 아니며 실제 촬영 범위나 작동 상태를 보장하는 정보는 아닙니다.', 7000);
   }
+}
+
+function cctvIconHtml(count, showCount) {
+  const badge = showCount ? `<span class="count-label">${count}</span>` : '';
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5v-9Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 10 4-2.5v9L16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>${badge}`;
 }
 
 function wireChip(id, onToggle, defaultOn) {
@@ -1333,6 +1350,7 @@ async function initKakao(cfg) {
       el.className = 'cctv-dot';
       el.type = 'button';
       el.setAttribute('aria-label', `공공 CCTV ${count}대, ${purpose || '목적 미상'}`);
+      el.innerHTML = cctvIconHtml(count, false);
       el.onclick = () => {
         mapApi.panTo(lat, lng, 6);
         showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`);
@@ -1350,7 +1368,7 @@ async function initKakao(cfg) {
       const close = map.getLevel() <= 7;
       overlays.forEach(({ ov, el, count }) => {
         if (cctvOn) ov.setMap(map);
-        el.textContent = close ? count : '';
+        el.innerHTML = cctvIconHtml(count, close);
         el.classList.toggle('count', close);
       });
     };
@@ -1564,11 +1582,14 @@ async function initLeaflet(cfg) {
   if (state.cctv) {
     const layer = L.layerGroup();
     const cctvMarkers = state.cctv.points.map(([lat, lng, count, purpose]) => {
-      const iconFor = close => L.divIcon({
-        html: `<button class="cctv-dot${close ? ' count' : ''}" type="button" aria-label="공공 CCTV ${count}대, ${purpose || '목적 미상'}">${close ? count : ''}</button>`,
-        className: '',
-        iconSize: close ? [28, 18] : [18, 18]
-      });
+      const iconFor = close => {
+        const width = close ? Math.max(44, 34 + String(count).length * 7) : 28;
+        return L.divIcon({
+          html: `<button class="cctv-dot${close ? ' count' : ''}" type="button" aria-label="공공 CCTV ${count}대, ${escapeHtml(purpose || '목적 미상')}">${cctvIconHtml(count, close)}</button>`,
+          className: '',
+          iconSize: [width, 28]
+        });
+      };
       const marker = L.marker([lat, lng], { icon: iconFor(false), zIndexOffset: 300 })
         .addTo(layer)
         .on('click', event => {
