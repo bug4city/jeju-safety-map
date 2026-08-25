@@ -34,6 +34,7 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 - `MapPlaceInspector`: map-click detail surface for provider-backed place data. Kakao searches nearby POI categories around the clicked coordinate and reuses the place-candidate/card flow; tile-only fallback maps explain that rendered labels are not clickable data.
 - `NearestHelpPanel`: current-location result surface that shows the nearest police station and emergency hospital as actionable rows with distance, phone, and map focus. It is a direct assistance feature, separate from viral/shareable safety cards.
 - `HelpPlaceMarker`: map-native blue/green outlined marker for police and hospital candidates found from Kakao category search or static fallback data. It uses concise labels and never competes with red incident markers.
+
 ## 5. States
 
 - Safety search submits on Enter, shows a loading state, lists multiple candidate places for broad searches such as hotel or restaurant, pans the map to the selected place, and renders a shareable card with nearby incidents, regional crowding, and caveat copy.

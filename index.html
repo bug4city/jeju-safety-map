@@ -220,11 +220,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .chip.on { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); font-weight:600; }
 .chip[hidden] { display:none; }
 .legend-stack {
-  position:fixed; right:var(--sp-3); bottom:calc(var(--sheet-peek) + var(--sp-3)); z-index:900;
-  display:flex; flex-direction:column; align-items:flex-end; gap:var(--sp-2); width:min(280px, calc(100vw - var(--sp-3) * 2));
+  position:fixed; right:var(--sp-4); bottom:calc(var(--sheet-peek) + var(--sp-3)); z-index:900;
+  display:flex; flex-direction:column; align-items:flex-end; gap:var(--sp-2); width:min(280px, calc(100vw - var(--sp-4) * 2));
 }
 .legend {
-  width:100%; max-width:100%;
+  box-sizing:border-box; width:100%; max-width:100%;
   background:rgba(255,255,255,.93); border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); font-size:var(--fs-cap);
   box-shadow:var(--shadow-1); line-height:1.7;
 }
@@ -304,7 +304,8 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   line-height:1.15; text-align:center;
 }
 .pop-num small { display:block; margin-top:2px; font-size:var(--fs-cap); font-weight:700; color:var(--sub); }
-.pop-num.expanded { min-width:126px; border-radius:var(--r-sm); padding:6px 10px; }
+.pop-num.expanded { width:132px; border-radius:var(--r-sm); padding:6px 8px; white-space:normal; }
+.pop-num.expanded small { line-height:1.25; overflow-wrap:break-word; word-break:keep-all; }
 .cluster-num {
   width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff;
   display:flex; align-items:center; justify-content:center; font-size:var(--fs-md); font-weight:700;
@@ -1485,8 +1486,8 @@ async function initLeaflet(cfg) {
       const iconFor = expanded => L.divIcon({
         html: `<button class="pop-num${expanded ? ' expanded' : ''}" type="button" style="border-color:${style.color(r.total)};color:${style.color(r.total)}">${regionLabelHtml(r, regionPopulationContext(r, style, ranks), nearbyIncidentContext(r, 8), expanded ? 'expanded' : 'mid')}</button>`,
         className: '',
-        iconSize: expanded ? [126, 44] : [88, 36],
-        iconAnchor: expanded ? [63, 22] : [44, 18]
+        iconSize: expanded ? [132, 54] : [88, 36],
+        iconAnchor: expanded ? [66, 27] : [44, 18]
       });
       const marker = L.marker([r.lat, r.lng], { icon: iconFor(false), zIndexOffset: 200 }).addTo(layer).on('click', event => {
         L.DomEvent.stopPropagation(event);
