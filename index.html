@@ -75,6 +75,9 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
 gtag('config', 'G-FSQNRGNQ5Z');
+function track(name, params) {
+  if (typeof gtag === 'function') gtag('event', name, params || {});
+}
 </script>
 <style>
 :root {
@@ -867,10 +870,46 @@ const locateBtn = document.getElementById('locate-btn');
 const returnJejuBtn = document.getElementById('return-jeju');
 // 제주도(부속섬 포함) 대략 범위. 이 안에 있으면 "제주도로 돌아가기"를 띄우지 않는다.
 const inJeju = ({ lat, lng }) => lat >= 33.0 && lat <= 34.1 && lng >= 125.9 && lng <= 127.1;
+let searchSessionActive = false;
+function beginSearchSession(source) {
+  if (searchSessionActive) return;
+  searchSessionActive = true;
+  track('search_start', { source });
+}
+function resetSearchSession() {
+  searchSessionActive = false;
+}
+function submitSearch(query, source) {
+  const q = query.trim();
+  track(q ? 'search_submit' : 'search_empty_submit', { source, query_length: q.length });
+  mapApi.checkPlace(q);
+}
+function classifyLink(anchor) {
+  const href = anchor.getAttribute('href') || '';
+  if (href.startsWith('tel:')) return { link_type: 'phone' };
+  let url;
+  try { url = new URL(href, location.href); } catch (e) { return { link_type: 'unknown' }; }
+  const host = url.hostname.replace(/^www\./, '');
+  if (host.includes('discord.gg')) return { link_type: 'external', destination: 'discord' };
+  if (host.includes('instagram.com')) return { link_type: 'external', destination: 'instagram' };
+  if (host.includes('kimyukah.com') && host !== location.hostname) return { link_type: 'external', destination: 'kimyukah' };
+  if (host.includes('place.map.kakao.com')) return { link_type: 'map_detail', destination: 'kakao_place' };
+  if (host.includes('x.com')) return { link_type: 'share', destination: 'x' };
+  if (anchor.closest('.src') || anchor.closest('.mini-inc')) return { link_type: 'source', destination: host };
+  return { link_type: url.origin === location.origin ? 'internal' : 'external', destination: host || 'same_origin' };
+}
+document.addEventListener('click', e => {
+  const anchor = e.target.closest && e.target.closest('a[href]');
+  if (!anchor) return;
+  track('link_click', classifyLink(anchor));
+});
 // 손잡이: 접힘·전체 2단. 탭하면 토글, 위아래로 조금만 끌어도 방향대로 열리고 닫힌다
 (() => {
   const grab = document.getElementById('grab');
-  const setState = s => panel.classList.toggle('full', s === 'full');
+  const setState = s => {
+    panel.classList.toggle('full', s === 'full');
+    track('panel_sheet_change', { state: s });
+  };
   let startY = null;
   grab.addEventListener('pointerdown', e => {
     startY = e.clientY;
@@ -935,10 +974,10 @@ function renderNearestHelp(origin, places) {
     button.onclick = () => {
       const place = places[Number(button.dataset.helpIndex)];
       mapApi.panTo(place.lat, place.lng, 5);
-      gtag('event', 'help_place_focus', { type: place.type });
+      track('help_place_focus', { type: place.type });
     };
   });
-  gtag('event', 'nearest_help_show');
+  track('nearest_help_show');
 }
 function showPoiDetail(type, place) {
   // 카카오 장소검색 결과(place_name/y/x)를 좌측 패널 상세로 표시
@@ -959,7 +998,7 @@ function showPoiDetail(type, place) {
   document.getElementById('poi-call').onclick = () => { location.href = `tel:${tel}`; };
   const kakaoBtn = document.getElementById('poi-kakao');
   if (kakaoBtn) kakaoBtn.onclick = () => window.open(place.place_url, '_blank', 'noopener');
-  gtag('event', 'poi_detail', { type });
+  track('poi_detail', { type });
 }
 function incidentDetail(inc) {
   const fact = incidentFactText(inc);
@@ -969,7 +1008,7 @@ function incidentDetail(inc) {
     <div class="area">${escapeHtml(inc.area)} · ${escapeHtml(inc.date)} · ${escapeHtml(fact.secondary)}</div>
     <div class="summary">${escapeHtml(inc.summary)}</div>
     <div class="src">출처: ${inc.sources.map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>`).join('')}</div>`);
-  gtag('event', 'incident_open', { incident_id: inc.id });
+  track('incident_open', { incident_id: inc.id });
 }
 function regionDetail(r, style, ranks) {
   if (mapApi.highlightRegion) mapApi.highlightRegion(r.name);
@@ -1032,7 +1071,7 @@ function regionDetail(r, style, ranks) {
       mapApi.panTo(next.lat, next.lng);
     };
   });
-  gtag('event', 'region_open', { region: r.name });
+  track('region_open', { region: r.name });
 }
 
 // 리스트는 "내 위치(또는 점검한 장소) 주변 장소 + 장소별 안전 맥락"을 보여준다.
@@ -1078,7 +1117,7 @@ async function renderList(opts) {
     d.onclick = () => {
       if (mapApi.openPlaceCard) mapApi.openPlaceCard(p);
       else mapApi.panTo(p.lat, p.lng, 6);
-      gtag('event', 'nearby_place_open', { origin: origin ? (state.userLocation ? 'location' : 'search') : 'default' });
+      track('nearby_place_open', { origin: origin ? (state.userLocation ? 'location' : 'search') : 'default' });
     };
     d.onkeydown = e => { if (e.key === 'Enter') d.click(); };
     listView.appendChild(d);
@@ -1116,7 +1155,7 @@ returnJejuBtn.onclick = () => {
   mapApi.clearNearestHelp();
   returnJejuBtn.hidden = true;
   showToast('제주도 전체 지도로 돌아왔습니다.');
-  gtag('event', 'return_jeju');
+  track('return_jeju');
 };
 locateBtn.onclick = () => {
   if (!navigator.geolocation) {
@@ -1136,7 +1175,7 @@ locateBtn.onclick = () => {
     renderList({ keepDetail: true });
     mapApi.showNearestHelp(loc);
     showToast('현재 위치 기준 가까운 도움 장소를 표시했습니다.');
-    gtag('event', 'location_use');
+    track('location_use');
   }, () => {
     locateBtn.classList.remove('locating');
     locateBtn.querySelector('span').textContent = '내 위치';
@@ -1161,7 +1200,7 @@ function crimeUi(on) {
   document.getElementById('crime-legend').hidden = !on;
   if (on && !localStorage.getItem('crimeHintShown')) {
     localStorage.setItem('crimeHintShown', '1');
-    showToast('색이 진할수록 최근 1년간 범죄 신고가 밀집했던 구간이에요. 실제 위험도 판정이 아니라, 유동인구가 많은 번화가일수록 진하게 나타납니다.', 8000);
+    showToast('진한 색일수록 최근 1년 범죄 신고 밀집 구간이에요.', 4000);
   }
 }
 function cctvUi(on) {
@@ -1279,7 +1318,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     button.onclick = () => {
       const p = shownHelp[Number(button.dataset.helpI)];
       mapApi.panTo(p.lat, p.lng, 5);
-      gtag('event', 'help_place_focus', { type: p.type });
+      track('help_place_focus', { type: p.type });
     };
   });
   document.getElementById('card-result').innerHTML = `
@@ -1327,7 +1366,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
       <button id="card-webshare" hidden>공유</button>
     </div>
     <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도·CCTV·통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
-  gtag('event', 'card_create', { region: region.name, incidents_8km: incidents.nearby.length });
+  track('card_create', { region: region.name, incidents_8km: incidents.nearby.length });
   moveToLocation(loc);
   returnJejuBtn.hidden = inJeju(loc);
   if (!state.userLocation) {
@@ -1378,7 +1417,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     const a = document.createElement('a');
     const safeName = String(loc.name || '점검카드').replace(/[\\/:*?"<>|]/g, '').slice(0, 30);
     a.href = canvas.toDataURL('image/png'); a.download = `제주안전맵_${safeName}.png`; a.click();
-    gtag('event', 'card_share', { method: 'image' });
+    track('card_share', { method: 'image' });
   };
   document.getElementById('card-kakao').onclick = async () => {
     if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
@@ -1406,7 +1445,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         buttonTitle: '이 장소 확인하기'
       });
     }
-    gtag('event', 'card_share', { method: 'kakao' });
+    track('card_share', { method: 'kakao' });
   };
   // 이미지 파일 공유를 지원하는 환경(주로 모바일)에서만 시스템 공유 버튼 노출
   const webshareBtn = document.getElementById('card-webshare');
@@ -1424,7 +1463,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         }
         await navigator.share({ files: [cachedFile], text: summaryText + '\n' + shareUrl });
         cachedFile = null;
-        gtag('event', 'card_share', { method: 'webshare' });
+        track('card_share', { method: 'webshare' });
       } catch (e) {
         if (e && e.name === 'AbortError') return;
         // 제스처 만료로 거부된 경우: 이미지는 준비됐으니 바로 다시 누르면 즉시 공유된다.
@@ -1437,7 +1476,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     u.searchParams.set('text', summaryText);
     u.searchParams.set('url', shareUrl);
     window.open(u.toString(), '_blank', 'noopener');
-    gtag('event', 'card_share', { method: 'x' });
+    track('card_share', { method: 'x' });
   };
 }
 
@@ -1540,7 +1579,7 @@ function setupCard(map, cfg) {
       input.onkeydown = e => { if (e.key === 'Enter') go(); };
       input.focus();
     }
-    gtag('event', 'card_open');
+    track('card_open');
   };
   // 패널 검색창과 같은 기능이라 상세 시트에 입력폼을 또 그리지 않고,
   // 패널을 열어 기존 검색창에 포커스를 준다 (입력창 중복 문제)
@@ -1549,7 +1588,7 @@ function setupCard(map, cfg) {
     listView.classList.remove('off');
     if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
     searchInput.focus();
-    gtag('event', 'card_open', { source: 'chip' });
+    track('card_open', { source: 'chip' });
   };
   mapApi.openPlaceCard = loc => {
     openMapPlaceInspector(loc.name, '안전 정보를 정리하는 중...');
@@ -1592,12 +1631,12 @@ function setupCard(map, cfg) {
       openMapPlaceInspector(matches[0].name, '안전 정보를 정리하는 중...');
       renderCard(matches[0]);
       if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
-      gtag('event', 'map_place_lookup', { result_count: matches.length, direct_open: 1 });
+      track('map_place_lookup', { result_count: matches.length, direct_open: 1 });
       return;
     }
     renderPlaceResults('선택 지점 주변', matches, renderCard);
     if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
-    gtag('event', 'map_place_lookup', { result_count: matches.length });
+    track('map_place_lookup', { result_count: matches.length });
   };
   mapApi.checkPlace = query => {
     if (!query) {
@@ -1836,7 +1875,7 @@ async function initKakao(cfg) {
       polygons.forEach(p => p.setMap(on ? map : null));
       if (on) relabel(); else overlays.forEach(o => o.ov.setMap(null));
       document.getElementById('legend').hidden = !on;
-      gtag('event', 'layer_toggle', { layer: 'population', on });
+      track('layer_toggle', { layer: 'population', on });
     }, true);
   }
 
@@ -1851,7 +1890,7 @@ async function initKakao(cfg) {
       el.onclick = () => {
         mapApi.panTo(lat, lng, 6);
         showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`);
-        gtag('event', 'cctv_open');
+        track('cctv_open');
       };
       const ov = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(lat, lng),
@@ -1876,7 +1915,7 @@ async function initKakao(cfg) {
       cctvOn = on;
       if (on) relabelCctv(); else overlays.forEach(o => o.ov.setMap(null));
       cctvUi(on);
-      gtag('event', 'layer_toggle', { layer: 'cctv', on });
+      track('layer_toggle', { layer: 'cctv', on });
     }, false);
   }
 
@@ -1916,11 +1955,11 @@ async function initKakao(cfg) {
     };
     wmsChip('chip-crime', `${CRIME_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CRMNLHSPOT_TOT&styles=A2SM_CrmnlHspot_Tot_Tot`, {
       opacity: .5, zIndex: 5, defaultOn: true,
-      onToggle: on => { crimeUi(on); gtag('event', 'layer_toggle', { layer: 'crime_zone', on }); }
+      onToggle: on => { crimeUi(on); track('layer_toggle', { layer: 'crime_zone', on }); }
     });
     wmsChip('chip-light', `${LIGHT_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CMMNPOI_SECULIGHT`, {
       opacity: .8, zIndex: 6,
-      onToggle: on => { lightUi(on); gtag('event', 'layer_toggle', { layer: 'security_light', on }); }
+      onToggle: on => { lightUi(on); track('layer_toggle', { layer: 'security_light', on }); }
     });
   }
 
@@ -1989,7 +2028,7 @@ async function initKakao(cfg) {
           if (map.getLevel() > 7) { map.setLevel(7); map.panTo(new kakao.maps.LatLng(33.505, 126.525)); }
           else refresh();
         } else clear();
-        gtag('event', 'layer_toggle', { layer: opts.gaLayer, on });
+        track('layer_toggle', { layer: opts.gaLayer, on });
       });
     };
     poiChip('chip-hospital', 'hospital', fetchHospitals, {
@@ -2185,7 +2224,7 @@ async function initLeaflet(cfg) {
         input.onkeydown = e => { if (e.key === 'Enter') go(); };
         input.focus();
       }
-      gtag('event', 'card_open', { engine: 'osm' });
+      track('card_open', { engine: 'osm' });
     };
     mapApi.checkPlace = query => {
       if (!query) {
@@ -2277,7 +2316,7 @@ async function initLeaflet(cfg) {
   } catch (e) {
     engine = await initLeaflet(cfg);
   }
-  gtag('event', 'map_loaded', { incident_count: state.data.incidents.length, map_engine: engine });
+  track('map_loaded', { incident_count: state.data.incidents.length, map_engine: engine });
 
   // 공유 딥링크: ?lat=&lng=&name= 로 들어오면 그 장소 카드를 바로 연다.
   const qp = new URLSearchParams(location.search);
@@ -2290,7 +2329,7 @@ async function initLeaflet(cfg) {
       lat: dlLat,
       lng: dlLng
     });
-    gtag('event', 'card_deeplink_open');
+    track('card_deeplink_open');
   }
 })();
 </script>
