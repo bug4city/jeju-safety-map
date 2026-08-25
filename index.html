@@ -228,6 +228,10 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .result-meta > span:first-child { word-break:keep-all; }
 .result-meta > span:last-child { flex:none; white-space:nowrap; }
 .result-meta b { color:var(--ink); font-weight:700; }
+/* 상세 모드: 목록 전용 컨트롤(정렬·메타·안심 TOP)을 걷어내 상세에 집중시킨다 */
+.panel.detail-mode .sort-chips,
+.panel.detail-mode .result-meta,
+.panel.detail-mode .quiet-top { display:none; }
 /* 한적한 동네 TOP: 탐색 진입점 칩 줄 (북적북적 제주 패턴) */
 .quiet-top { margin-top:var(--sp-3); }
 .quiet-top-label { display:block; font-size:var(--fs-sub); font-weight:700; color:var(--sub); margin-bottom:var(--sp-2); }
@@ -274,6 +278,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 /* 숫자를 문장으로 풀어주는 요약 + 한 줄 인사이트 (북적북적 제주 패턴) */
 .summary-text { font-size:var(--fs-body); line-height:1.65; color:var(--ink); margin:var(--sp-2) 0; word-break:keep-all; }
 .summary-text b { font-weight:700; }
+.src-caption { font-size:var(--fs-cap); color:var(--sub); margin-bottom:var(--sp-2); }
 .insight {
   display:block; margin:var(--sp-2) 0 var(--sp-3); padding:var(--sp-2) var(--sp-3);
   border-radius:var(--r-sm); background:var(--brand-soft); color:var(--ink);
@@ -285,8 +290,6 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .insight.alert small { color:var(--sub); }
 /* 도민 vs 외지인 유동인구 비율 바 (북적북적 제주 패턴) */
 .split-row { margin:var(--sp-2) 0 var(--sp-3); }
-.split-labels { display:flex; justify-content:space-between; font-size:var(--fs-sub); color:var(--sub); margin-bottom:var(--sp-1); }
-.split-labels b { color:var(--ink); font-weight:700; }
 .split-bar { height:8px; border-radius:999px; background:var(--cctv); overflow:hidden; }
 .split-bar i { display:block; height:100%; background:var(--blue); border-radius:999px 0 0 999px; }
 .split-ends { display:flex; justify-content:space-between; font-size:var(--fs-cap); color:var(--sub); margin-top:var(--sp-1); }
@@ -518,10 +521,6 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   color:var(--brand); text-decoration:none; font-size:var(--fs-ui);
 }
 /* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
-.rank-scale { margin:var(--sp-3) 0 var(--sp-2); }
-.rank-scale .track { position:relative; height:10px; border-radius:5px; background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
-.rank-scale .marker { position:absolute; top:50%; width:16px; height:16px; border-radius:50%; border:3px solid #fff; background:var(--ink); box-shadow:0 1px 5px rgba(0,0,0,.35); transform:translate(-50%,-50%); }
-.rank-scale .ends { display:flex; justify-content:space-between; font-size:var(--fs-cap); color:var(--sub); margin-top:4px; }
 .near-regions { margin-top:var(--sp-3); border-top:1px solid var(--line); padding-top:var(--sp-2); }
 .near-regions h4 { font-size:var(--fs-ui); margin-bottom:var(--sp-1); }
 .near-region { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); width:100%; border:0; background:none; text-align:left; font-size:var(--fs-ui); padding:var(--sp-2) 0; border-bottom:1px solid var(--line); cursor:pointer; }
@@ -1002,9 +1001,8 @@ function localSplitHtml(region) {
   const localPct = Math.round((region.local / (region.local + region.other)) * 100);
   return `
     <div class="split-row" aria-label="도민 대 외지인 유동인구 비율">
-      <div class="split-labels"><span>🏠 도민 <b>${region.local.toLocaleString()}명</b></span><span>🧳 외지인 <b>${region.other.toLocaleString()}명</b></span></div>
       <div class="split-bar"><i style="width:${localPct}%"></i></div>
-      <div class="split-ends"><span>도민 ${localPct}%</span><span>외지인 ${100 - localPct}%</span></div>
+      <div class="split-ends"><span>🏠 도민 ${localPct}%</span><span>🧳 외지인 ${100 - localPct}%</span></div>
     </div>`;
 }
 function regionLabelHtml(region, pop, incident, mode) {
@@ -1114,8 +1112,10 @@ function showDetail(html) {
   lastDetailOpenAt = Date.now();
   detailView.innerHTML = '<button class="back" id="back-btn">&larr; 목록으로</button>' + html;
   detailView.classList.add('on'); listView.classList.add('off');
+  panel.classList.add('detail-mode');
   document.getElementById('back-btn').onclick = () => {
     detailView.classList.remove('on'); listView.classList.remove('off');
+    panel.classList.remove('detail-mode');
     if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
     syncPlaceUrl(null);
     if (window.matchMedia('(max-width: 899px)').matches) collapsePanelForMap();
@@ -1196,7 +1196,6 @@ function regionDetail(r, style, ranks) {
   const cctv = nearbyCctvContext(r, 1);
   const avg = Math.round(state.pop.regions.reduce((s, x) => s + x.total, 0) / state.pop.regions.length);
   const vsAvg = Math.round((r.total / avg) * 100);
-  const markerPct = pop.totalRegions > 1 ? ((pop.quietRank - 1) / (pop.totalRegions - 1)) * 100 : 50;
   const neighbors = state.pop.regions
     .filter(x => x.name !== r.name)
     .map(x => ({ x, km: haversineKm(r, x) }))
@@ -1205,28 +1204,11 @@ function regionDetail(r, style, ranks) {
   showDetail(`
     <span class="status" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span>
     <h2>${escapeHtml(r.name)}</h2>
-    <div class="area">${pop.totalRegions}개 지역 중 한적한 순 ${pop.quietRank}위 · 붐비는 순 ${pop.crowdRank}위</div>
-    <div class="rank-scale">
-      <div class="track"><i class="marker" style="left:${markerPct.toFixed(1)}%"></i></div>
-      <div class="ends"><span>가장 한적</span><span>가장 붐빔</span></div>
-    </div>
+    <div class="area">${pop.totalRegions}개 지역 중 붐비는 순 ${pop.crowdRank}위 · 한적한 순 ${pop.quietRank}위</div>
     <p class="summary-text">하루에 약 <b>${r.total.toLocaleString()}명</b>이 오가요. ${pop.totalRegions}개 지역 평균의 <b>${vsAvg}%</b> 수준이고, 1km 안에 공공 CCTV ${cctv && cctv.spots ? `<b>${cctv.cameras}대</b>가 있어요` : '정보가 없어요'}. 반경 8km 보도 확인 사건은 ${incidents.nearby.length ? `<b>${incidents.nearby.length}건</b>이에요` : '없어요'}.</p>
+    <div class="src-caption">${day} 통신사 빅데이터 · 행정안전부 CCTV 표준데이터</div>
     ${insightHtml({ incidents, pop, cctvCameras: cctv ? cctv.cameras : 0 })}
     ${localSplitHtml(r)}
-    <div class="context">
-      <div class="context-box"><span>하루 유동인구</span>
-        <b>약 ${r.total.toLocaleString()}명</b>
-        <small>${day} · 통신사 빅데이터</small></div>
-      <div class="context-box"><span>지역 평균 대비</span>
-        <b>${vsAvg}%</b>
-        <small>${pop.totalRegions}개 지역 평균 ${avg.toLocaleString()}명</small></div>
-      <div class="context-box"><span>공공 CCTV (1km)</span>
-        <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
-        <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · ${cctv.nearestM}m 거리` : '행정안전부 표준데이터 기준'}</small></div>
-      <div class="context-box"><span>보도 사건 (8km)</span>
-        <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
-        <small>${incidents.nearby.length ? incidents.nearby[0].km.toFixed(1) + 'km 거리' : incidentDataBasisText() + ' 없음'}</small></div>
-    </div>
     ${incidents.nearby.length ? `
     <details class="card-more">
       <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
@@ -1245,7 +1227,24 @@ function regionDetail(r, style, ranks) {
           <span class="tagchip" style="background:${style.color(x.total)};color:${style.ink(x.total)}">${style.tag(x.total)}</span>
         </button>`).join('')}
     </div>
-    <div class="card-hint">범죄주의구간은 경찰청 생활안전지도 레이어에서 색으로 따로 확인하세요. 이 화면은 안전 판정이 아니라 공개 데이터를 한 번에 보는 참고 자료입니다.</div>`);
+    <details class="card-more">
+      <summary>자세한 수치 보기</summary>
+      <div class="context">
+        <div class="context-box"><span>하루 유동인구</span>
+          <b>약 ${r.total.toLocaleString()}명</b>
+          <small>${day} · 통신사 빅데이터</small></div>
+        <div class="context-box"><span>지역 평균 대비</span>
+          <b>${vsAvg}%</b>
+          <small>${pop.totalRegions}개 지역 평균 ${avg.toLocaleString()}명</small></div>
+        <div class="context-box"><span>공공 CCTV (1km)</span>
+          <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
+          <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · ${cctv.nearestM}m 거리` : '행정안전부 표준데이터 기준'}</small></div>
+        <div class="context-box"><span>보도 사건 (8km)</span>
+          <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
+          <small>${incidents.nearby.length ? incidents.nearby[0].km.toFixed(1) + 'km 거리' : incidentDataBasisText() + ' 없음'}</small></div>
+      </div>
+    </details>
+    <div class="card-hint">안전 판정이 아니라 공개 데이터를 한눈에 보는 참고 자료예요.</div>`);
   detailView.querySelectorAll('.near-region').forEach(button => {
     button.onclick = () => {
       const next = neighbors[Number(button.dataset.nearIndex)].x;
@@ -1369,7 +1368,7 @@ async function renderList(opts) {
   };
   redrawList = draw;
   draw();
-  if (!keepDetail) { detailView.classList.remove('on'); listView.classList.remove('off'); }
+  if (!keepDetail) { detailView.classList.remove('on'); listView.classList.remove('off'); panel.classList.remove('detail-mode'); }
 }
 searchInput.oninput = () => {
   if (searchInput.value) beginSearchSession('panel_search');
