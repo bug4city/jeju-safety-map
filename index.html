@@ -17,6 +17,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="assets/favicon-512.png?v=2">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=2">
 <link rel="manifest" href="site.webmanifest">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <meta property="og:site_name" content="제주안전맵">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://jeju.kimyukah.com/">
@@ -98,15 +99,16 @@ gtag('config', 'G-FSQNRGNQ5Z');
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;  /* 간격은 이 4단계만 쓴다 */
   --panel-w:360px; --sheet-peek:112px; --sheet-half:46vh; --header-h:56px;
 }
+/* iOS 사파리 주소창 접힘에 맞춰 실제 보이는 높이 기준으로 계산 */
+@supports (height: 1dvh) { :root { --sheet-half:46dvh; } }
 * { box-sizing:border-box; margin:0; }
 html,body { height:100%; }
-body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; color:var(--ink); overflow:hidden; }
+body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif; color:var(--ink); overflow:hidden; }
 #map { position:fixed; inset:0; }
 
 /* 앱 헤더: 외부 피드백/프로필 링크 */
 .app-header {
   position:fixed; top:0; left:0; right:0; z-index:1300;
-  width:100vw;
   height:calc(var(--header-h) + env(safe-area-inset-top)); padding:env(safe-area-inset-top) var(--sp-3) 0;
   display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3);
   background:rgba(247,248,250,.96); border-bottom:1px solid var(--line); backdrop-filter:saturate(180%) blur(14px);
@@ -118,7 +120,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .header-brand img { flex:none; width:32px; height:32px; border-radius:8px; box-shadow:var(--shadow-1); }
 .header-actions { display:flex; align-items:center; gap:var(--sp-2); flex:none; }
 .header-action {
-  min-height:34px; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:0 var(--sp-3);
+  min-height:40px; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:0 var(--sp-3);
   display:inline-flex; align-items:center; justify-content:center; gap:var(--sp-2);
   background:var(--chip-dark); color:#fff; text-decoration:none; font-size:var(--fs-ui); font-weight:700;
   box-shadow:var(--shadow-1); white-space:nowrap;
@@ -128,7 +130,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   outline:3px solid var(--focus-blue); outline-offset:2px;
 }
 .header-action:hover { background:var(--chip-dark-hover); }
-.header-action.icon-only { width:34px; padding:0; }
+.header-action.icon-only { width:40px; padding:0; }
 .header-grid { display:grid; grid-template-columns:repeat(3,3px); gap:3px; }
 .header-grid i { width:3px; height:3px; border-radius:50%; background:currentColor; }
 
@@ -137,13 +139,13 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   position:fixed; left:0; right:0; bottom:0; z-index:1100;
   background:var(--card); border-radius:var(--r-lg) var(--r-lg) 0 0;
   box-shadow:0 -4px 20px rgba(0,0,0,.14);
-  height:85vh; transform:translateY(calc(100% - var(--sheet-peek)));
+  height:85vh; height:85dvh; transform:translateY(calc(100% - var(--sheet-peek)));
   transition:transform .28s cubic-bezier(.3,.9,.3,1);
   display:flex; flex-direction:column;
 }
 .panel.half { transform:translateY(calc(100% - var(--sheet-half))); }
 .panel.full { transform:translateY(calc(8px + env(safe-area-inset-top))); }
-.grab { padding:var(--sp-2) 0 var(--sp-1); cursor:grab; flex:none; }
+.grab { padding:var(--sp-2) 0 var(--sp-1); cursor:grab; flex:none; touch-action:none; }
 .grab::before { content:''; display:block; width:44px; height:5px; border-radius:3px; background:var(--line-strong); margin:0 auto; }
 .panel-head { padding:var(--sp-1) var(--sp-4) var(--sp-2); flex:none; }
 .panel-head h1 { font-size:var(--fs-title); }
@@ -157,11 +159,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 }
 .search-box:focus-within { border-color:var(--brand); box-shadow:0 0 0 3px var(--focus-brand); }
 .search-box svg { flex:none; width:20px; height:20px; color:var(--sub); }
-.search-box input { flex:1; min-width:0; border:0; outline:0; font-size:var(--fs-md); color:var(--ink); background:transparent; }
+.search-box input { flex:1; min-width:0; border:0; outline:0; font-size:16px; color:var(--ink); background:transparent; } /* 16px 미만이면 iOS가 포커스 시 강제 줌 */
 .search-box input::placeholder { color:var(--placeholder); }
 .search-box input::-webkit-search-cancel-button { appearance:none; display:none; }
 .icon-btn {
-  flex:none; width:30px; height:30px; border:0; border-radius:999px; background:transparent; color:var(--sub);
+  flex:none; width:40px; height:40px; border:0; border-radius:999px; background:transparent; color:var(--sub);
   display:flex; align-items:center; justify-content:center; cursor:pointer;
 }
 .icon-btn:hover, .icon-btn:focus-visible { background:var(--panel-muted); color:var(--ink); outline:none; }
@@ -177,6 +179,8 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .tool-btn.locating { color:var(--blue); border-color:var(--blue); background:var(--blue-soft); }
 .tool-btn.searching { color:var(--brand); border-color:var(--brand); background:var(--brand-soft); }
 .result-meta { display:flex; justify-content:space-between; gap:var(--sp-2); margin-top:var(--sp-3); color:var(--sub); font-size:var(--fs-sub); line-height:1.4; }
+.result-meta > span:first-child { word-break:keep-all; }
+.result-meta > span:last-child { flex:none; white-space:nowrap; }
 .result-meta b { color:var(--ink); font-weight:700; }
 .panel-body { flex:1; overflow-y:auto; overscroll-behavior:contain; padding:0 var(--sp-4) calc(var(--sp-4) + var(--sp-1) + env(safe-area-inset-bottom)); }
 
@@ -226,11 +230,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   background:rgba(255,255,255,.93); border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); font-size:var(--fs-cap);
   box-shadow:var(--shadow-1); line-height:1.7;
 }
-/* 범례는 첫 방문 때 데이터 의미를 바로 알 수 있도록 기본 펼침 */
+/* 범례는 데스크톱에서 기본 펼침, 모바일은 지도를 가려서 기본 접힘(JS에서 처리) */
 .legend-stack:not(.open) .legend { display:none; }
 .legend-toggle {
-  flex:none; font-size:var(--fs-cap); border:1px solid var(--line); background:rgba(255,255,255,.93);
-  color:var(--sub); border-radius:999px; padding:var(--sp-1) var(--sp-3); cursor:pointer; box-shadow:var(--shadow-1);
+  flex:none; min-height:40px; font-size:var(--fs-cap); border:1px solid var(--line); background:rgba(255,255,255,.93);
+  color:var(--sub); border-radius:999px; padding:var(--sp-2) var(--sp-3); cursor:pointer; box-shadow:var(--shadow-1);
 }
 .legend-stack.open .legend-toggle { background:var(--ink); border-color:var(--ink); color:#fff; }
 .legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:var(--sp-2); }
@@ -251,10 +255,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 }
 .legend .legend-cctv-icon svg { width:12px; height:12px; }
 .cctv-dot {
-  appearance:none; display:flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0;
+  appearance:none; position:relative; display:flex; align-items:center; justify-content:center; width:28px; height:28px; padding:0;
   border:2px solid #fff; border-radius:50%; background:var(--card); color:var(--cctv);
   box-shadow:0 2px 8px rgba(0,0,0,.34); cursor:pointer;
 }
+.cctv-dot::before { content:''; position:absolute; inset:-8px; border-radius:50%; } /* 시각 크기는 유지하고 터치 히트 영역만 44px급으로 */
 .cctv-dot svg { flex:none; width:17px; height:17px; }
 .cctv-dot.count {
   width:auto; min-width:44px; gap:3px; padding:0 6px; border-radius:999px;
@@ -263,10 +268,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   font-size:10px; font-weight:900; line-height:1; color:var(--ink);
 }
 .help-marker {
-  display:flex; align-items:center; justify-content:center; min-width:42px; height:28px; padding:0 var(--sp-2);
+  position:relative; display:flex; align-items:center; justify-content:center; min-width:42px; height:28px; padding:0 var(--sp-2);
   border:2px solid #fff; border-radius:999px; color:#fff; box-shadow:0 2px 10px rgba(0,0,0,.28);
   font-size:var(--fs-cap); font-weight:900; white-space:nowrap; cursor:pointer;
 }
+.help-marker::before { content:''; position:absolute; inset:-8px; border-radius:999px; }
 .help-marker.police { background:var(--blue); }
 .help-marker.hospital { background:var(--brand); }
 
@@ -305,16 +311,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   display:flex; flex-direction:column; align-items:center; filter:drop-shadow(0 3px 9px rgba(0,0,0,.24));
 }
 .incident-marker .label {
-  min-width:128px; min-height:52px; display:flex; align-items:center; gap:var(--sp-2);
-  padding:7px 13px 7px 8px; border:2px solid #6e463f; border-radius:999px;
+  min-height:44px; display:flex; align-items:center;
+  padding:7px 14px; border:2px solid #6e463f; border-radius:999px;
   background:rgba(255,255,255,.96); color:var(--ink); white-space:nowrap;
 }
-.incident-marker .icon {
-  flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(145deg,#8a5049,#54302a); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
-}
-.incident-marker .icon svg { width:20px; height:20px; }
-.incident-marker .text { min-width:0; display:flex; flex-direction:column; align-items:flex-start; line-height:1.1; }
+.incident-marker .text { min-width:0; display:flex; flex-direction:column; align-items:center; line-height:1.1; }
 .incident-marker .primary { font-size:var(--fs-md); font-weight:900; letter-spacing:0; color:#17191f; }
 .incident-marker .secondary { margin-top:4px; font-size:var(--fs-sub); font-weight:700; color:var(--sub); }
 .incident-marker .anchor {
@@ -322,8 +323,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   border:3px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.34);
 }
 .incident-marker:focus-visible .label { outline:3px solid var(--focus-blue); outline-offset:2px; }
-.incident-marker.compact .label { min-width:112px; min-height:46px; padding:6px 11px 6px 7px; }
-.incident-marker.compact .icon { width:30px; height:30px; }
+.incident-marker.compact .label { min-height:40px; padding:6px 12px; }
 .incident-marker.compact .primary { font-size:var(--fs-body); }
 .incident-marker.compact .secondary { font-size:var(--fs-cap); }
 .pop-num {
@@ -356,7 +356,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .return-jeju[hidden] { display:none; }
 .return-jeju svg { width:17px; height:17px; }
 .card-input { display:flex; gap:var(--sp-2); margin:var(--sp-3) 0 var(--sp-4); }
-.card-input input { flex:1; min-width:0; font-size:var(--fs-md); border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:var(--sp-3); }
+.card-input input { flex:1; min-width:0; font-size:16px; border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:var(--sp-3); } /* 16px 미만이면 iOS가 포커스 시 강제 줌 */
 .card-input input:focus { outline:none; border-color:var(--brand); }
 .card-input button { font-size:var(--fs-body); border:0; border-radius:var(--r-sm); padding:var(--sp-3) var(--sp-4); background:var(--brand); color:#fff; cursor:pointer; }
 .place-results { display:grid; gap:var(--sp-2); margin-top:var(--sp-3); }
@@ -384,7 +384,8 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .help-main span { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-sub); line-height:1.35; word-break:keep-all; }
 .help-actions { display:flex; gap:var(--sp-1); }
 .help-actions a, .help-actions button {
-  min-height:30px; border:1px solid var(--line-strong); border-radius:999px; padding:0 var(--sp-2);
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px; min-width:44px; border:1px solid var(--line-strong); border-radius:999px; padding:0 var(--sp-3);
   background:#fff; color:var(--ink); font-size:var(--fs-cap); font-weight:800; text-decoration:none; cursor:pointer;
 }
 .help-actions a:focus-visible, .help-actions button:focus-visible { outline:3px solid var(--focus-blue); outline-offset:2px; }
@@ -405,7 +406,10 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .context-box .help-place { display:flex; align-items:baseline; gap:var(--sp-1); margin-top:3px; }
 .context-box .help-place button { border:0; background:none; padding:0; text-align:left; cursor:pointer; color:var(--sub); font-size:var(--fs-cap); line-height:1.4; }
 .context-box .help-place b { display:inline; margin:0; font-size:var(--fs-ui); color:var(--brand); text-decoration:underline; text-underline-offset:2px; }
-.context-box .help-place a { color:var(--brand); text-decoration:none; font-size:var(--fs-ui); }
+.context-box .help-place a {
+  display:inline-flex; align-items:center; justify-content:center; min-width:32px; min-height:32px; margin:-8px 0;
+  color:var(--brand); text-decoration:none; font-size:var(--fs-ui);
+}
 /* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
 .rank-scale { margin:var(--sp-3) 0 var(--sp-2); }
 .rank-scale .track { position:relative; height:10px; border-radius:5px; background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
@@ -451,32 +455,28 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   .foot-note { left:calc(var(--panel-w) + var(--sp-4)); bottom:var(--sp-4); max-width:360px; }
   .return-jeju { left:calc(var(--panel-w) + (100vw - var(--panel-w)) / 2); bottom:var(--sp-4); }
 }
-@media (max-width: 520px) {
-  .app-header { padding-left:var(--sp-2); padding-right:var(--sp-2); gap:var(--sp-2); }
-  .header-brand { font-size:var(--fs-body); gap:var(--sp-1); }
-  .header-brand img { width:30px; height:30px; border-radius:7px; }
-  .header-actions { gap:var(--sp-1); }
-  .header-action { min-height:32px; padding:0 var(--sp-2); }
-  .header-action .label { display:none; }
-}
 @media (max-width: 700px) {
   .app-header { display:block; }
   .header-brand {
     position:absolute; left:var(--sp-2); top:env(safe-area-inset-top); bottom:0;
-    max-width:calc(100vw - 148px);
+    max-width:calc(100vw - 160px); font-size:var(--fs-body);
   }
+  .header-brand img { width:30px; height:30px; border-radius:7px; }
   .header-actions {
-    position:absolute; right:var(--sp-2); top:env(safe-area-inset-top); bottom:0;
+    position:absolute; right:var(--sp-2); top:env(safe-area-inset-top); bottom:0; gap:var(--sp-1);
   }
-  .header-actions { gap:var(--sp-1); }
-  .header-action { width:34px; min-height:34px; padding:0; }
+  .header-action { width:40px; min-height:40px; padding:0; }
   .header-action .label { display:none; }
 }
 @media (max-width: 899px) {
-  .return-jeju {
-    bottom:calc(var(--sheet-half) + var(--sp-3));
-    z-index:1120;
-  }
+  /* 시트 접힘 상태에선 시트 바로 위, 반쯤 펼치면 그 위로. 패널(1100)보다 아래 유지 */
+  .return-jeju { bottom:calc(var(--sheet-peek) + 62px); z-index:1050; }
+  body:has(.panel.half) .return-jeju { bottom:calc(var(--sheet-half) + var(--sp-3)); }
+  /* 시트를 펼치면 뒤에 깔려 못 누르는 범례·출처·복귀 버튼은 같이 숨긴다 */
+  .legend-stack, .foot-note, .return-jeju { transition:opacity .2s; }
+  body:has(.panel.half) .legend-stack, body:has(.panel.full) .legend-stack,
+  body:has(.panel.half) .foot-note, body:has(.panel.full) .foot-note,
+  body:has(.panel.full) .return-jeju { opacity:0; pointer-events:none; }
 }
 </style>
 </head>
@@ -572,7 +572,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
     <div><span class="legend-cctv-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5v-9Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 10 4-2.5v9L16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>공공 CCTV 위치</div>
     <div class="sub-note">방범·교통·시설물·재난 목적을 함께 표시합니다.<br>지도를 확대하면 위치가 나타납니다.</div>
   </div>
-  <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="true">ⓘ 범례</button>
+  <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="true">&#x24D8;&#xFE0E; 범례</button>
 </div>
 
 <div class="toast" id="toast" hidden></div>
@@ -648,26 +648,23 @@ function formatConfirmedAt(value) {
   if (!value) return '';
   const raw = String(value).trim();
   const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/);
-  if (!match) return raw + ' 확인';
+  if (!match) return raw;
   const month = Number(match[2]);
   const day = Number(match[3]);
   const rest = match[4].trim();
-  return `${month}.${day}${rest ? ' ' + rest : ''} 확인`;
+  return `${month}.${day}${rest ? ' ' + rest : ''}`;
 }
 function incidentFactText(inc) {
   return {
     primary: inc.status,
-    secondary: formatConfirmedAt(inc.confirmedAt) || `${inc.date} 확인`
+    secondary: formatConfirmedAt(inc.confirmedAt) || inc.date
   };
 }
 function incidentMarkerHtml(inc, compact) {
   const text = incidentFactText(inc);
-  return `<button class="incident-marker${compact ? ' compact' : ''}" type="button" aria-label="${text.primary}, ${text.secondary}">
+  return `<button class="incident-marker${compact ? ' compact' : ''}" type="button" aria-label="${escapeHtml(text.primary)}, ${escapeHtml(text.secondary)}">
     <span class="label">
-      <span class="icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M12 2c-2.5 0-4 1.9-4 4 0 1.6.8 3 1.7 4.5L6 17.5 8.5 19l3.5-5 3.5 5 2.5-1.5-3.7-7C15.2 9 16 7.6 16 6c0-2.1-1.5-4-4-4Zm0 2c1.3 0 2 .9 2 2 0 1.1-.9 2.4-2 4-1.1-1.6-2-2.9-2-4 0-1.1.7-2 2-2Z" fill="currentColor"/></svg>
-      </span>
-      <span class="text"><span class="primary">${text.primary}</span><span class="secondary">${text.secondary}</span></span>
+      <span class="text"><span class="primary">${escapeHtml(text.primary)}</span><span class="secondary">${escapeHtml(text.secondary)}</span></span>
     </span>
     <span class="anchor" aria-hidden="true"></span>
   </button>`;
@@ -745,7 +742,7 @@ function nearbyIncidentContext(point, radiusKm) {
   return {
     nearby,
     label: nearby.length ? `사건 ${nearby.length}건` : '사건 없음',
-    detail: nearby.length ? `반경 ${radiusKm}km 보도 확인 사건 ${nearby.length}건 (최근접 ${nearby[0].km.toFixed(1)}km)` : `반경 ${radiusKm}km 보도 확인 사건 없음`,
+    detail: nearby.length ? `반경 ${radiusKm}km 보도 확인 사건 ${nearby.length}건 (가장 가까운 곳 ${nearby[0].km.toFixed(1)}km)` : `반경 ${radiusKm}km 보도 확인 사건 없음`,
     alert: nearby.length > 0
   };
 }
@@ -826,8 +823,8 @@ function placeShareUrl(loc) {
   return u.toString();
 }
 function regionLabelHtml(region, pop, incident, mode) {
-  if (mode === 'mid') return `${region.name}<small>${pop.tag}</small>`;
-  return `${region.name}<small>${pop.people}명 · ${pop.tag} · ${incident.label}</small>`;
+  if (mode === 'mid') return `${escapeHtml(region.name)}<small>${pop.tag}</small>`;
+  return `${escapeHtml(region.name)}<small>${pop.people}명 · ${pop.tag} · ${incident.label}</small>`;
 }
 
 // ── 패널(목록/상세) : 거지맵 패턴 — 목록 항목 ↔ 지도 이동 연동, 상세는 같은 패널에서 전환 ──
@@ -839,10 +836,37 @@ const searchClear = document.getElementById('search-clear');
 const resultMeta = document.getElementById('result-meta');
 const locateBtn = document.getElementById('locate-btn');
 const returnJejuBtn = document.getElementById('return-jeju');
-document.getElementById('grab').onclick = () => {
-  panel.classList.toggle('half', !panel.classList.contains('half') && !panel.classList.contains('full'));
-  if (!panel.classList.contains('half')) panel.classList.remove('full');
-};
+// 손잡이: 탭하면 접힘→반→전체 순환, 위아래로 끌면 한 단계씩 이동
+(() => {
+  const grab = document.getElementById('grab');
+  const states = ['peek', 'half', 'full'];
+  const getState = () => panel.classList.contains('full') ? 'full' : panel.classList.contains('half') ? 'half' : 'peek';
+  const setState = s => {
+    panel.classList.toggle('half', s === 'half');
+    panel.classList.toggle('full', s === 'full');
+  };
+  let startY = null, moved = false;
+  grab.addEventListener('pointerdown', e => {
+    startY = e.clientY; moved = false;
+    grab.setPointerCapture(e.pointerId);
+  });
+  grab.addEventListener('pointermove', e => {
+    if (startY !== null && Math.abs(e.clientY - startY) > 12) moved = true;
+  });
+  grab.addEventListener('pointerup', e => {
+    if (startY === null) return;
+    const dy = e.clientY - startY;
+    startY = null;
+    const i = states.indexOf(getState());
+    if (moved) {
+      if (dy < -20) setState(states[Math.min(states.length - 1, i + 1)]);
+      else if (dy > 20) setState(states[Math.max(0, i - 1)]);
+    } else {
+      setState(states[(i + 1) % states.length]);
+    }
+  });
+  grab.addEventListener('pointercancel', () => { startY = null; });
+})();
 let mapApi = {
   panTo: () => {},
   returnToJeju: () => {},
@@ -853,7 +877,9 @@ let mapApi = {
   checkPlace: () => showToast('지도 검색을 준비 중입니다.')
 };
 
+let lastDetailOpenAt = 0;   // 지도 클릭 핸들러가 방금 열린 상세를 바로 닫지 않도록 시각 기록
 function showDetail(html) {
+  lastDetailOpenAt = Date.now();
   detailView.innerHTML = '<button class="back" id="back-btn">&larr; 목록으로</button>' + html;
   detailView.classList.add('on'); listView.classList.add('off');
   document.getElementById('back-btn').onclick = () => {
@@ -897,11 +923,11 @@ function renderNearestHelp(origin, places) {
 function incidentDetail(inc) {
   const fact = incidentFactText(inc);
   showDetail(`
-    <span class="status">${inc.status}</span>
-    <h2>${inc.title}</h2>
-    <div class="area">${inc.area} · ${inc.date} · ${fact.secondary}</div>
-    <div class="summary">${inc.summary}</div>
-    <div class="src">출처: ${inc.sources.map(s => `<a href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`).join('')}</div>`);
+    <span class="status">${escapeHtml(inc.status)}</span>
+    <h2>${escapeHtml(inc.title)}</h2>
+    <div class="area">${escapeHtml(inc.area)} · ${escapeHtml(inc.date)} · ${escapeHtml(fact.secondary)}</div>
+    <div class="summary">${escapeHtml(inc.summary)}</div>
+    <div class="src">출처: ${inc.sources.map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>`).join('')}</div>`);
   gtag('event', 'incident_open', { incident_id: inc.id });
 }
 function regionDetail(r, style, ranks) {
@@ -919,7 +945,7 @@ function regionDetail(r, style, ranks) {
   const day = `${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 ${+state.pop.day.slice(6,8)}일`;
   showDetail(`
     <span class="status" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span>
-    <h2>${r.name}</h2>
+    <h2>${escapeHtml(r.name)}</h2>
     <div class="area">${pop.totalRegions}개 지역 중 한적한 순 ${pop.quietRank}위 · 붐비는 순 ${pop.crowdRank}위</div>
     <div class="rank-scale">
       <div class="track"><i class="marker" style="left:${markerPct.toFixed(1)}%"></i></div>
@@ -934,10 +960,10 @@ function regionDetail(r, style, ranks) {
         <small>${pop.totalRegions}개 지역 평균 ${avg.toLocaleString()}명</small></div>
       <div class="context-box"><span>공공 CCTV (1km)</span>
         <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
-        <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · 최근접 ${cctv.nearestM}m` : '행정안전부 표준데이터 기준'}</small></div>
+        <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · ${cctv.nearestM}m 거리` : '행정안전부 표준데이터 기준'}</small></div>
       <div class="context-box"><span>보도 사건 (8km)</span>
         <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
-        <small>${incidents.nearby.length ? '최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km' : '언론 보도 확인 기준'}</small></div>
+        <small>${incidents.nearby.length ? incidents.nearby[0].km.toFixed(1) + 'km 거리' : '언론 보도 확인 기준'}</small></div>
     </div>
     ${incidents.nearby.length ? `
     <details class="card-more">
@@ -953,7 +979,7 @@ function regionDetail(r, style, ranks) {
       <h4>가까운 지역과 비교</h4>
       ${neighbors.map(({ x, km }, index) => `
         <button type="button" class="near-region" data-near-index="${index}">
-          <span><b>${x.name}</b> <small>${km.toFixed(1)}km · 약 ${x.total.toLocaleString()}명</small></span>
+          <span><b>${escapeHtml(x.name)}</b> <small>${km.toFixed(1)}km · 약 ${x.total.toLocaleString()}명</small></span>
           <span class="tagchip" style="background:${style.color(x.total)};color:${style.ink(x.total)}">${style.tag(x.total)}</span>
         </button>`).join('')}
     </div>
@@ -1077,9 +1103,14 @@ locateBtn.onclick = () => {
   }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
 };
 
-// 범례는 기본 펼침 — ⓘ 칩으로 필요할 때 접는다.
+// 범례는 데스크톱 기본 펼침 — 모바일은 지도 가운데를 가려서 기본 접힘, ⓘ 칩으로 연다.
 const legendStack = document.querySelector('.legend-stack');
-document.getElementById('legend-toggle').onclick = function () {
+const legendToggle = document.getElementById('legend-toggle');
+if (window.matchMedia('(max-width: 899px)').matches) {
+  legendStack.classList.remove('open');
+  legendToggle.setAttribute('aria-expanded', 'false');
+}
+legendToggle.onclick = function () {
   const open = legendStack.classList.toggle('open');
   this.setAttribute('aria-expanded', open);
 };
@@ -1164,12 +1195,14 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   const shareUrl = placeShareUrl(loc);
   const summaryText = `${loc.name} 안전 점검: ${incidents.detail}. ${region.name}은 통신사 유동인구 기준 "${pop.tag}" 지역입니다.`;
   const helpFallback = fallbackNearestHelp(loc);
+  const bellCount = state.bells ? nearbyPointCount(state.bells, loc, 0.5) : null;
+  const lightCount = state.lights ? nearbyPointCount(state.lights, loc, 0.5) : null;
   // 도움 장소 줄: 이름을 누르면 지도가 그 위치로 이동, ↗는 카카오맵 상세(검색 결과일 때만)
   let shownHelp = helpFallback.filter(Boolean);
   const helpLine = places => places
     .map((p, i) => `<span class="help-place">
       <button type="button" data-help-i="${i}"><b>${escapeHtml(p.name)}</b> ${helpTypeLabel(p.type)} · ${formatDistance(p, loc)}</button>
-      ${p.id ? `<a href="https://place.map.kakao.com/${encodeURIComponent(p.id)}" target="_blank" rel="noopener" aria-label="카카오맵에서 ${escapeHtml(p.name)} 열기">↗</a>` : ''}
+      ${p.id ? `<a href="https://place.map.kakao.com/${encodeURIComponent(p.id)}" target="_blank" rel="noopener" aria-label="카카오맵에서 ${escapeHtml(p.name)} 열기">&#x2197;&#xFE0E;</a>` : ''}
     </span>`).join('');
   const bindHelpTile = () => document.querySelectorAll('#help-tile [data-help-i]').forEach(button => {
     button.onclick = () => {
@@ -1185,21 +1218,21 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         <span class="media-cap">카카오 로드뷰 · 실제 촬영 시점은 현재와 다를 수 있습니다</span>
       </div>
       <h3>${escapeHtml(loc.name)} 안전 점검</h3>
-      <div class="addr">${escapeHtml(loc.addr || '주소 정보 없음')}${loc.id ? ` · <a class="place-link" href="https://place.map.kakao.com/${encodeURIComponent(loc.id)}" target="_blank" rel="noopener">카카오맵 사진·리뷰 ↗</a>` : ''}</div>
+      <div class="addr">${escapeHtml(loc.addr || '주소 정보 없음')}${loc.id ? ` · <a class="place-link" href="https://place.map.kakao.com/${encodeURIComponent(loc.id)}" target="_blank" rel="noopener">카카오맵 사진·리뷰 &#x2197;&#xFE0E;</a>` : ''}</div>
       <div class="context">
         <div class="context-box"><span>공공 CCTV (500m)</span>
           <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
-          <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · 최근접 ${cctv.nearestM}m` : '행정안전부 표준데이터 기준'}</small></div>
+          <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · ${cctv.nearestM}m 거리` : '행정안전부 표준데이터 기준'}</small></div>
         <div class="context-box"><span>가까운 도움 장소</span>
           <div id="help-tile">${helpLine(shownHelp)}</div></div>
         <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span></b>
           <small>${region.name} · ${pop.totalRegions}곳 중 ${pop.quietRank}번째로 한적</small></div>
         <div class="context-box"><span>보도 사건 (8km)</span>
           <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
-          <small>${incidents.nearby.length ? '최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km' : '언론 보도 확인 기준'}</small></div>
+          <small>${incidents.nearby.length ? incidents.nearby[0].km.toFixed(1) + 'km 거리' : '언론 보도 확인 기준'}</small></div>
       </div>
-      ${state.bells ? `<div class="row"><span>안전비상벨 (500m)</span><b>${nearbyPointCount(state.bells, loc, 0.5) || '없음'}${nearbyPointCount(state.bells, loc, 0.5) ? '개' : ''}</b></div>` : ''}
-      ${state.lights ? `<div class="row"><span>보안등 (500m)</span><b>${nearbyPointCount(state.lights, loc, 0.5) || '없음'}${nearbyPointCount(state.lights, loc, 0.5) ? '개' : ''}</b></div>` : ''}
+      ${state.bells ? `<div class="row"><span>안전비상벨 (500m)</span><b>${bellCount ? bellCount + '개' : '없음'}</b></div>` : ''}
+      ${state.lights ? `<div class="row"><span>보안등 (500m)</span><b>${lightCount ? lightCount + '개' : '없음'}</b></div>` : ''}
       <div class="row"><span>도보권 편의점 (500m)</span><b id="cs-row">확인 중…</b></div>
       <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
       <div class="row"><span>범죄주의구간 (최근 1년 신고 밀집)</span><b id="crime-row">확인 중…</b></div>
@@ -1317,8 +1350,13 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     };
   }
   document.getElementById('card-copy').onclick = async () => {
-    await navigator.clipboard.writeText(summaryText + '\n' + shareUrl);
     const copyBtn = document.getElementById('card-copy');
+    try {
+      await navigator.clipboard.writeText(summaryText + '\n' + shareUrl);
+    } catch (e) {
+      showToast('이 환경에서는 자동 복사가 막혀 있어요. 카톡 공유나 이미지 저장을 이용해 주세요.');
+      return;
+    }
     copyBtn.textContent = '복사됨!';
     setTimeout(() => { if (copyBtn.isConnected) copyBtn.textContent = '요약 복사'; }, 2000);
     gtag('event', 'card_share', { method: 'copy' });
@@ -1329,7 +1367,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
 function setupCard(map, cfg) {
   if (!state.pop) return;
   const btn = document.getElementById('check-btn');
-  btn.hidden = true;
+  btn.hidden = false;
   const geocoder = new kakao.maps.services.Geocoder();
   const places = new kakao.maps.services.Places();
   let marker = null;
@@ -1793,6 +1831,15 @@ async function initKakao(cfg) {
   setupCard(map, cfg);
   kakao.maps.event.addListener(map, 'click', mouseEvent => {
     if (!state.pop || !mapApi.inspectPoint) return;
+    // 마커·폴리곤 클릭으로 방금 상세가 열렸으면 건너뛰고,
+    // 상세가 열린 상태의 지도 탭은 새 조회 대신 닫기로 동작 (모바일에서 시트가 계속 올라오는 문제)
+    if (Date.now() - lastDetailOpenAt < 400) return;
+    if (detailView.classList.contains('on')) {
+      const back = document.getElementById('back-btn');
+      if (back) back.click();
+      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('half', 'full');
+      return;
+    }
     mapApi.inspectPoint(mouseEvent.latLng);
   });
   return 'kakao';
@@ -2006,17 +2053,31 @@ async function initLeaflet(cfg) {
         });
       return { marker, count, iconFor };
     });
+    // 카카오 경로처럼 도 전체 축척에서는 감춘다. 다 그리면 마커가 뭉개지고 모바일이 버벅인다.
+    let cctvOn = false;
     const relabelCctv = () => {
+      const visible = cctvOn && map.getZoom() >= 11;
+      if (!visible) { map.removeLayer(layer); return; }
       const close = map.getZoom() >= 12;
       cctvMarkers.forEach(({ marker, iconFor }) => marker.setIcon(iconFor(close)));
+      if (!map.hasLayer(layer)) layer.addTo(map);
     };
     map.on('zoomend', relabelCctv);
     wireChip('chip-cctv', on => {
-      if (on) { layer.addTo(map); relabelCctv(); } else map.removeLayer(layer);
+      cctvOn = on;
+      relabelCctv();
       cctvUi(on);
     }, true);
   }
   map.on('click', () => {
+    // 상세가 열려 있으면 지도 탭은 닫기로 동작 (모바일에서 시트를 치우는 자연스러운 방법)
+    if (Date.now() - lastDetailOpenAt < 400) return;
+    if (detailView.classList.contains('on')) {
+      const back = document.getElementById('back-btn');
+      if (back) back.click();
+      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('half', 'full');
+      return;
+    }
     openMapPlaceInspector('지도에서 누른 위치', '이 기본 지도는 화면에 그려진 건물·상호명을 클릭 데이터로 제공하지 않습니다. 상단 검색창에 호텔, 음식점, 카페, 해변 이름을 입력해 점검해 주세요.');
   });
   return 'osm';
