@@ -846,6 +846,11 @@ function placeShareUrl(loc) {
   if (loc.id) u.searchParams.set('pid', loc.id);
   return u.toString();
 }
+// 카드가 열리면 주소창도 같은 쿼리로 맞춰서, 주소를 그대로 복사·공유해도 같은 카드가 열리게 한다.
+function syncPlaceUrl(loc) {
+  const search = loc ? new URL(placeShareUrl(loc)).search : '';
+  history.replaceState(null, '', location.pathname + search);
+}
 function regionLabelHtml(region, pop, incident, mode) {
   if (mode === 'mid') return `${escapeHtml(region.name)}<small>${pop.tag}</small>`;
   return `${escapeHtml(region.name)}<small>${pop.people}명 · ${pop.tag} · ${incident.label}</small>`;
@@ -860,6 +865,8 @@ const searchClear = document.getElementById('search-clear');
 const resultMeta = document.getElementById('result-meta');
 const locateBtn = document.getElementById('locate-btn');
 const returnJejuBtn = document.getElementById('return-jeju');
+// 제주도(부속섬 포함) 대략 범위. 이 안에 있으면 "제주도로 돌아가기"를 띄우지 않는다.
+const inJeju = ({ lat, lng }) => lat >= 33.0 && lat <= 34.1 && lng >= 125.9 && lng <= 127.1;
 // 손잡이: 접힘·전체 2단. 탭하면 토글, 위아래로 조금만 끌어도 방향대로 열리고 닫힌다
 (() => {
   const grab = document.getElementById('grab');
@@ -897,6 +904,7 @@ function showDetail(html) {
   document.getElementById('back-btn').onclick = () => {
     detailView.classList.remove('on'); listView.classList.remove('off');
     if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
+    syncPlaceUrl(null);
   };
   if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
 }
@@ -1122,7 +1130,7 @@ locateBtn.onclick = () => {
     state.userLocation = loc;
     mapApi.setUserLocation(loc.lat, loc.lng);
     mapApi.panTo(loc.lat, loc.lng, 6);
-    returnJejuBtn.hidden = false;
+    returnJejuBtn.hidden = inJeju(loc);
     locateBtn.classList.remove('locating');
     locateBtn.querySelector('span').textContent = '내 위치';
     renderList({ keepDetail: true });
@@ -1255,6 +1263,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   const incidents = nearbyIncidentContext(loc, 8);
   const cctv = nearbyCctvContext(loc, 0.5);
   const shareUrl = placeShareUrl(loc);
+  syncPlaceUrl(loc);
   const summaryText = `${loc.name} 안전 점검: ${incidents.detail}. ${region.name}은 통신사 유동인구 기준 "${pop.tag}" 지역입니다.`;
   const helpFallback = fallbackNearestHelp(loc);
   const bellCount = state.bells ? nearbyPointCount(state.bells, loc, 0.5) : null;
@@ -1320,7 +1329,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도·CCTV·통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
   gtag('event', 'card_create', { region: region.name, incidents_8km: incidents.nearby.length });
   moveToLocation(loc);
-  returnJejuBtn.hidden = false;
+  returnJejuBtn.hidden = inJeju(loc);
   if (!state.userLocation) {
     state.searchOrigin = { name: loc.name, lat: loc.lat, lng: loc.lng };
     renderList({ keepDetail: true });
@@ -1403,16 +1412,24 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   const webshareBtn = document.getElementById('card-webshare');
   if (navigator.canShare && navigator.canShare({ files: [new File([''], 'x.png', { type: 'image/png' })] })) {
     webshareBtn.hidden = false;
+    // 캡처가 오래 걸리면 클릭 제스처가 만료되어 share가 거부되므로, 스크립트를 미리 받아둔다.
+    if (!window.html2canvas) loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    let cachedFile = null;
     webshareBtn.onclick = async () => {
-      const canvas = await captureCard();
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       try {
-        await navigator.share({
-          files: [new File([blob], '제주안전맵_점검카드.png', { type: 'image/png' })],
-          text: summaryText + '\n' + shareUrl
-        });
+        if (!cachedFile) {
+          const canvas = await captureCard();
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          cachedFile = new File([blob], '제주안전맵_점검카드.png', { type: 'image/png' });
+        }
+        await navigator.share({ files: [cachedFile], text: summaryText + '\n' + shareUrl });
+        cachedFile = null;
         gtag('event', 'card_share', { method: 'webshare' });
-      } catch (e) {}
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;
+        // 제스처 만료로 거부된 경우: 이미지는 준비됐으니 바로 다시 누르면 즉시 공유된다.
+        showToast('이미지 준비 완료. 공유 버튼을 한 번 더 눌러주세요.');
+      }
     };
   }
   document.getElementById('card-x').onclick = () => {
