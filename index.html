@@ -509,6 +509,8 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   <button class="chip" id="chip-incident">실종 사건</button>
   <button class="chip" id="chip-cctv" hidden>공공 CCTV</button>
   <button class="chip" id="chip-light" hidden>보안등</button>
+  <button class="chip" id="chip-hospital" hidden>병원</button>
+  <button class="chip" id="chip-police" hidden>경찰서</button>
   <button class="chip check-btn" id="check-btn" hidden>내 숙소 안전 점검</button>
 </div>
 
@@ -1826,6 +1828,84 @@ async function initKakao(cfg) {
     wmsChip('chip-light', `${LIGHT_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CMMNPOI_SECULIGHT`, {
       opacity: .8, zIndex: 6,
       onToggle: on => { lightUi(on); gtag('event', 'layer_toggle', { layer: 'security_light', on }); }
+    });
+  }
+
+  // 병원·경찰서 POI 레이어: 카카오 장소검색으로 화면 영역 안의 위치를 idle마다 갱신.
+  // 정적 데이터 파일 없이 실시간 검색이라 폐업·이전이 비교적 빨리 반영된다.
+  {
+    const collectPages = run => new Promise(resolve => {
+      const all = [];
+      run((res, status, pagination) => {
+        if (status !== kakao.maps.services.Status.OK) { resolve(all); return; }
+        all.push(...res);
+        if (pagination && pagination.hasNextPage && pagination.current < 3) pagination.nextPage();
+        else resolve(all);
+      });
+    });
+    const fetchHospitals = bounds =>
+      collectPages(cb => new kakao.maps.services.Places().categorySearch('HP8', cb, { bounds }));
+    // 카카오에는 경찰 카테고리가 없어서 키워드 검색 결과를 관서명 패턴으로 거른다 (nearestKakaoHelp와 같은 방식)
+    const policeName = /(경찰서|지구대|파출소|치안센터)$/;
+    const fetchPolice = async bounds => {
+      const lists = await Promise.all(['경찰서', '파출소', '지구대'].map(keyword =>
+        collectPages(cb => new kakao.maps.services.Places().keywordSearch(keyword, cb, { bounds }))));
+      const merged = new Map();
+      lists.flat().filter(p => policeName.test(p.place_name.trim())).forEach(p => merged.set(p.id, p));
+      return [...merged.values()];
+    };
+    const poiChip = (chipId, type, fetcher, opts) => {
+      let on = false;
+      const overlays = new Map();
+      const clear = () => { overlays.forEach(ov => ov.setMap(null)); overlays.clear(); };
+      const refresh = async () => {
+        if (!on) return;
+        if (map.getLevel() > 7) { clear(); return; }
+        const places = await fetcher(map.getBounds());
+        if (!on) return;
+        const seen = new Set();
+        places.forEach(place => {
+          seen.add(place.id);
+          if (overlays.has(place.id)) return;
+          const el = document.createElement('button');
+          el.className = `help-marker ${type}`;
+          el.type = 'button';
+          el.textContent = helpTypeLabel(type);
+          el.setAttribute('aria-label', place.place_name);
+          el.onclick = () => {
+            mapApi.panTo(Number(place.y), Number(place.x), 5);
+            showToast(`${place.place_name} · ${place.road_address_name || place.address_name}${place.phone ? ' · ' + place.phone : ''}`, 6000);
+          };
+          const ov = new kakao.maps.CustomOverlay({
+            position: new kakao.maps.LatLng(Number(place.y), Number(place.x)),
+            content: el,
+            yAnchor: 1,
+            zIndex: 60
+          });
+          ov.setMap(map);
+          overlays.set(place.id, ov);
+        });
+        overlays.forEach((ov, id) => { if (!seen.has(id)) { ov.setMap(null); overlays.delete(id); } });
+      };
+      kakao.maps.event.addListener(map, 'idle', refresh);
+      wireChip(chipId, v => {
+        on = v;
+        if (on) {
+          showToast(opts.toast, 6000);
+          // 도 전역 뷰에서는 검색 결과가 무의미하게 잘려서 시내 축척으로 데려간다 (보안등 칩과 같은 동작)
+          if (map.getLevel() > 7) { map.setLevel(7); map.panTo(new kakao.maps.LatLng(33.505, 126.525)); }
+          else refresh();
+        } else clear();
+        gtag('event', 'layer_toggle', { layer: opts.gaLayer, on });
+      });
+    };
+    poiChip('chip-hospital', 'hospital', fetchHospitals, {
+      gaLayer: 'hospital',
+      toast: '화면 영역의 병원·의원 위치를 카카오 장소검색으로 표시합니다. 진료 시간·응급실 운영 여부는 전화로 확인하세요.'
+    });
+    poiChip('chip-police', 'police', fetchPolice, {
+      gaLayer: 'police',
+      toast: '화면 영역의 경찰서·지구대·파출소 위치를 표시합니다. 긴급 상황에서는 112에 먼저 신고하세요.'
     });
   }
   setupCard(map, cfg);
