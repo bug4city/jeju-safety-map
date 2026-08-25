@@ -1989,8 +1989,12 @@ async function initKakao(cfg) {
     });
   }
   setupCard(map, cfg);
+  // 드래그로 지도를 움직인 직후에는 click 판정을 무시 (드래그가 클릭으로 오인되는 문제)
+  let lastDragEndAt = 0;
+  kakao.maps.event.addListener(map, 'dragend', () => { lastDragEndAt = Date.now(); });
   kakao.maps.event.addListener(map, 'click', mouseEvent => {
     if (!state.pop || !mapApi.inspectPoint) return;
+    if (Date.now() - lastDragEndAt < 300) return;
     // 마커·폴리곤 클릭으로 방금 상세가 열렸으면 건너뛰고,
     // 상세가 열린 상태의 지도 탭은 새 조회 대신 닫기로 동작 (모바일에서 시트가 계속 올라오는 문제)
     if (Date.now() - lastDetailOpenAt < 400) return;
