@@ -372,6 +372,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .safety-card { border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--sp-4); background:#fff; }
 .safety-card h3 { font-size:var(--fs-md); margin-bottom:2px; }
 .safety-card .addr { font-size:var(--fs-cap); color:var(--sub); margin-bottom:var(--sp-3); }
+.safety-card .place-link { color:var(--brand); text-decoration:none; font-weight:700; }
 .safety-card .row { display:flex; justify-content:space-between; gap:var(--sp-3); font-size:var(--fs-ui); padding:var(--sp-2) 0; border-top:1px solid var(--line); }
 .safety-card .row:first-of-type { border-top:0; }
 .safety-card .row b { text-align:right; white-space:nowrap; }
@@ -381,6 +382,9 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .safety-card .context-box span, .detail .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
 .safety-card .context-box b, .detail .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
 .safety-card .context-box small, .detail .context-box small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
+/* 도움 장소 타일: 장소 이름을 주 정보로, 종류·거리를 보조로 한 줄씩 */
+.context-box .help-place { display:block; margin-top:3px; color:var(--sub); font-size:var(--fs-cap); line-height:1.4; }
+.context-box .help-place b { display:inline; margin:0; font-size:var(--fs-ui); color:var(--ink); }
 /* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
 .rank-scale { margin:var(--sp-3) 0 var(--sp-2); }
 .rank-scale .track { position:relative; height:10px; border-radius:5px; background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
@@ -599,7 +603,7 @@ const FALLBACK_HELP_PLACES = [
   { type: 'hospital', name: '제주한라병원', addr: '제주시 도령로 65', lat: 33.489, lng: 126.486, phone: '119' },
   { type: 'hospital', name: '서귀포의료원', addr: '서귀포시 장수로 47', lat: 33.254, lng: 126.564, phone: '119' }
 ];
-const state = { data: null, pop: null, cctv: null, focus: null, query: '', userLocation: null, searchOrigin: null };
+const state = { data: null, pop: null, cctv: null, bells: null, lights: null, focus: null, query: '', userLocation: null, searchOrigin: null };
 
 function loadScript(src) {
   return new Promise((ok, fail) => {
@@ -747,6 +751,10 @@ function nearbyCctvContext(point, radiusKm) {
   });
   return { spots, cameras, safety, nearestM: spots ? Math.round(nearestKm * 1000) : null };
 }
+function nearbyPointCount(data, point, radiusKm) {
+  if (!data || !data.points) return null;
+  return data.points.reduce((n, [lat, lng]) => n + (haversineKm(point, { lat, lng }) <= radiusKm ? 1 : 0), 0);
+}
 // 범죄주의구간 WMS는 GetFeatureInfo를 지원하지 않아서, 지점 주변의 작은 GetMap
 // 타일을 받아 중심 픽셀 색을 범례 팔레트에 매핑해 등급을 읽는다 (CORS 허용 확인됨).
 const CRIME_GRADES = [
@@ -791,6 +799,7 @@ function placeShareUrl(loc) {
   u.searchParams.set('lng', loc.lng.toFixed(5));
   u.searchParams.set('name', loc.name || '');
   if (loc.addr) u.searchParams.set('addr', loc.addr);
+  if (loc.id) u.searchParams.set('pid', loc.id);
   return u.toString();
 }
 function regionLabelHtml(region, pop, incident, mode) {
@@ -1127,7 +1136,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   const summaryText = `${loc.name} 안전 점검: ${incidents.detail}. ${region.name}은 통신사 유동인구 기준 "${pop.tag}", 한적한 순 ${pop.quietRank}위 지역입니다.`;
   const helpFallback = fallbackNearestHelp(loc);
   const helpLine = places => places.filter(Boolean)
-    .map(p => `${helpTypeLabel(p.type)} ${formatDistance(p, loc)}`).join(' · ');
+    .map(p => `<span class="help-place"><b>${escapeHtml(p.name)}</b> ${helpTypeLabel(p.type)} · ${formatDistance(p, loc)}</span>`).join('');
   document.getElementById('card-result').innerHTML = `
     <div class="safety-card" id="the-card">
       <div class="card-media" id="card-media" hidden data-html2canvas-ignore>
@@ -1135,7 +1144,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         <span class="media-cap">카카오 로드뷰 · 실제 촬영 시점은 현재와 다를 수 있습니다</span>
       </div>
       <h3>${escapeHtml(loc.name)} 안전 점검</h3>
-      <div class="addr">${escapeHtml(loc.addr || '주소 정보 없음')}</div>
+      <div class="addr">${escapeHtml(loc.addr || '주소 정보 없음')}${loc.id ? ` · <a class="place-link" href="https://place.map.kakao.com/${encodeURIComponent(loc.id)}" target="_blank" rel="noopener">카카오맵 사진·리뷰 ↗</a>` : ''}</div>
       <div class="context">
         <div class="context-box"><span>보도 사건 (8km)</span>
           <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
@@ -1146,12 +1155,13 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
           <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
           <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · 최근접 ${cctv.nearestM}m` : '행정안전부 표준데이터 기준'}</small></div>
         <div class="context-box"><span>가까운 도움 장소</span>
-          <b id="help-tile">${helpLine(helpFallback)}</b>
-          <small id="help-tile-sub">${escapeHtml((helpFallback[0] || {}).name || '')}</small></div>
+          <div id="help-tile">${helpLine(helpFallback)}</div></div>
       </div>
       <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
       <div class="row"><span>범죄주의구간 (최근 1년 신고 밀집)</span><b id="crime-row">확인 중…</b></div>
       <div class="row"><span>도보권 편의점 (500m)</span><b id="cs-row">확인 중…</b></div>
+      ${state.bells ? `<div class="row"><span>안전비상벨 (500m)</span><b>${nearbyPointCount(state.bells, loc, 0.5) || '없음'}${nearbyPointCount(state.bells, loc, 0.5) ? '개' : ''}</b></div>` : ''}
+      ${state.lights ? `<div class="row"><span>보안등 (500m)</span><b>${nearbyPointCount(state.lights, loc, 0.5) || '없음'}${nearbyPointCount(state.lights, loc, 0.5) ? '개' : ''}</b></div>` : ''}
       ${incidents.nearby.length ? `
       <details class="card-more">
         <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
@@ -1184,8 +1194,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   mapApi.nearestHelp(loc).then(places => {
     const found = (places || []).filter(Boolean);
     if (!helpTile.isConnected || !found.length) return;
-    helpTile.textContent = helpLine(found);
-    document.getElementById('help-tile-sub').textContent = found[0].name || '';
+    helpTile.innerHTML = helpLine(found);
   }).catch(() => {});
   if (mapApi.mountRoadview) mapApi.mountRoadview(document.getElementById('card-media'), loc);
 
@@ -1289,6 +1298,7 @@ function setupCard(map, cfg) {
       places.keywordSearch(q + ' 제주', (res2, st2) => {
         if (st2 === kakao.maps.services.Status.OK && res2.length)
           return resolve(res2.slice(0, 15).map(place => ({
+            id: place.id,
             name: place.place_name,
             addr: place.road_address_name || place.address_name,
             lat: +place.y,
@@ -1949,6 +1959,9 @@ async function initLeaflet(cfg) {
   document.getElementById('stat-count').textContent = state.data.stats.unresolvedAdultMissing + '명';
   try { state.pop = await (await fetch('data/pop.json')).json(); } catch (e) {}
   try { state.cctv = await (await fetch('data/cctv.json')).json(); } catch (e) {}
+  // 비상벨·보안등은 tools/build_safety.py로 생성 — 파일이 없으면 조용히 건너뛴다.
+  try { const r = await fetch('data/bells.json'); if (r.ok) state.bells = await r.json(); } catch (e) {}
+  try { const r = await fetch('data/lights.json'); if (r.ok) state.lights = await r.json(); } catch (e) {}
   renderList();
   let cfg = {};
   try { const r = await fetch('config.json'); if (r.ok) cfg = await r.json(); } catch (e) {}
@@ -1967,6 +1980,7 @@ async function initLeaflet(cfg) {
     mapApi.openPlaceCard({
       name: qp.get('name') || '공유된 장소',
       addr: qp.get('addr') || '',
+      id: qp.get('pid') || undefined,
       lat: dlLat,
       lng: dlLng
     });
