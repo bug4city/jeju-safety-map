@@ -375,12 +375,22 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .safety-card .row { display:flex; justify-content:space-between; gap:var(--sp-3); font-size:var(--fs-ui); padding:var(--sp-2) 0; border-top:1px solid var(--line); }
 .safety-card .row:first-of-type { border-top:0; }
 .safety-card .row b { text-align:right; white-space:nowrap; }
-.safety-card .tagchip { display:inline-block; font-size:var(--fs-cap); font-weight:700; color:#fff; border-radius:var(--r-xs); padding:2px var(--sp-2); }
-.safety-card .context { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin:var(--sp-3) 0; }
-.safety-card .context-box { border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3); background:var(--panel-muted); }
-.safety-card .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
-.safety-card .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
-.safety-card .context-box small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
+.safety-card .tagchip, .detail .tagchip { display:inline-block; font-size:var(--fs-cap); font-weight:700; color:#fff; border-radius:var(--r-xs); padding:2px var(--sp-2); }
+.safety-card .context, .detail .context { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin:var(--sp-3) 0; }
+.safety-card .context-box, .detail .context-box { border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3); background:var(--panel-muted); }
+.safety-card .context-box span, .detail .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
+.safety-card .context-box b, .detail .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
+.safety-card .context-box small, .detail .context-box small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
+/* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
+.rank-scale { margin:var(--sp-3) 0 var(--sp-2); }
+.rank-scale .track { position:relative; height:10px; border-radius:5px; background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
+.rank-scale .marker { position:absolute; top:50%; width:16px; height:16px; border-radius:50%; border:3px solid #fff; background:var(--ink); box-shadow:0 1px 5px rgba(0,0,0,.35); transform:translate(-50%,-50%); }
+.rank-scale .ends { display:flex; justify-content:space-between; font-size:var(--fs-cap); color:var(--sub); margin-top:4px; }
+.near-regions { margin-top:var(--sp-3); border-top:1px solid var(--line); padding-top:var(--sp-2); }
+.near-regions h4 { font-size:var(--fs-ui); margin-bottom:var(--sp-1); }
+.near-region { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); width:100%; border:0; background:none; text-align:left; font-size:var(--fs-ui); padding:var(--sp-2) 0; border-bottom:1px solid var(--line); cursor:pointer; }
+.near-region:last-child { border-bottom:0; }
+.near-region small { color:var(--sub); font-size:var(--fs-cap); }
 .card-media { margin-bottom:var(--sp-3); border-radius:var(--r-sm); overflow:hidden; border:1px solid var(--line); }
 .card-media[hidden] { display:none; }
 .card-media .card-roadview { width:100%; height:150px; }
@@ -737,6 +747,44 @@ function nearbyCctvContext(point, radiusKm) {
   });
   return { spots, cameras, safety, nearestM: spots ? Math.round(nearestKm * 1000) : null };
 }
+// 범죄주의구간 WMS는 GetFeatureInfo를 지원하지 않아서, 지점 주변의 작은 GetMap
+// 타일을 받아 중심 픽셀 색을 범례 팔레트에 매핑해 등급을 읽는다 (CORS 허용 확인됨).
+const CRIME_GRADES = [
+  { rgb: [255, 226, 122], label: '낮음' },
+  { rgb: [245, 166, 35], label: '보통' },
+  { rgb: [226, 87, 59], label: '높음' },
+  { rgb: [184, 29, 19], label: '매우 높음' }
+];
+function crimeGradeAt(cfg, loc) {
+  if (!cfg.safemapKey) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const d = 0.004;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onerror = () => resolve(null);
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = c.height = 101;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const px = ctx.getImageData(49, 49, 3, 3).data;
+        let r = 0, g = 0, b = 0, a = 0;
+        for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; b += px[i + 2]; a += px[i + 3]; }
+        const n = px.length / 4;
+        r /= n; g /= n; b /= n; a /= n;
+        if (a < 40) return resolve({ label: '표시 없음', level: -1 });
+        let best = 0, bestDist = Infinity;
+        CRIME_GRADES.forEach((grade, idx) => {
+          const dist = (r - grade.rgb[0]) ** 2 + (g - grade.rgb[1]) ** 2 + (b - grade.rgb[2]) ** 2;
+          if (dist < bestDist) { bestDist = dist; best = idx; }
+        });
+        resolve({ label: CRIME_GRADES[best].label, level: best });
+      } catch (e) { resolve(null); }
+    };
+    img.src = `${CRIME_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CRMNLHSPOT_TOT&styles=A2SM_CrmnlHspot_Tot_Tot&format=image/png&transparent=TRUE&version=1.1.1&srs=EPSG:4326&bbox=${loc.lng - d},${loc.lat - d},${loc.lng + d},${loc.lat + d}&width=101&height=101`;
+  });
+}
 function placeShareUrl(loc) {
   const u = new URL('https://jeju.kimyukah.com/');
   u.searchParams.set('lat', loc.lat.toFixed(5));
@@ -828,13 +876,63 @@ function regionDetail(r, style, ranks) {
   if (mapApi.highlightRegion) mapApi.highlightRegion(r.name);
   const pop = regionPopulationContext(r, style, ranks);
   const incidents = nearbyIncidentContext(r, 8);
+  const cctv = nearbyCctvContext(r, 1);
+  const avg = Math.round(state.pop.regions.reduce((s, x) => s + x.total, 0) / state.pop.regions.length);
+  const vsAvg = Math.round((r.total / avg) * 100);
+  const markerPct = pop.totalRegions > 1 ? ((pop.quietRank - 1) / (pop.totalRegions - 1)) * 100 : 50;
+  const neighbors = state.pop.regions
+    .filter(x => x.name !== r.name)
+    .map(x => ({ x, km: haversineKm(r, x) }))
+    .sort((a, b) => a.km - b.km).slice(0, 3);
+  const day = `${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 ${+state.pop.day.slice(6,8)}일`;
   showDetail(`
-    <span class="status" style="background:${style.color(r.total)};color:${style.ink(r.total)}">${style.tag(r.total)}</span>
+    <span class="status" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span>
     <h2>${r.name}</h2>
     <div class="area">${pop.totalRegions}개 지역 중 한적한 순 ${pop.quietRank}위 · 붐비는 순 ${pop.crowdRank}위</div>
-    <div class="summary">하루 동안 이 지역을 오간 사람이 약 <b>${r.total.toLocaleString()}명</b>입니다
-    (${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 ${+state.pop.day.slice(6,8)}일, 통신사 빅데이터 기준).<br>
-    ${incidents.detail}<br>범죄주의구간은 경찰청 생활안전지도 레이어에서 색으로 따로 확인하세요.</div>`);
+    <div class="rank-scale">
+      <div class="track"><i class="marker" style="left:${markerPct.toFixed(1)}%"></i></div>
+      <div class="ends"><span>가장 한적</span><span>가장 붐빔</span></div>
+    </div>
+    <div class="context">
+      <div class="context-box"><span>하루 유동인구</span>
+        <b>약 ${r.total.toLocaleString()}명</b>
+        <small>${day} · 통신사 빅데이터</small></div>
+      <div class="context-box"><span>지역 평균 대비</span>
+        <b>${vsAvg}%</b>
+        <small>${pop.totalRegions}개 지역 평균 ${avg.toLocaleString()}명</small></div>
+      <div class="context-box"><span>보도 사건 (8km)</span>
+        <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
+        <small>${incidents.nearby.length ? '최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km' : '언론 보도 확인 기준'}</small></div>
+      <div class="context-box"><span>공공 CCTV (1km)</span>
+        <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
+        <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · 최근접 ${cctv.nearestM}m` : '행정안전부 표준데이터 기준'}</small></div>
+    </div>
+    ${incidents.nearby.length ? `
+    <details class="card-more">
+      <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
+      ${incidents.nearby.map(({ i, km }) => `
+        <div class="mini-inc">
+          <b>${escapeHtml(i.title)}</b>
+          <span>${escapeHtml(i.area)} · ${escapeHtml(i.date)} · ${escapeHtml(i.status)} · ${km.toFixed(1)}km</span>
+          ${(i.sources || []).map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>`).join('')}
+        </div>`).join('')}
+    </details>` : ''}
+    <div class="near-regions">
+      <h4>가까운 지역과 비교</h4>
+      ${neighbors.map(({ x, km }, index) => `
+        <button type="button" class="near-region" data-near-index="${index}">
+          <span><b>${x.name}</b> <small>${km.toFixed(1)}km · 약 ${x.total.toLocaleString()}명</small></span>
+          <span class="tagchip" style="background:${style.color(x.total)};color:${style.ink(x.total)}">${style.tag(x.total)}</span>
+        </button>`).join('')}
+    </div>
+    <div class="card-hint">범죄주의구간은 경찰청 생활안전지도 레이어에서 색으로 따로 확인하세요. 이 화면은 안전 판정이 아니라 공개 데이터를 한 번에 보는 참고 자료입니다.</div>`);
+  detailView.querySelectorAll('.near-region').forEach(button => {
+    button.onclick = () => {
+      const next = neighbors[Number(button.dataset.nearIndex)].x;
+      regionDetail(next, style, ranks);
+      mapApi.panTo(next.lat, next.lng);
+    };
+  });
   gtag('event', 'region_open', { region: r.name });
 }
 
@@ -1052,6 +1150,8 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
           <small id="help-tile-sub">${escapeHtml((helpFallback[0] || {}).name || '')}</small></div>
       </div>
       <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
+      <div class="row"><span>범죄주의구간 (최근 1년 신고 밀집)</span><b id="crime-row">확인 중…</b></div>
+      <div class="row"><span>도보권 편의점 (500m)</span><b id="cs-row">확인 중…</b></div>
       ${incidents.nearby.length ? `
       <details class="card-more">
         <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
@@ -1068,6 +1168,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
       <button id="card-save">이미지 저장</button>
       <button id="card-kakao" class="kakao">카톡 공유</button>
       <button id="card-copy">요약 복사</button>
+      <button id="card-webshare" hidden>공유</button>
     </div>
     <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도·CCTV·통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
   gtag('event', 'card_create', { region: region.name, incidents_8km: incidents.nearby.length });
@@ -1087,6 +1188,25 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     document.getElementById('help-tile-sub').textContent = found[0].name || '';
   }).catch(() => {});
   if (mapApi.mountRoadview) mapApi.mountRoadview(document.getElementById('card-media'), loc);
+
+  // 범죄주의구간 등급: 실패하면 행 자체를 지운다 (카드를 막지 않는다).
+  crimeGradeAt(cfg, loc).then(grade => {
+    const el = document.getElementById('crime-row');
+    if (!el || !el.isConnected) return;
+    if (!grade) { el.closest('.row').remove(); return; }
+    el.textContent = grade.label;
+    if (grade.level >= 2) el.style.color = 'var(--accent)';
+  });
+  const csEl = document.getElementById('cs-row');
+  if (mapApi.countConvenience) {
+    mapApi.countConvenience(loc).then(count => {
+      if (!csEl.isConnected) return;
+      if (count === null) { csEl.closest('.row').remove(); return; }
+      csEl.textContent = count ? `${count}곳` : '없음';
+    });
+  } else {
+    csEl.closest('.row').remove();
+  }
 
   const captureCard = async () => {
     if (!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
@@ -1127,6 +1247,22 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     }
     gtag('event', 'card_share', { method: 'kakao' });
   };
+  // 이미지 파일 공유를 지원하는 환경(주로 모바일)에서만 시스템 공유 버튼 노출
+  const webshareBtn = document.getElementById('card-webshare');
+  if (navigator.canShare && navigator.canShare({ files: [new File([''], 'x.png', { type: 'image/png' })] })) {
+    webshareBtn.hidden = false;
+    webshareBtn.onclick = async () => {
+      const canvas = await captureCard();
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      try {
+        await navigator.share({
+          files: [new File([blob], '제주안전지도_점검카드.png', { type: 'image/png' })],
+          text: summaryText + '\n' + shareUrl
+        });
+        gtag('event', 'card_share', { method: 'webshare' });
+      } catch (e) {}
+    };
+  }
   document.getElementById('card-copy').onclick = async () => {
     await navigator.clipboard.writeText(summaryText + '\n' + shareUrl);
     const copyBtn = document.getElementById('card-copy');
@@ -1317,29 +1453,39 @@ async function initKakao(cfg) {
     helpOverlays = [];
   };
   mapApi.clearNearestHelp = clearHelpOverlays;
+  const toHelpPlace = (type, place) => ({
+    type,
+    name: place.place_name,
+    addr: place.road_address_name || place.address_name,
+    lat: Number(place.y),
+    lng: Number(place.x),
+    phone: place.phone || (type === 'police' ? '112' : '119'),
+    distanceKm: Number(place.distance || 0) / 1000
+  });
   const searchHelpCategory = (origin, type, code) => new Promise(resolve => {
     const center = new kakao.maps.LatLng(origin.lat, origin.lng);
     helpPlaces.categorySearch(code, (res, status) => {
-      if (status !== kakao.maps.services.Status.OK || !res.length) {
-        resolve(null);
-        return;
-      }
-      const place = res[0];
-      resolve({
-        type,
-        name: place.place_name,
-        addr: place.road_address_name || place.address_name,
-        lat: Number(place.y),
-        lng: Number(place.x),
-        phone: place.phone || (type === 'police' ? '112' : '119'),
-        distanceKm: Number(place.distance || 0) / 1000
-      });
+      resolve(status === kakao.maps.services.Status.OK && res.length ? toHelpPlace(type, res[0]) : null);
     }, { location: center, radius: 20000, sort: kakao.maps.services.SortBy.DISTANCE });
   });
+  // 카카오에는 경찰 카테고리가 없다. PO3(공공기관)은 시청·주민센터가 먼저 잡히므로
+  // 경찰서·지구대·파출소 키워드 검색 결과 중 최근접을 쓴다.
+  const searchNearestPolice = origin => {
+    const center = new kakao.maps.LatLng(origin.lat, origin.lng);
+    const keywordHit = keyword => new Promise(resolve => {
+      helpPlaces.keywordSearch(keyword, (res, status) => {
+        const hit = status === kakao.maps.services.Status.OK &&
+          res.find(place => /(경찰서|지구대|파출소|치안센터)$/.test(place.place_name.trim()));
+        resolve(hit ? toHelpPlace('police', hit) : null);
+      }, { location: center, radius: 20000, sort: kakao.maps.services.SortBy.DISTANCE });
+    });
+    return Promise.all([keywordHit('경찰서'), keywordHit('파출소'), keywordHit('지구대')])
+      .then(found => found.filter(Boolean).sort((a, b) => a.distanceKm - b.distanceKm)[0] || null);
+  };
   const nearestKakaoHelp = async origin => {
     const fallback = fallbackNearestHelp(origin);
     const found = await Promise.all([
-      searchHelpCategory(origin, 'police', 'PO3'),
+      searchNearestPolice(origin),
       searchHelpCategory(origin, 'hospital', 'HP8')
     ]);
     return found.map((place, index) => place || fallback[index]);
@@ -1372,6 +1518,13 @@ async function initKakao(cfg) {
     renderNearestHelp(loc, places);
   };
   mapApi.nearestHelp = nearestKakaoHelp;
+  const conveniencePlaces = new kakao.maps.services.Places();
+  mapApi.countConvenience = loc => new Promise(resolve => {
+    conveniencePlaces.categorySearch('CS2', (res, st, pagination) => {
+      if (st === kakao.maps.services.Status.OK) resolve(pagination ? pagination.totalCount : res.length);
+      else resolve(st === kakao.maps.services.Status.ZERO_RESULT ? 0 : null);
+    }, { location: new kakao.maps.LatLng(loc.lat, loc.lng), radius: 500 });
+  });
 
   // 안전 카드 상단 로드뷰 썸네일: 80m 내 파노라마가 있을 때만 보여준다.
   const roadviewClient = new kakao.maps.RoadviewClient();
