@@ -668,8 +668,8 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
     </div>
     <div class="result-meta" id="result-meta"></div>
     <div class="quiet-top" id="quiet-top" hidden>
-      <span class="quiet-top-label">🍃 지금 한적한 동네 TOP</span>
-      <div class="quiet-top-chips" id="quiet-top-chips" aria-label="한적한 동네 바로가기"></div>
+      <span class="quiet-top-label">🛡️ 사람 많고 사건 없는 동네 TOP</span>
+      <div class="quiet-top-chips" id="quiet-top-chips" aria-label="유동인구가 많고 보도 사건이 없는 동네 바로가기"></div>
     </div>
   </div>
   <div class="panel-body">
@@ -982,7 +982,7 @@ function safetyInsight({ incidents, pop, cctvCameras }) {
     return { cls: 'insight alert', text: `근처에 보도로 확인된 사건 <b>${incidents.nearby.length}건</b>이 있어요`, sub: '아래 목록에서 위치와 언론 출처를 확인하세요.' };
   }
   if (quietTop && cctvCameras >= 20) {
-    return { cls: 'insight', text: '✨ 한적한 편인데 공공 CCTV도 촘촘한 곳이에요', sub: '유동인구 순위와 CCTV 대수 기준이에요.' };
+    return { cls: 'insight', text: '✨ 한적하지만 공공 CCTV는 촘촘한 곳이에요', sub: '인적이 드문 시간대에는 큰길 위주로 다니는 게 좋아요.' };
   }
   if (crowdTop) {
     return { cls: 'insight', text: '✨ 사람이 많이 다니는 곳이라 밤에도 인적이 드물지 않은 편이에요', sub: '통신사 유동인구 기준 추정이에요.' };
@@ -1257,13 +1257,18 @@ function regionDetail(r, style, ranks) {
   track('region_open', { region: r.name });
 }
 
-// 한적한 동네 TOP 칩: 목적 없이 들어온 사용자에게 탐색 진입점을 준다.
+// 안심 동네 TOP 칩: 안전맵에서는 "한적"이 아니라 "사람이 많이 다니고 사건이 없는 곳"이
+// 좋은 신호다. 유동인구 상위 지역 중 반경 8km 보도 확인 사건이 없는 곳만 추린다.
 function renderQuietTop() {
   const wrap = document.getElementById('quiet-top');
   if (!state.pop) return;
   const style = popStyle(state.pop.regions);
   const ranks = regionRanks(state.pop.regions);
-  const top = [...state.pop.regions].sort((a, b) => a.total - b.total).slice(0, 5);
+  const top = [...state.pop.regions]
+    .sort((a, b) => b.total - a.total)
+    .filter(r => !nearbyIncidentContext(r, 8).nearby.length)
+    .slice(0, 5);
+  if (!top.length) return;
   const chips = document.getElementById('quiet-top-chips');
   chips.innerHTML = '';
   top.forEach((r, index) => {
@@ -1273,7 +1278,7 @@ function renderQuietTop() {
     b.onclick = () => {
       regionDetail(r, style, ranks);
       mapApi.panTo(r.lat, r.lng);
-      track('quiet_top_open', { region: r.name, rank: index + 1 });
+      track('safe_top_open', { region: r.name, rank: index + 1 });
     };
     chips.appendChild(b);
   });
