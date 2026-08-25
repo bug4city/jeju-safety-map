@@ -1569,6 +1569,15 @@ function setupCard(map, cfg) {
         '<div class="card-hint">이 지점 주변에서 제공사가 공개한 장소 정보를 찾지 못했습니다. 지도 글자 자체가 아니라 장소 데이터 API 기준이라, 일부 아파트나 작은 건물은 나오지 않을 수 있습니다.</div>';
       return;
     }
+    // POI 라벨을 직접 누른 경우 클릭 좌표와 장소 좌표가 거의 일치한다.
+    // 최근접 장소가 30m 이내면 목록 대신 그 장소 카드를 바로 연다.
+    if (matches[0].distance <= 30) {
+      openMapPlaceInspector(matches[0].name, '안전 정보를 정리하는 중...');
+      renderCard(matches[0]);
+      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
+      gtag('event', 'map_place_lookup', { result_count: matches.length, direct_open: 1 });
+      return;
+    }
     renderPlaceResults('선택 지점 주변', matches, renderCard);
     if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
     gtag('event', 'map_place_lookup', { result_count: matches.length });
