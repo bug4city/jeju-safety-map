@@ -16,7 +16,7 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 ## 3. Layout
 
 - Desktop uses a 360px fixed left panel below the fixed app header and keeps map tools outside the panel offset by `--panel-w`.
-- Mobile uses the existing bottom sheet, with the search and utility actions staying at the top of the sheet.
+- Mobile uses a three-state bottom sheet: peek keeps only the search affordance visible over the map, mid opens map-click results without taking over the screen, and full is reserved for deliberate search/input or longer reading.
 - The list owns vertical scrolling; the map remains fixed.
 
 ## 4. Components
@@ -39,7 +39,8 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 
 - Safety search submits on Enter, shows a loading state, lists multiple candidate places for broad searches such as hotel or restaurant, pans the map to the selected place, and renders a shareable card with nearby incidents, regional crowding, and caveat copy.
 - Region labels progressively disclose detail by zoom: island view uses color only, mid zoom uses region name plus crowding tier, close zoom adds `한적 N위` and estimated daily population. Nearby reported incidents are framed as public-report context, not an official crime-risk score.
-- Map click on the provider-backed map opens nearby public place candidates. Selecting a candidate generates the same safety card; if the provider has no POI for that coordinate, the empty state explains the data limitation.
+- Map click on the provider-backed map opens nearby public place candidates in the mid sheet first. Selecting a candidate generates the same safety card without immediately covering the whole map; dragging the handle expands for long reading. If the provider has no POI for that coordinate, the empty state explains the data limitation.
+- A tap on the map while a detail is open dismisses the detail and returns the sheet to peek, prioritizing map movement on mobile.
 - Empty state explains no matching item was found without replacing the search controls.
 - Current location button shows locating, success, unsupported, and permission/error states through label text and toast.
 - After current location succeeds, the detail panel switches to nearby help mode and lists the closest police and hospital. If provider search is unavailable, the app uses curated fallback 제주 public-safety locations.
