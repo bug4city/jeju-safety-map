@@ -519,7 +519,6 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   <div class="panel-head">
     <h1>제주안전맵</h1>
     <p>내 숙소, 내가 갈 곳은 안전할까? 제주 여행 전에 미리 확인하는 안심 지도입니다.</p>
-    <p class="panel-sub">정부 공공데이터로 CCTV·비상벨·보안등 같은 안전시설을 한눈에 모았습니다. 시설이 어디에 있는지 알면, 어디에 더 필요한지도 알 수 있습니다.</p>
   </div>
   <div class="panel-tools">
     <label class="search-box" for="search-input">
@@ -680,6 +679,11 @@ function helpTypeLabel(type) {
 }
 function helpTypeTitle(type) {
   return type === 'police' ? '가까운 경찰서' : '가까운 병원';
+}
+function helpTypeIcon(type) {
+  return type === 'police'
+    ? '<svg viewBox="0 0 24 24" width="15" height="15" fill="#fff" aria-hidden="true"><path d="M12 2l8 3v6c0 5.1-3.4 9.4-8 11-4.6-1.6-8-5.9-8-11V5l8-3zm0 4.5l-1.3 2.7-3 .4 2.2 2.1-.5 2.9L12 13.2l2.6 1.4-.5-2.9 2.2-2.1-3-.4L12 6.5z"/></svg>'
+    : '<svg viewBox="0 0 24 24" width="15" height="15" fill="#fff" aria-hidden="true"><path d="M9.5 3h5A1.5 1.5 0 0 1 16 4.5V8h3.5A1.5 1.5 0 0 1 21 9.5v5a1.5 1.5 0 0 1-1.5 1.5H16v3.5a1.5 1.5 0 0 1-1.5 1.5h-5A1.5 1.5 0 0 1 8 19.5V16H4.5A1.5 1.5 0 0 1 3 14.5v-5A1.5 1.5 0 0 1 4.5 8H8V4.5A1.5 1.5 0 0 1 9.5 3z"/></svg>';
 }
 function fallbackNearestHelp(origin) {
   return ['police', 'hospital'].map(type => FALLBACK_HELP_PLACES
@@ -1466,7 +1470,15 @@ function setupCard(map, cfg) {
     }
     gtag('event', 'card_open');
   };
-  btn.onclick = () => openSafetyCheck('');
+  // 패널 검색창과 같은 기능이라 상세 시트에 입력폼을 또 그리지 않고,
+  // 패널을 열어 기존 검색창에 포커스를 준다 (입력창 중복 문제)
+  btn.onclick = () => {
+    detailView.classList.remove('on');
+    listView.classList.remove('off');
+    if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
+    searchInput.focus();
+    gtag('event', 'card_open', { source: 'chip' });
+  };
   mapApi.openPlaceCard = loc => {
     openMapPlaceInspector(loc.name, '안전 정보를 정리하는 중...');
     renderCard(loc);
@@ -1596,7 +1608,7 @@ async function initKakao(cfg) {
       const el = document.createElement('button');
       el.className = `help-marker ${place.type}`;
       el.type = 'button';
-      el.textContent = helpTypeLabel(place.type);
+      el.innerHTML = helpTypeIcon(place.type);
       el.setAttribute('aria-label', `${helpTypeTitle(place.type)} ${place.name}`);
       el.onclick = () => {
         mapApi.panTo(place.lat, place.lng, 5);
@@ -1870,7 +1882,7 @@ async function initKakao(cfg) {
           const el = document.createElement('button');
           el.className = `help-marker ${type}`;
           el.type = 'button';
-          el.textContent = helpTypeLabel(type);
+          el.innerHTML = helpTypeIcon(type);
           el.setAttribute('aria-label', place.place_name);
           el.onclick = () => {
             mapApi.panTo(Number(place.y), Number(place.x), 5);
@@ -1958,7 +1970,7 @@ async function initLeaflet(cfg) {
     places.forEach(place => {
       L.marker([place.lat, place.lng], {
         icon: L.divIcon({
-          html: `<button class="help-marker ${place.type}" type="button" aria-label="${helpTypeTitle(place.type)} ${escapeHtml(place.name)}">${helpTypeLabel(place.type)}</button>`,
+          html: `<button class="help-marker ${place.type}" type="button" aria-label="${helpTypeTitle(place.type)} ${escapeHtml(place.name)}">${helpTypeIcon(place.type)}</button>`,
           className: '',
           iconSize: [42, 28],
           iconAnchor: [21, 28]
