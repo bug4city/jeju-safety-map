@@ -6,7 +6,7 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 
 ## 2. Tokens
 
-- Color: `--ink` primary text, `--sub` secondary text, `--card` panels, `--line` hairlines, `--line-strong` controls, `--accent` incident red, `--brand` safety green, `--brand-soft` selected green tint, `--panel-muted` quiet panel background, `--blue` location/distance affordance.
+- Color: `--ink` primary text, `--sub` secondary text, `--card` panels, `--line` hairlines, `--line-strong` controls, `--accent` incident red, `--brand` safety green, `--brand-soft` selected green tint, `--panel-muted` quiet panel background, `--blue` location/distance affordance, `--cctv` CCTV data teal, `--cctv-soft` CCTV tint.
 - Radius: `--r-sm` controls, `--r-lg` panel/card shells, pill controls use `999px`.
 - Shadow: `--shadow-1` controls and chips, `--shadow-2` fixed panels and floating primary controls.
 - Type: `--fs-title`, `--fs-body`, `--fs-ui`, `--fs-sub`, `--fs-cap`.
@@ -26,8 +26,10 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 - `ResultMeta`: compact row that explains the safety-check search action while preserving the browsable incident/region list below.
 - `ResultItem`: list row with semantic color dot, primary label, secondary label, optional metric, and selected-state background.
 - `LocationMarker`: map-native blue marker/ring for the browser geolocation result.
+- `IncidentFactMarker`: map-native white pill marker for confirmed fatality incidents. The primary line shows the outcome count (`사망 1명`), the secondary line shows the confirmation date/time when available (`8.24 확인`, `8.24 08:40 확인`). Confirmation state is carried by the red icon and border, not by spending the text slot on `현장 확인 완료`.
 - `ReturnJejuButton`: floating map button shown after the user leaves the 제주 overview via current location or place search; one tap returns to the 제주 center and restores the island-level map.
 - `AppHeader`: fixed top brand bar with favicon + 제주안전맵 on the left and compact external action pills on the right. Mobile preserves the brand and collapses long labels before icons.
+- `CctvLayer`: optional map overlay using compact teal dots; at close zoom each dot labels the camera count so CCTV coverage is visible without competing with incident pins.
 
 ## 5. States
 

@@ -85,6 +85,8 @@ gtag('config', 'G-FSQNRGNQ5Z');
   --panel-muted:#f7f8fa;
   --blue:#1f7ae0;
   --blue-soft:#eaf3ff;
+  --cctv:#008a9a;
+  --cctv-soft:#e6f7f9;
   --line-strong:#d1d1d6;
   --chip-dark:#111827; --chip-dark-hover:#1f2937;   /* 헤더 다크 필 버튼 전용 */
   --placeholder:#8a8f98;
@@ -219,7 +221,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   background:rgba(255,255,255,.93); border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); font-size:var(--fs-cap);
   box-shadow:var(--shadow-1); line-height:1.7;
 }
-/* 범례는 기본 접힘 — ⓘ 칩을 눌렀을 때만 펼침 */
+/* 범례는 첫 방문 때 데이터 의미를 바로 알 수 있도록 기본 펼침 */
 .legend-stack:not(.open) .legend { display:none; }
 .legend-toggle {
   flex:none; font-size:var(--fs-cap); border:1px solid var(--line); background:rgba(255,255,255,.93);
@@ -237,6 +239,12 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .legend .scale-crime { background:linear-gradient(to right,#ffe27a,#f5a623,#e2573b,#b81d13); }
 .legend .scale-pop { background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
 .legend .sub-note { font-size:var(--fs-cap); color:var(--sub); line-height:1.4; margin-top:2px; }
+.cctv-dot {
+  display:flex; align-items:center; justify-content:center; width:18px; height:18px;
+  border:2px solid #fff; border-radius:50%; background:var(--cctv); color:#fff;
+  box-shadow:0 1px 6px rgba(0,0,0,.35); font-size:9px; font-weight:800; cursor:pointer;
+}
+.cctv-dot.count { width:auto; min-width:28px; padding:0 var(--sp-1); border-radius:999px; }
 
 /* 레이어를 처음 켰을 때 한 번만 띄우는 안내 */
 .toast {
@@ -250,6 +258,32 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .toast[hidden] { display:none; }
 
 .pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
+.incident-marker {
+  appearance:none; border:0; background:transparent; padding:0; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; filter:drop-shadow(0 3px 9px rgba(0,0,0,.24));
+}
+.incident-marker .label {
+  min-width:128px; min-height:52px; display:flex; align-items:center; gap:var(--sp-2);
+  padding:7px 13px 7px 8px; border:2px solid #a91419; border-radius:999px;
+  background:rgba(255,255,255,.96); color:var(--ink); white-space:nowrap;
+}
+.incident-marker .icon {
+  flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(145deg,#d8392e,#93070c); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+}
+.incident-marker .icon svg { width:20px; height:20px; }
+.incident-marker .text { min-width:0; display:flex; flex-direction:column; align-items:flex-start; line-height:1.1; }
+.incident-marker .primary { font-size:var(--fs-md); font-weight:900; letter-spacing:0; color:#17191f; }
+.incident-marker .secondary { margin-top:4px; font-size:var(--fs-sub); font-weight:700; color:var(--sub); }
+.incident-marker .anchor {
+  width:16px; height:16px; margin-top:-2px; border-radius:50%; background:var(--accent);
+  border:3px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.34);
+}
+.incident-marker:focus-visible .label { outline:3px solid var(--focus-blue); outline-offset:2px; }
+.incident-marker.compact .label { min-width:112px; min-height:46px; padding:6px 11px 6px 7px; }
+.incident-marker.compact .icon { width:30px; height:30px; }
+.incident-marker.compact .primary { font-size:var(--fs-body); }
+.incident-marker.compact .secondary { font-size:var(--fs-cap); }
 .pop-num {
   background:#fff; border:2px solid; border-radius:999px; padding:3px var(--sp-2);
   font-size:var(--fs-sub); font-weight:700; box-shadow:var(--shadow-1); cursor:pointer; white-space:nowrap;
@@ -280,6 +314,14 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .card-input input { flex:1; min-width:0; font-size:var(--fs-md); border:1px solid var(--line-strong); border-radius:var(--r-sm); padding:var(--sp-3); }
 .card-input input:focus { outline:none; border-color:var(--brand); }
 .card-input button { font-size:var(--fs-body); border:0; border-radius:var(--r-sm); padding:var(--sp-3) var(--sp-4); background:var(--brand); color:#fff; cursor:pointer; }
+.place-results { display:grid; gap:var(--sp-2); margin-top:var(--sp-3); }
+.place-result {
+  width:100%; border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3);
+  background:#fff; color:var(--ink); text-align:left; cursor:pointer;
+}
+.place-result:hover, .place-result:focus-visible { border-color:var(--brand); background:var(--brand-soft); outline:none; }
+.place-result b { display:block; font-size:var(--fs-body); line-height:1.35; }
+.place-result span { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-sub); line-height:1.4; word-break:keep-all; }
 .safety-card { border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--sp-4); background:#fff; }
 .safety-card h3 { font-size:var(--fs-md); margin-bottom:2px; }
 .safety-card .addr { font-size:var(--fs-cap); color:var(--sub); margin-bottom:var(--sp-3); }
@@ -331,6 +373,12 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   .header-action { width:34px; min-height:34px; padding:0; }
   .header-action .label { display:none; }
 }
+@media (max-width: 899px) {
+  .return-jeju {
+    bottom:calc(var(--sheet-half) + var(--sp-3));
+    z-index:1120;
+  }
+}
 </style>
 </head>
 <body>
@@ -340,11 +388,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
     <span>제주안전맵</span>
   </a>
   <nav class="header-actions" aria-label="외부 링크">
-    <a class="header-action compact-label" href="https://discord.gg/" target="_blank" rel="noopener" aria-label="장난감병동 디스코드에서 피드백 보내기">
+    <a class="header-action compact-label" href="https://discord.gg/UX9YQWxvYb" target="_blank" rel="noopener" aria-label="장난감병동 디스코드에서 피드백 보내기">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h.01M12 12h.01M16 12h.01M7.5 19.5 4 21l1.1-3.3A8.5 8.5 0 1 1 7.5 19.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span class="label">피드백</span>
     </a>
-    <a class="header-action icon-only" href="https://www.instagram.com/kim_yooka/" target="_blank" rel="noopener" aria-label="김육아 인스타그램 열기">
+    <a class="header-action icon-only" href="https://www.instagram.com/kimyukah" target="_blank" rel="noopener" aria-label="김육아 인스타그램 열기">
       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg>
     </a>
     <a class="header-action icon-only" href="https://kimyukah.com" target="_blank" rel="noopener" aria-label="김육아 홈페이지 열기">
@@ -401,7 +449,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   </div>
 </aside>
 
-<div class="legend-stack">
+<div class="legend-stack open">
+  <div class="legend" id="incident-legend">
+    <b class="legend-title">지도 표시</b>
+    <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
+  </div>
   <div class="legend" id="crime-legend" hidden>
     <b class="legend-title">범죄주의구간 <small>경찰청 최근 1년</small></b>
     <div class="scale-row">
@@ -418,10 +470,13 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
       <span class="scale-bar scale-pop"></span>
       <span>붐빔</span>
     </div>
-    <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
   </div>
-  <div class="legend sub-note">사건 위치는 피해자 보호를 위해<br>읍면 중심 수준으로 표시합니다.</div>
-  <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="false">ⓘ 범례</button>
+  <div class="legend" id="cctv-legend" hidden>
+    <b class="legend-title">방범 CCTV <small>행정안전부 표준데이터</small></b>
+    <div><i style="background:var(--cctv);border:2px solid #fff"></i>방범 목적 CCTV 위치</div>
+    <div class="sub-note">확대하면 카메라 대수를 함께 표시합니다.</div>
+  </div>
+  <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="true">ⓘ 범례</button>
 </div>
 
 <div class="toast" id="toast" hidden></div>
@@ -436,7 +491,38 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 <script>
 const CENTER = { lat: 33.38, lng: 126.53 };
 const CRIME_WMS = 'https://www.safemap.go.kr/openapi2/IF_0087_WMS';
-const state = { data: null, pop: null, tab: 'incident', focus: null, query: '', userLocation: null };
+const FALLBACK_PLACES = [
+  { keys: ['제주공항', '제주국제공항', '공항'], name: '제주국제공항', addr: '제주시 공항로 2', lat: 33.506, lng: 126.493 },
+  { keys: ['롯데호텔', '롯데호텔제주', '롯데 제주'], name: '롯데호텔 제주', addr: '서귀포시 색달동 2812-4', lat: 33.248, lng: 126.410 },
+  { keys: ['신라호텔', '제주신라호텔', '신라 제주'], name: '제주신라호텔', addr: '서귀포시 색달동 3039-3', lat: 33.247, lng: 126.408 },
+  { keys: ['그랜드하얏트', '드림타워', '하얏트'], name: '그랜드 하얏트 제주', addr: '제주시 노연로 12', lat: 33.485, lng: 126.482 },
+  { keys: ['파르나스', '파르나스호텔'], name: '파르나스 호텔 제주', addr: '서귀포시 중문관광로72번길 100', lat: 33.245, lng: 126.408 },
+  { keys: ['메종글래드', '글래드호텔', '글래드'], name: '메종 글래드 제주', addr: '제주시 노연로 80', lat: 33.486, lng: 126.489 },
+  { keys: ['라마다프라자', '라마다'], name: '라마다프라자 제주호텔', addr: '제주시 탑동로 66', lat: 33.518, lng: 126.517 },
+  { keys: ['성산일출봉', '일출봉'], name: '성산일출봉', addr: '서귀포시 성산읍', lat: 33.459, lng: 126.942 },
+  { keys: ['협재해수욕장', '협재'], name: '협재해수욕장', addr: '제주시 한림읍 협재리', lat: 33.394, lng: 126.239 },
+  { keys: ['함덕해수욕장', '함덕'], name: '함덕해수욕장', addr: '제주시 조천읍 함덕리', lat: 33.543, lng: 126.669 },
+  { keys: ['중문관광단지', '중문'], name: '중문관광단지', addr: '서귀포시 중문동', lat: 33.249, lng: 126.412 },
+  { keys: ['애월카페거리', '애월'], name: '애월 카페거리', addr: '제주시 애월읍', lat: 33.463, lng: 126.31 },
+  { keys: ['동문시장', '동문재래시장', '시장'], name: '동문재래시장', addr: '제주시 관덕로14길 20', lat: 33.512, lng: 126.526 },
+  { keys: ['올레시장', '서귀포매일올레시장'], name: '서귀포매일올레시장', addr: '서귀포시 중앙로62번길 18', lat: 33.250, lng: 126.563 },
+  { keys: ['이중섭거리', '이중섭'], name: '이중섭거리', addr: '서귀포시 이중섭로', lat: 33.246, lng: 126.564 },
+  { keys: ['아르떼뮤지엄', '아르떼'], name: '아르떼뮤지엄 제주', addr: '제주시 애월읍 어림비로 478', lat: 33.397, lng: 126.345 },
+  { keys: ['카멜리아힐', '카멜리아'], name: '카멜리아힐', addr: '서귀포시 안덕면 병악로 166', lat: 33.289, lng: 126.370 },
+  { keys: ['오설록', '오설록티뮤지엄'], name: '오설록 티뮤지엄', addr: '서귀포시 안덕면 신화역사로 15', lat: 33.306, lng: 126.289 },
+  { keys: ['제주민속촌', '민속촌'], name: '제주민속촌', addr: '서귀포시 표선면 민속해안로 631-34', lat: 33.322, lng: 126.842 },
+  { keys: ['한라산', '성판악'], name: '한라산 성판악 탐방로', addr: '제주시 조천읍 516로 1865', lat: 33.385, lng: 126.620 },
+  { keys: ['우도', '우도항'], name: '우도', addr: '제주시 우도면', lat: 33.504, lng: 126.955 },
+  { keys: ['곽지해수욕장', '곽지'], name: '곽지해수욕장', addr: '제주시 애월읍 곽지리', lat: 33.450, lng: 126.304 },
+  { keys: ['월정리해변', '월정리'], name: '월정리해변', addr: '제주시 구좌읍 월정리', lat: 33.556, lng: 126.796 },
+  { keys: ['이호테우', '이호테우해변'], name: '이호테우해변', addr: '제주시 이호일동', lat: 33.497, lng: 126.452 },
+  { keys: ['고집돌우럭', '우럭'], name: '고집돌우럭 중문점', addr: '서귀포시 일주서로 879', lat: 33.255, lng: 126.421 },
+  { keys: ['연돈', '돈까스'], name: '연돈', addr: '서귀포시 일주서로 968-10', lat: 33.257, lng: 126.407 },
+  { keys: ['오는정김밥', '김밥'], name: '오는정김밥', addr: '서귀포시 동문동로 2', lat: 33.249, lng: 126.568 },
+  { keys: ['자매국수', '국수'], name: '자매국수', addr: '제주시 탑동로11길 6', lat: 33.516, lng: 126.520 },
+  { keys: ['카페노티드', '노티드'], name: '카페 노티드 제주', addr: '제주시 애월읍 애월로1길 24-9', lat: 33.462, lng: 126.310 }
+];
+const state = { data: null, pop: null, cctv: null, tab: 'incident', focus: null, query: '', userLocation: null };
 
 function loadScript(src) {
   return new Promise((ok, fail) => {
@@ -453,10 +539,50 @@ function haversineKm(a, b) {
 }
 function fmt(n) { return n >= 10000 ? (n / 10000).toFixed(1).replace(/\.0$/, '') + '만' : n.toLocaleString(); }
 function norm(s) { return String(s || '').trim().toLocaleLowerCase('ko-KR'); }
+function formatConfirmedAt(value) {
+  if (!value) return '';
+  const raw = String(value).trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/);
+  if (!match) return raw + ' 확인';
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const rest = match[4].trim();
+  return `${month}.${day}${rest ? ' ' + rest : ''} 확인`;
+}
+function incidentFactText(inc) {
+  const fatalities = Number(inc.fatalities || 1);
+  return {
+    primary: inc.status === '사망 확인' ? `사망 ${fatalities}명` : inc.status,
+    secondary: formatConfirmedAt(inc.confirmedAt) || `${inc.date} 확인`
+  };
+}
+function incidentMarkerHtml(inc, compact) {
+  const text = incidentFactText(inc);
+  return `<button class="incident-marker${compact ? ' compact' : ''}" type="button" aria-label="${text.primary}, ${text.secondary}">
+    <span class="label">
+      <span class="icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="m5 12 4 4 10-10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="text"><span class="primary">${text.primary}</span><span class="secondary">${text.secondary}</span></span>
+    </span>
+    <span class="anchor" aria-hidden="true"></span>
+  </button>`;
+}
 function distanceLabel(point) {
   if (!state.userLocation) return '';
   const km = haversineKm(state.userLocation, point);
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+}
+function fallbackPlaceSearchResults(query) {
+  const q = norm(query);
+  const broad = ['호텔', '숙소', '식당', '음식점', '맛집', '카페', '해변', '관광지', '장소'];
+  const places = FALLBACK_PLACES
+    .filter(p => broad.includes(q) || p.keys.some(k => norm(k).includes(q) || q.includes(norm(k))))
+    .map(p => ({ name: p.name, addr: p.addr, lat: p.lat, lng: p.lng }));
+  const regions = state.pop ? state.pop.regions
+    .filter(r => norm(r.name).includes(q) || q.includes(norm(r.name)))
+    .map(r => ({ name: r.name, addr: '제주특별자치도 ' + r.name, lat: r.lat, lng: r.lng })) : [];
+  return [...places, ...regions].slice(0, 20);
 }
 function showToast(message, duration) {
   const t = document.getElementById('toast');
@@ -501,10 +627,11 @@ function showDetail(html) {
   if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
 }
 function incidentDetail(inc) {
+  const fact = incidentFactText(inc);
   showDetail(`
     <span class="status">${inc.status}</span>
     <h2>${inc.title}</h2>
-    <div class="area">${inc.area} · ${inc.date}</div>
+    <div class="area">${inc.area} · ${inc.date} · ${fact.secondary}</div>
     <div class="summary">${inc.summary}</div>
     <div class="src">출처: ${inc.sources.map(s => `<a href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`).join('')}</div>`);
   gtag('event', 'incident_open', { incident_id: inc.id });
@@ -527,12 +654,13 @@ function renderList() {
   const el = listView; el.innerHTML = '';
   if (state.tab === 'incident') {
     const rows = state.data.incidents;
-    resultMeta.innerHTML = `<span>Enter로 점검 카드 생성</span><span>사건 <b>${rows.length}</b>건 참고</span>`;
+    resultMeta.innerHTML = `<span>장소 입력 후 Enter로 점검</span><span>사건 <b>${rows.length}</b>건 참고</span>`;
     rows.forEach(inc => {
+      const fact = incidentFactText(inc);
       const d = document.createElement('div'); d.className = 'item';
       d.tabIndex = 0;
       d.innerHTML = `<span class="dot" style="background:var(--accent)"></span>
-        <div class="t"><b>${inc.title}</b><span>${inc.area} · ${inc.date}</span>${state.userLocation ? `<span class="distance">내 위치에서 ${distanceLabel(inc)}</span>` : ''}</div>
+        <div class="t"><b>${inc.title}</b><span>${inc.area} · ${fact.secondary}</span>${state.userLocation ? `<span class="distance">내 위치에서 ${distanceLabel(inc)}</span>` : ''}</div>
         <span class="badge" style="background:var(--accent)">${inc.status}</span>`;
       d.onclick = () => { mapApi.panTo(inc.lat, inc.lng, 7); incidentDetail(inc); };
       d.onkeydown = e => { if (e.key === 'Enter') d.click(); };
@@ -543,7 +671,7 @@ function renderList() {
     const allSorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
     const sorted = allSorted;
     const max = sorted.length ? sorted[sorted.length - 1].total : 1;
-    resultMeta.innerHTML = `<span>Enter로 점검 카드 생성</span><span>지역 <b>${sorted.length}</b>곳 참고</span>`;
+    resultMeta.innerHTML = `<span>장소 입력 후 Enter로 점검</span><span>지역 <b>${sorted.length}</b>곳 참고</span>`;
     sorted.forEach(r => {
       const rank = allSorted.findIndex(x => x.name === r.name) + 1;
       const c = style.color(r.total);
@@ -620,7 +748,7 @@ locateBtn.onclick = () => {
   }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
 };
 
-// 범례는 기본 접힘 — ⓘ 칩을 눌러야 펼쳐진다
+// 범례는 기본 펼침 — ⓘ 칩으로 필요할 때 접는다.
 const legendStack = document.querySelector('.legend-stack');
 document.getElementById('legend-toggle').onclick = function () {
   const open = legendStack.classList.toggle('open');
@@ -635,6 +763,13 @@ function crimeUi(on) {
     showToast('색이 진할수록 최근 1년간 범죄 신고가 밀집했던 구간이에요. 실제 위험도 판정이 아니라, 유동인구가 많은 번화가일수록 진하게 나타납니다.', 8000);
   }
 }
+function cctvUi(on) {
+  document.getElementById('cctv-legend').hidden = !on;
+  if (on && !localStorage.getItem('cctvHintShown')) {
+    localStorage.setItem('cctvHintShown', '1');
+    showToast('방범 목적 CCTV 위치를 표시합니다. 카메라별 실제 촬영 범위나 작동 상태를 보장하는 정보는 아닙니다.', 7000);
+  }
+}
 
 function wireChip(id, onToggle, defaultOn) {
   const chip = document.getElementById(id);
@@ -644,6 +779,90 @@ function wireChip(id, onToggle, defaultOn) {
   return chip;
 }
 
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[ch]);
+}
+function renderPlaceResults(query, places, onPick) {
+  const result = document.getElementById('card-result');
+  if (!places.length) {
+    result.innerHTML = `<div class="card-hint"><b>${escapeHtml(query)}</b> 위치를 찾지 못했습니다. 호텔명, 음식점명, 해변명처럼 장소 이름을 조금 더 구체적으로 입력해 주세요.</div>`;
+    return;
+  }
+  const label = places.length === 1 ? '검색 결과 1곳' : `검색 결과 ${places.length}곳`;
+  result.innerHTML = `
+    <div class="card-hint"><b>${escapeHtml(query)}</b> ${label}입니다. 점검할 장소를 선택하세요.</div>
+    <div class="place-results">
+      ${places.map((p, index) => `
+        <button class="place-result" type="button" data-place-index="${index}">
+          <b>${escapeHtml(p.name)}</b>
+          <span>${escapeHtml(p.addr || '주소 정보 없음')}</span>
+        </button>`).join('')}
+    </div>`;
+  result.querySelectorAll('.place-result').forEach(button => {
+    button.onclick = () => onPick(places[Number(button.dataset.placeIndex)]);
+  });
+}
+
+function renderSafetyCard(loc, cfg, moveToLocation) {
+  const style = popStyle(state.pop.regions);
+  const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+  const region = state.pop.regions.reduce((a, r) => haversineKm(loc, r) < haversineKm(loc, a) ? r : a);
+  const rank = sorted.findIndex(x => x.name === region.name) + 1;
+  const near = state.data.incidents.map(i => ({ i, km: haversineKm(loc, i) }))
+    .filter(x => x.km <= 8).sort((a, b) => a.km - b.km);
+  const c = style.color(region.total), tag = style.tag(region.total);
+  const nearText = near.length ? `반경 8km 보도 확인 사건 ${near.length}건, 최근접 ${near[0].km.toFixed(1)}km` : '반경 8km 보도 확인 사건 없음';
+  const summaryText = `${loc.name} 안전 점검: ${nearText}. ${region.name}은 통신사 유동인구 기준 "${tag}" 지역입니다.`;
+  document.getElementById('card-result').innerHTML = `
+    <div class="safety-card" id="the-card">
+      <h3>${loc.name} 안전 점검</h3>
+      <div class="addr">${loc.addr}</div>
+      <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${near.length ? 'var(--accent)' : 'inherit'}">${near.length ? near.length + '건 (최근접 ' + near[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
+      <div class="row"><span>지역 붐빔도 (${region.name})</span><b><span class="tagchip" style="background:${c}">${tag}</span></b></div>
+      <div class="row"><span>하루 유동인구</span><b>약 ${region.total.toLocaleString()}명</b></div>
+      <div class="row"><span>한적한 순위</span><b>43곳 중 ${rank}위</b></div>
+      <div class="brand">공유용 요약 · 제주안전맵 · ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 + 언론 보도 기준</div>
+    </div>
+    <div class="card-actions">
+      <button id="card-save">이미지 저장</button>
+      <button id="card-kakao" class="kakao">카톡 공유</button>
+      <button id="card-copy">요약 복사</button>
+    </div>
+    <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도와 통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
+  gtag('event', 'card_create', { region: region.name, incidents_8km: near.length });
+  moveToLocation(loc);
+  returnJejuBtn.hidden = false;
+
+  document.getElementById('card-save').onclick = async () => {
+    if (!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    const canvas = await html2canvas(document.getElementById('the-card'), { scale: 2, backgroundColor: '#fff' });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png'); a.download = '제주안전지도_점검카드.png'; a.click();
+    gtag('event', 'card_share', { method: 'image' });
+  };
+  document.getElementById('card-kakao').onclick = async () => {
+    if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
+    if (!Kakao.isInitialized()) Kakao.init(cfg.kakaoKey);
+    Kakao.Share.sendDefault({
+      objectType: 'text',
+      text: '내 숙소 안전 점검 결과\n' + summaryText,
+      link: { mobileWebUrl: 'https://jeju.kimyukah.com', webUrl: 'https://jeju.kimyukah.com' },
+      buttonTitle: '내 숙소도 점검하기'
+    });
+    gtag('event', 'card_share', { method: 'kakao' });
+  };
+  document.getElementById('card-copy').onclick = async () => {
+    await navigator.clipboard.writeText(summaryText + '\nhttps://jeju.kimyukah.com');
+    document.getElementById('card-copy').textContent = '복사됨!';
+    gtag('event', 'card_share', { method: 'copy' });
+  };
+}
 
 // ── 안전 점검 카드: 주소 검색 → 요약 카드 → 저장/공유 (카카오맵 엔진 전용) ──
 function setupCard(map, cfg) {
@@ -652,98 +871,64 @@ function setupCard(map, cfg) {
   btn.hidden = true;
   const geocoder = new kakao.maps.services.Geocoder();
   const places = new kakao.maps.services.Places();
-  const style = popStyle(state.pop.regions);
-  const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
   let marker = null;
 
   const search = q => new Promise(resolve => {
     geocoder.addressSearch(q, (res, st) => {
       if (st === kakao.maps.services.Status.OK && res[0])
-        return resolve({ name: q, addr: res[0].address_name, lat: +res[0].y, lng: +res[0].x });
+        return resolve([{ name: q, addr: res[0].address_name, lat: +res[0].y, lng: +res[0].x }]);
       places.keywordSearch(q + ' 제주', (res2, st2) => {
-        if (st2 === kakao.maps.services.Status.OK && res2[0])
-          return resolve({ name: res2[0].place_name, addr: res2[0].address_name, lat: +res2[0].y, lng: +res2[0].x });
-        resolve(null);
+        if (st2 === kakao.maps.services.Status.OK && res2.length)
+          return resolve(res2.slice(0, 15).map(place => ({
+            name: place.place_name,
+            addr: place.road_address_name || place.address_name,
+            lat: +place.y,
+            lng: +place.x
+          })));
+        resolve([]);
       });
     });
   });
 
   function renderCard(loc) {
-    const region = state.pop.regions.reduce((a, r) => haversineKm(loc, r) < haversineKm(loc, a) ? r : a);
-    const rank = sorted.findIndex(x => x.name === region.name) + 1;
-    const near = state.data.incidents.map(i => ({ i, km: haversineKm(loc, i) }))
-      .filter(x => x.km <= 8).sort((a, b) => a.km - b.km);
-    const c = style.color(region.total), tag = style.tag(region.total);
-    const nearText = near.length ? `반경 8km 보도 확인 사건 ${near.length}건, 최근접 ${near[0].km.toFixed(1)}km` : '반경 8km 보도 확인 사건 없음';
-    const summaryText = `${loc.name} 안전 점검: ${nearText}. ${region.name}은 통신사 유동인구 기준 "${tag}" 지역입니다.`;
-    document.getElementById('card-result').innerHTML = `
-      <div class="safety-card" id="the-card">
-        <h3>${loc.name} 안전 점검</h3>
-        <div class="addr">${loc.addr}</div>
-        <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${near.length ? 'var(--accent)' : 'inherit'}">${near.length ? near.length + '건 (최근접 ' + near[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
-        <div class="row"><span>지역 붐빔도 (${region.name})</span><b><span class="tagchip" style="background:${c}">${tag}</span></b></div>
-        <div class="row"><span>하루 유동인구</span><b>약 ${region.total.toLocaleString()}명</b></div>
-        <div class="row"><span>한적한 순위</span><b>43곳 중 ${rank}위</b></div>
-        <div class="brand">공유용 요약 · 제주안전맵 · ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 + 언론 보도 기준</div>
-      </div>
-      <div class="card-actions">
-        <button id="card-save">이미지 저장</button>
-        <button id="card-kakao" class="kakao">카톡 공유</button>
-        <button id="card-copy">요약 복사</button>
-      </div>
-      <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도와 통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
-    gtag('event', 'card_create', { region: region.name, incidents_8km: near.length });
-
-    if (marker) marker.setMap(null);
-    marker = new kakao.maps.Marker({ position: new kakao.maps.LatLng(loc.lat, loc.lng), map });
-    map.setLevel(6); map.panTo(new kakao.maps.LatLng(loc.lat, loc.lng));
-    returnJejuBtn.hidden = false;
-
-    document.getElementById('card-save').onclick = async () => {
-      if (!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-      const canvas = await html2canvas(document.getElementById('the-card'), { scale: 2, backgroundColor: '#fff' });
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png'); a.download = '제주안전지도_점검카드.png'; a.click();
-      gtag('event', 'card_share', { method: 'image' });
-    };
-    document.getElementById('card-kakao').onclick = async () => {
-      if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
-      if (!Kakao.isInitialized()) Kakao.init(cfg.kakaoKey);
-      Kakao.Share.sendDefault({
-        objectType: 'text',
-        text: '내 숙소 안전 점검 결과\n' + summaryText,
-        link: { mobileWebUrl: 'https://jeju.kimyukah.com', webUrl: 'https://jeju.kimyukah.com' },
-        buttonTitle: '내 숙소도 점검하기'
-      });
-      gtag('event', 'card_share', { method: 'kakao' });
-    };
-    document.getElementById('card-copy').onclick = async () => {
-      await navigator.clipboard.writeText(summaryText + '\nhttps://jeju.kimyukah.com');
-      document.getElementById('card-copy').textContent = '복사됨!';
-      gtag('event', 'card_share', { method: 'copy' });
-    };
+    renderSafetyCard(loc, cfg, place => {
+      if (marker) marker.setMap(null);
+      marker = new kakao.maps.Marker({ position: new kakao.maps.LatLng(place.lat, place.lng), map });
+      map.setLevel(6);
+      map.panTo(new kakao.maps.LatLng(place.lat, place.lng));
+    });
   }
 
   const openSafetyCheck = query => {
+    const submitted = (query || '').trim();
     showDetail(`
-      <h2>내 숙소 안전 점검</h2>
-      <div class="card-input">
-        <input id="addr-input" type="text" placeholder="숙소 주소나 이름 (예: 제주시 애월읍 ...)" enterkeyhint="search">
-        <button id="addr-go">확인</button>
-      </div>
+      <h2>장소 안전 점검</h2>
+      ${submitted ? '' : `
+        <div class="card-input">
+          <input id="addr-input" type="text" placeholder="호텔·식당·카페·해변 이름" enterkeyhint="search">
+          <button id="addr-go">확인</button>
+        </div>`}
       <div id="card-result" class="card-hint">호텔·숙소·식당·카페·해변 이름을 입력하면 주변 사건과 지역 붐빔도를 공유 가능한 카드로 요약합니다.</div>`);
-    const input = document.getElementById('addr-input');
     const go = async () => {
-      const q = input.value.trim(); if (!q) return;
+      const input = document.getElementById('addr-input');
+      const q = submitted || (input ? input.value.trim() : '');
+      if (!q) return;
       document.getElementById('card-result').textContent = '검색 중...';
-      const loc = await search(q);
-      if (!loc) { document.getElementById('card-result').textContent = '위치를 찾지 못했습니다. 장소명 뒤에 제주를 붙이거나 주소를 더 자세히 입력해보세요.'; return; }
-      renderCard(loc);
+      const matches = await search(q);
+      if (matches.length === 1) {
+        renderCard(matches[0]);
+        return;
+      }
+      renderPlaceResults(q, matches, renderCard);
     };
-    document.getElementById('addr-go').onclick = go;
-    input.onkeydown = e => { if (e.key === 'Enter') go(); };
-    input.value = query || '';
-    if (query) go(); else input.focus();
+    if (submitted) {
+      go();
+    } else {
+      const input = document.getElementById('addr-input');
+      document.getElementById('addr-go').onclick = go;
+      input.onkeydown = e => { if (e.key === 'Enter') go(); };
+      input.focus();
+    }
     gtag('event', 'card_open');
   };
   btn.onclick = () => openSafetyCheck('');
@@ -803,10 +988,32 @@ async function initKakao(cfg) {
     kakao.maps.event.addListener(m, 'click', () => { incidentDetail(inc); mapApi.panTo(inc.lat, inc.lng); });
     return m;
   });
+  let incidentOn = true;
+  const incidentLabels = state.data.incidents.map(inc => {
+    const el = document.createElement('div');
+    el.innerHTML = incidentMarkerHtml(inc, true);
+    el.firstElementChild.onclick = () => { incidentDetail(inc); mapApi.panTo(inc.lat, inc.lng); };
+    const ov = new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(inc.lat, inc.lng),
+      content: el.firstElementChild,
+      yAnchor: 1,
+      zIndex: 45
+    });
+    return ov;
+  });
+  const relabelIncidents = () => {
+    const showLabels = incidentOn && map.getLevel() <= 8;
+    incidentLabels.forEach(ov => ov.setMap(showLabels ? map : null));
+  };
+  kakao.maps.event.addListener(map, 'zoom_changed', relabelIncidents);
   clusterer.addMarkers(markers);
   document.getElementById('chip-incident').onclick = function () {
-    this.classList.toggle('on') ? clusterer.addMarkers(markers) : clusterer.removeMarkers(markers);
+    incidentOn = this.classList.toggle('on');
+    if (incidentOn) clusterer.addMarkers(markers);
+    else clusterer.removeMarkers(markers);
+    relabelIncidents();
   };
+  relabelIncidents();
 
   // 유동인구: 읍면동 경계를 한적함으로 채색 + 숫자 라벨 (기본 켜짐)
   // 사건이 있는 지역은 빨간 테두리. "위험도 점수"가 아니라 사실(사람 수·사건 유무)만 칠한다.
@@ -857,6 +1064,43 @@ async function initKakao(cfg) {
       if (on) relabel(); else overlays.forEach(o => o.ov.setMap(null));
       document.getElementById('legend').hidden = !on;
       gtag('event', 'layer_toggle', { layer: 'population', on });
+    }, true);
+  }
+
+  if (state.cctv) {
+    let cctvOn = false;
+    const overlays = state.cctv.points.map(([lat, lng, count]) => {
+      const el = document.createElement('button');
+      el.className = 'cctv-dot';
+      el.type = 'button';
+      el.setAttribute('aria-label', `방범 CCTV ${count}대`);
+      el.onclick = () => {
+        mapApi.panTo(lat, lng, 6);
+        showToast(`이 지점에 방범 CCTV ${count}대가 등록되어 있습니다.`);
+        gtag('event', 'cctv_open');
+      };
+      const ov = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(lat, lng),
+        content: el,
+        yAnchor: .5,
+        zIndex: 30
+      });
+      return { ov, el, count };
+    });
+    const relabelCctv = () => {
+      const close = map.getLevel() <= 7;
+      overlays.forEach(({ ov, el, count }) => {
+        if (cctvOn) ov.setMap(map);
+        el.textContent = close ? count : '';
+        el.classList.toggle('count', close);
+      });
+    };
+    kakao.maps.event.addListener(map, 'zoom_changed', relabelCctv);
+    wireChip('chip-cctv', on => {
+      cctvOn = on;
+      if (on) relabelCctv(); else overlays.forEach(o => o.ov.setMap(null));
+      cctvUi(on);
+      gtag('event', 'layer_toggle', { layer: 'cctv', on });
     }, false);
   }
 
@@ -920,10 +1164,15 @@ async function initLeaflet(cfg) {
     userMarker.setLatLng([lat, lng]);
   };
 
+  const incidentLayer = L.layerGroup();
   state.data.incidents.forEach(inc => {
-    L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: '<span class="pin-dot"></span>', className: '', iconSize: [18, 18] }) })
-      .addTo(map).on('click', () => incidentDetail(inc));
+    L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: incidentMarkerHtml(inc, true), className: '', iconSize: [132, 68], iconAnchor: [66, 68] }) })
+      .addTo(incidentLayer).on('click', () => incidentDetail(inc));
   });
+  incidentLayer.addTo(map);
+  document.getElementById('chip-incident').onclick = function () {
+    this.classList.toggle('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
+  };
   if (state.pop) {
     const style = popStyle(state.pop.regions);
     const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
@@ -952,7 +1201,44 @@ async function initLeaflet(cfg) {
     wireChip('chip-pop', on => {
       on ? layer.addTo(map) : map.removeLayer(layer);
       document.getElementById('legend').hidden = !on;
-    }, false);
+    }, true);
+    let placeMarker = null;
+    const openFallbackSafetyCheck = query => {
+      showDetail(`
+        <h2>내 숙소 안전 점검</h2>
+        <div class="card-input">
+          <input id="addr-input" type="text" placeholder="숙소 주소나 이름 (예: 제주공항, 협재)" enterkeyhint="search">
+          <button id="addr-go">확인</button>
+        </div>
+        <div id="card-result" class="card-hint">카카오 장소검색을 쓸 수 없는 환경이라 제주 주요 장소와 읍면동 이름으로 점검합니다.</div>`);
+      const input = document.getElementById('addr-input');
+      const go = () => {
+        const q = input.value.trim(); if (!q) return;
+        document.getElementById('card-result').textContent = '검색 중...';
+        const loc = fallbackPlaceSearch(q);
+        if (!loc) { document.getElementById('card-result').textContent = '위치를 찾지 못했습니다. 제주공항, 협재, 애월처럼 주요 장소나 읍면동 이름으로 검색해보세요.'; return; }
+        renderSafetyCard(loc, cfg, place => {
+          const icon = L.divIcon({ html: '<span class="user-loc-dot" aria-label="검색한 장소"></span>', className: '', iconSize: [18, 18] });
+          if (!placeMarker) placeMarker = L.marker([place.lat, place.lng], { icon, zIndexOffset: 900 }).addTo(map);
+          else placeMarker.setLatLng([place.lat, place.lng]);
+          map.setView([place.lat, place.lng], 12);
+        });
+      };
+      document.getElementById('addr-go').onclick = go;
+      input.onkeydown = e => { if (e.key === 'Enter') go(); };
+      input.value = query || '';
+      if (query) go(); else input.focus();
+      gtag('event', 'card_open', { engine: 'osm' });
+    };
+    mapApi.checkPlace = query => {
+      if (!query) {
+        showToast('호텔·숙소·장소 이름을 입력해 주세요.');
+        searchInput.focus();
+        return;
+      }
+      searchClear.hidden = false;
+      openFallbackSafetyCheck(query);
+    };
   }
   if (cfg.safemapKey) {
     const wms = L.tileLayer.wms(CRIME_WMS, {
@@ -962,6 +1248,29 @@ async function initLeaflet(cfg) {
     });
     wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); crimeUi(on); }, true);
   }
+  if (state.cctv) {
+    const layer = L.layerGroup();
+    const cctvMarkers = state.cctv.points.map(([lat, lng, count]) => {
+      const iconFor = close => L.divIcon({
+        html: `<button class="cctv-dot${close ? ' count' : ''}" type="button" aria-label="방범 CCTV ${count}대">${close ? count : ''}</button>`,
+        className: '',
+        iconSize: close ? [28, 18] : [18, 18]
+      });
+      const marker = L.marker([lat, lng], { icon: iconFor(false), zIndexOffset: 300 })
+        .addTo(layer)
+        .on('click', () => showToast(`이 지점에 방범 CCTV ${count}대가 등록되어 있습니다.`));
+      return { marker, count, iconFor };
+    });
+    const relabelCctv = () => {
+      const close = map.getZoom() >= 12;
+      cctvMarkers.forEach(({ marker, iconFor }) => marker.setIcon(iconFor(close)));
+    };
+    map.on('zoomend', relabelCctv);
+    wireChip('chip-cctv', on => {
+      if (on) { layer.addTo(map); relabelCctv(); } else map.removeLayer(layer);
+      cctvUi(on);
+    }, false);
+  }
   return 'osm';
 }
 
@@ -969,6 +1278,7 @@ async function initLeaflet(cfg) {
   state.data = await (await fetch('data/incidents.json')).json();
   document.getElementById('stat-count').textContent = state.data.stats.unresolvedAdultMissing + '명';
   try { state.pop = await (await fetch('data/pop.json')).json(); } catch (e) {}
+  try { state.cctv = await (await fetch('data/cctv.json')).json(); } catch (e) {}
   renderList();
   let cfg = {};
   try { const r = await fetch('config.json'); if (r.ok) cfg = await r.json(); } catch (e) {}
