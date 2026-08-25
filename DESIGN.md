@@ -30,12 +30,18 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 - `ReturnJejuButton`: floating map button shown after the user leaves the 제주 overview via current location or place search; one tap returns to the 제주 center and restores the island-level map.
 - `AppHeader`: fixed top brand bar with favicon + 제주안전맵 on the left and compact external action pills on the right. Mobile preserves the brand and collapses long labels before icons.
 - `CctvLayer`: optional map overlay using compact teal dots for public CCTV locations; at close zoom each dot labels the camera count so CCTV coverage is visible without competing with incident pins. Purpose labels clarify that the layer mixes traffic, facility, disaster, and safety cameras.
-
+- `RegionContextPills`: compact data badges for population rank and nearby reported incidents. Map labels show only the crowding tier at middle zoom, then add quiet-rank and people count at close zoom. Panels and share cards can show the full two-line context because they have more room.
+- `MapPlaceInspector`: map-click detail surface for provider-backed place data. Kakao searches nearby POI categories around the clicked coordinate and reuses the place-candidate/card flow; tile-only fallback maps explain that rendered labels are not clickable data.
+- `NearestHelpPanel`: current-location result surface that shows the nearest police station and emergency hospital as actionable rows with distance, phone, and map focus. It is a direct assistance feature, separate from viral/shareable safety cards.
+- `HelpPlaceMarker`: map-native blue/green outlined marker for police and hospital candidates found from Kakao category search or static fallback data. It uses concise labels and never competes with red incident markers.
 ## 5. States
 
 - Safety search submits on Enter, shows a loading state, lists multiple candidate places for broad searches such as hotel or restaurant, pans the map to the selected place, and renders a shareable card with nearby incidents, regional crowding, and caveat copy.
+- Region labels progressively disclose detail by zoom: island view uses color only, mid zoom uses region name plus crowding tier, close zoom adds `한적 N위` and estimated daily population. Nearby reported incidents are framed as public-report context, not an official crime-risk score.
+- Map click on the provider-backed map opens nearby public place candidates. Selecting a candidate generates the same safety card; if the provider has no POI for that coordinate, the empty state explains the data limitation.
 - Empty state explains no matching item was found without replacing the search controls.
 - Current location button shows locating, success, unsupported, and permission/error states through label text and toast.
+- After current location succeeds, the detail panel switches to nearby help mode and lists the closest police and hospital. If provider search is unavailable, the app uses curated fallback 제주 public-safety locations.
 - Return-to-Jeju stays hidden on the 제주 overview and appears after current-location or place-search navigation.
 - Focus states use the brand or blue outline and never remove keyboard visibility.
 - Header links open external destinations in a new tab, have visible focus rings, and expose clear Korean `aria-label` text for icon-only actions.

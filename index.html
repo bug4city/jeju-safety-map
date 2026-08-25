@@ -191,6 +191,12 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .item .t span { font-size:var(--fs-sub); color:var(--sub); }
 .item .distance { display:block; color:var(--blue); font-size:var(--fs-sub); font-weight:700; margin-top:2px; }
 .item .badge { flex:none; font-size:var(--fs-cap); font-weight:700; border-radius:var(--r-xs); padding:3px var(--sp-2); color:#fff; }
+.item .metrics { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.metric-pill {
+  display:inline-flex; align-items:center; min-height:20px; border:1px solid var(--line); border-radius:999px;
+  padding:0 var(--sp-2); background:#fff; color:var(--sub); font-size:var(--fs-cap); font-weight:700;
+}
+.metric-pill.alert { border-color:rgba(192,57,43,.32); color:var(--accent); background:#fff5f4; }
 .bar-wrap { flex:none; width:74px; }
 .bar-wrap small { display:block; font-size:var(--fs-cap); color:var(--sub); text-align:right; margin-bottom:3px; }
 .bar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
@@ -211,13 +217,14 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 /* 지도 위 요소 */
 .chips { position:fixed; top:calc(var(--header-h) + var(--sp-3) + env(safe-area-inset-top)); left:var(--sp-3); right:var(--sp-3); z-index:1000; display:flex; gap:var(--sp-2); overflow-x:auto; scrollbar-width:none; }
 .chip { flex:none; font-size:var(--fs-ui); border:1px solid var(--line); background:#fff; color:var(--sub); border-radius:999px; padding:var(--sp-2) var(--sp-3); cursor:pointer; box-shadow:var(--shadow-1); }
-.chip.on { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600; }
+.chip.on { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); font-weight:600; }
 .chip[hidden] { display:none; }
 .legend-stack {
   position:fixed; right:var(--sp-3); bottom:calc(var(--sheet-peek) + var(--sp-3)); z-index:900;
-  display:flex; flex-direction:column; align-items:flex-end; gap:var(--sp-2); max-width:56vw;
+  display:flex; flex-direction:column; align-items:flex-end; gap:var(--sp-2); width:min(280px, calc(100vw - var(--sp-3) * 2));
 }
 .legend {
+  width:100%; max-width:100%;
   background:rgba(255,255,255,.93); border-radius:var(--r-sm); padding:var(--sp-2) var(--sp-3); font-size:var(--fs-cap);
   box-shadow:var(--shadow-1); line-height:1.7;
 }
@@ -232,9 +239,9 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .legend[hidden] { display:none; }
 .legend .legend-title { font-size:var(--fs-cap); }
 .legend .legend-title small { font-weight:400; color:var(--sub); }
-.legend .scale-row { display:flex; align-items:center; gap:var(--sp-1); margin:var(--sp-1) 0 2px; }
+.legend .scale-row { display:flex; align-items:center; gap:var(--sp-1); margin:var(--sp-1) 0 2px; min-width:0; }
 .legend .scale-row span { font-size:var(--fs-cap); }
-.legend .scale-bar { flex:1; height:8px; border-radius:4px; min-width:84px; }
+.legend .scale-bar { flex:1 1 56px; height:8px; border-radius:4px; min-width:56px; }
 /* 데이터 그라데이션 — JS 팔레트(popStyle/CRIME)와 동기화. design.md 참고 */
 .legend .scale-crime { background:linear-gradient(to right,#ffe27a,#f5a623,#e2573b,#b81d13); }
 .legend .scale-pop { background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
@@ -245,6 +252,13 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   box-shadow:0 1px 6px rgba(0,0,0,.35); font-size:9px; font-weight:800; cursor:pointer;
 }
 .cctv-dot.count { width:auto; min-width:28px; padding:0 var(--sp-1); border-radius:999px; }
+.help-marker {
+  display:flex; align-items:center; justify-content:center; min-width:42px; height:28px; padding:0 var(--sp-2);
+  border:2px solid #fff; border-radius:999px; color:#fff; box-shadow:0 2px 10px rgba(0,0,0,.28);
+  font-size:var(--fs-cap); font-weight:900; white-space:nowrap; cursor:pointer;
+}
+.help-marker.police { background:var(--blue); }
+.help-marker.hospital { background:var(--brand); }
 
 /* 레이어를 처음 켰을 때 한 번만 띄우는 안내 */
 .toast {
@@ -285,10 +299,12 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .incident-marker.compact .primary { font-size:var(--fs-body); }
 .incident-marker.compact .secondary { font-size:var(--fs-cap); }
 .pop-num {
-  background:#fff; border:2px solid; border-radius:999px; padding:3px var(--sp-2);
-  font-size:var(--fs-sub); font-weight:700; box-shadow:var(--shadow-1); cursor:pointer; white-space:nowrap;
+  min-width:88px; background:#fff; border:2px solid; border-radius:999px; padding:4px 9px;
+  font-size:var(--fs-sub); font-weight:800; box-shadow:var(--shadow-1); cursor:pointer; white-space:nowrap;
+  line-height:1.15; text-align:center;
 }
-.pop-num small { font-weight:500; }
+.pop-num small { display:block; margin-top:2px; font-size:var(--fs-cap); font-weight:700; color:var(--sub); }
+.pop-num.expanded { min-width:126px; border-radius:var(--r-sm); padding:6px 10px; }
 .cluster-num {
   width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff;
   display:flex; align-items:center; justify-content:center; font-size:var(--fs-md); font-weight:700;
@@ -322,6 +338,27 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .place-result:hover, .place-result:focus-visible { border-color:var(--brand); background:var(--brand-soft); outline:none; }
 .place-result b { display:block; font-size:var(--fs-body); line-height:1.35; }
 .place-result span { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-sub); line-height:1.4; word-break:keep-all; }
+.help-list { display:grid; gap:var(--sp-2); margin-top:var(--sp-3); }
+.help-row {
+  width:100%; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:var(--sp-3);
+  border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3); background:#fff; color:var(--ink); text-align:left;
+}
+.help-row:focus-within, .help-row:hover { border-color:var(--line-strong); background:var(--panel-muted); }
+.help-icon {
+  width:34px; height:34px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+  background:var(--blue-soft); color:var(--blue);
+}
+.help-icon svg { width:19px; height:19px; }
+.help-icon.hospital { background:var(--brand-soft); color:var(--brand); }
+.help-main { min-width:0; }
+.help-main b { display:block; font-size:var(--fs-body); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.help-main span { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-sub); line-height:1.35; word-break:keep-all; }
+.help-actions { display:flex; gap:var(--sp-1); }
+.help-actions a, .help-actions button {
+  min-height:30px; border:1px solid var(--line-strong); border-radius:999px; padding:0 var(--sp-2);
+  background:#fff; color:var(--ink); font-size:var(--fs-cap); font-weight:800; text-decoration:none; cursor:pointer;
+}
+.help-actions a:focus-visible, .help-actions button:focus-visible { outline:3px solid var(--focus-blue); outline-offset:2px; }
 .safety-card { border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--sp-4); background:#fff; }
 .safety-card h3 { font-size:var(--fs-md); margin-bottom:2px; }
 .safety-card .addr { font-size:var(--fs-cap); color:var(--sub); margin-bottom:var(--sp-3); }
@@ -329,6 +366,10 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .safety-card .row:first-of-type { border-top:0; }
 .safety-card .row b { text-align:right; white-space:nowrap; }
 .safety-card .tagchip { display:inline-block; font-size:var(--fs-cap); font-weight:700; color:#fff; border-radius:var(--r-xs); padding:2px var(--sp-2); }
+.safety-card .context { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin:var(--sp-3) 0; }
+.safety-card .context-box { border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3); background:var(--panel-muted); }
+.safety-card .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
+.safety-card .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
 .safety-card .brand { margin-top:var(--sp-3); font-size:var(--fs-cap); color:var(--sub); }
 .card-actions { display:flex; gap:var(--sp-2); margin-top:var(--sp-3); }
 .card-actions button { flex:1; font-size:var(--fs-ui); border:1px solid var(--line-strong); background:#fff; border-radius:var(--r-sm); padding:var(--sp-3) 0; cursor:pointer; }
@@ -359,6 +400,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   .header-actions { gap:var(--sp-1); }
   .header-action { min-height:32px; padding:0 var(--sp-2); }
   .header-action .label { display:none; }
+  .safety-card .context { grid-template-columns:1fr; }
 }
 @media (max-width: 700px) {
   .app-header { display:block; }
@@ -450,10 +492,6 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 </aside>
 
 <div class="legend-stack open">
-  <div class="legend" id="incident-legend">
-    <b class="legend-title">지도 표시</b>
-    <div><i style="background:var(--accent);border:2px solid #fff"></i>실종 사건 (핀)</div>
-  </div>
   <div class="legend" id="crime-legend" hidden>
     <b class="legend-title">범죄주의구간 <small>경찰청 최근 1년</small></b>
     <div class="scale-row">
@@ -522,6 +560,14 @@ const FALLBACK_PLACES = [
   { keys: ['자매국수', '국수'], name: '자매국수', addr: '제주시 탑동로11길 6', lat: 33.516, lng: 126.520 },
   { keys: ['카페노티드', '노티드'], name: '카페 노티드 제주', addr: '제주시 애월읍 애월로1길 24-9', lat: 33.462, lng: 126.310 }
 ];
+const FALLBACK_HELP_PLACES = [
+  { type: 'police', name: '제주동부경찰서', addr: '제주시 동광로 66', lat: 33.505, lng: 126.532, phone: '112' },
+  { type: 'police', name: '제주서부경찰서', addr: '제주시 애월읍 애조로 215', lat: 33.471, lng: 126.405, phone: '112' },
+  { type: 'police', name: '서귀포경찰서', addr: '서귀포시 신중로 27', lat: 33.253, lng: 126.509, phone: '112' },
+  { type: 'hospital', name: '제주대학교병원', addr: '제주시 아란13길 15', lat: 33.467, lng: 126.545, phone: '119' },
+  { type: 'hospital', name: '제주한라병원', addr: '제주시 도령로 65', lat: 33.489, lng: 126.486, phone: '119' },
+  { type: 'hospital', name: '서귀포의료원', addr: '서귀포시 장수로 47', lat: 33.254, lng: 126.564, phone: '119' }
+];
 const state = { data: null, pop: null, cctv: null, tab: 'incident', focus: null, query: '', userLocation: null };
 
 function loadScript(src) {
@@ -573,11 +619,35 @@ function distanceLabel(point) {
   const km = haversineKm(state.userLocation, point);
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 }
+function formatDistance(point, origin) {
+  const km = haversineKm(origin, point);
+  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+}
+function helpTypeLabel(type) {
+  return type === 'police' ? '경찰' : '병원';
+}
+function helpTypeTitle(type) {
+  return type === 'police' ? '가까운 경찰서' : '가까운 병원';
+}
+function fallbackNearestHelp(origin) {
+  return ['police', 'hospital'].map(type => FALLBACK_HELP_PLACES
+    .filter(place => place.type === type)
+    .map(place => ({ ...place, distanceKm: haversineKm(origin, place) }))
+    .sort((a, b) => a.distanceKm - b.distanceKm)[0]);
+}
 function fallbackPlaceSearchResults(query) {
   const q = norm(query);
-  const broad = ['호텔', '숙소', '식당', '음식점', '맛집', '카페', '해변', '관광지', '장소'];
+  const categoryMatch = p => {
+    const haystack = norm([p.name, p.addr, ...p.keys].join(' '));
+    if (['호텔', '숙소'].includes(q)) return /호텔|하얏트|글래드|라마다|파르나스|신라/.test(haystack);
+    if (['식당', '음식점', '맛집'].includes(q)) return /고집돌우럭|연돈|김밥|국수|돈까스|우럭/.test(haystack);
+    if (q === '카페') return /카페|노티드|애월/.test(haystack);
+    if (q === '해변') return /해변|해수욕장|협재|함덕|곽지|월정리|이호테우/.test(haystack);
+    if (['관광지', '장소'].includes(q)) return true;
+    return false;
+  };
   const places = FALLBACK_PLACES
-    .filter(p => broad.includes(q) || p.keys.some(k => norm(k).includes(q) || q.includes(norm(k))))
+    .filter(p => categoryMatch(p) || p.keys.some(k => norm(k).includes(q) || q.includes(norm(k))))
     .map(p => ({ name: p.name, addr: p.addr, lat: p.lat, lng: p.lng }));
   const regions = state.pop ? state.pop.regions
     .filter(r => norm(r.name).includes(q) || q.includes(norm(r.name)))
@@ -602,6 +672,42 @@ function popStyle(regions) {
   return { color: t => COLORS[tier(t)],
            tag: t => ['가장 한적', '한적', '보통', '붐빔', '가장 붐빔'][tier(t)] };
 }
+function regionRanks(regions) {
+  const quiet = [...regions].sort((a, b) => a.total - b.total);
+  const byName = Object.fromEntries(quiet.map((r, index) => [r.name, {
+    quietRank: index + 1,
+    crowdRank: quiet.length - index,
+    totalRegions: quiet.length
+  }]));
+  return { quiet, byName };
+}
+function nearbyIncidentContext(point, radiusKm) {
+  const nearby = state.data.incidents
+    .map(i => ({ i, km: haversineKm(point, i) }))
+    .filter(x => x.km <= radiusKm)
+    .sort((a, b) => a.km - b.km);
+  return {
+    nearby,
+    label: nearby.length >= 3 ? '보도 사건 높음' : nearby.length ? '보도 사건 있음' : '보도 사건 낮음',
+    detail: nearby.length ? `반경 ${radiusKm}km 보도 확인 사건 ${nearby.length}건 (최근접 ${nearby[0].km.toFixed(1)}km)` : `반경 ${radiusKm}km 보도 확인 사건 없음`,
+    alert: nearby.length > 0
+  };
+}
+function regionPopulationContext(region, style, ranks) {
+  const rank = ranks.byName[region.name];
+  return {
+    color: style.color(region.total),
+    tag: style.tag(region.total),
+    quietRank: rank ? rank.quietRank : 0,
+    crowdRank: rank ? rank.crowdRank : 0,
+    totalRegions: rank ? rank.totalRegions : state.pop.regions.length,
+    people: fmt(region.total)
+  };
+}
+function regionLabelHtml(region, pop, incident, mode) {
+  if (mode === 'mid') return `${region.name}<small>${pop.tag}</small>`;
+  return `${region.name}<small>${pop.people}명 · 한적 ${pop.quietRank}위 · ${incident.label}</small>`;
+}
 
 // ── 패널(목록/상세) : 거지맵 패턴 — 목록 항목 ↔ 지도 이동 연동, 상세는 같은 패널에서 전환 ──
 const panel = document.getElementById('panel');
@@ -616,7 +722,14 @@ document.getElementById('grab').onclick = () => {
   panel.classList.toggle('half', !panel.classList.contains('half') && !panel.classList.contains('full'));
   if (!panel.classList.contains('half')) panel.classList.remove('full');
 };
-let mapApi = { panTo: () => {}, returnToJeju: () => {}, setUserLocation: () => {}, checkPlace: () => showToast('지도 검색을 준비 중입니다.') };
+let mapApi = {
+  panTo: () => {},
+  returnToJeju: () => {},
+  setUserLocation: () => {},
+  clearNearestHelp: () => {},
+  showNearestHelp: loc => renderNearestHelp(loc, fallbackNearestHelp(loc)),
+  checkPlace: () => showToast('지도 검색을 준비 중입니다.')
+};
 
 function showDetail(html) {
   detailView.innerHTML = '<button class="back" id="back-btn">&larr; 목록으로</button>' + html;
@@ -625,6 +738,38 @@ function showDetail(html) {
     detailView.classList.remove('on'); listView.classList.remove('off');
   };
   if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
+}
+function renderNearestHelp(origin, places) {
+  showDetail(`
+    <h2>내 주변 도움 장소</h2>
+    <div class="area">현재 위치 기준 가까운 경찰서와 병원입니다.</div>
+    <div class="help-list">
+      ${places.map((place, index) => `
+        <div class="help-row">
+          <div class="help-icon ${place.type}" aria-hidden="true">
+            ${place.type === 'police'
+              ? '<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.2 2.7 7.7 7 10 4.3-2.3 7-5.8 7-10V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+              : '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>'}
+          </div>
+          <div class="help-main">
+            <b>${escapeHtml(helpTypeTitle(place.type))} · ${escapeHtml(place.name)}</b>
+            <span>${escapeHtml(place.addr || '주소 정보 없음')} · ${formatDistance(place, origin)}</span>
+          </div>
+          <div class="help-actions">
+            <button type="button" data-help-index="${index}">지도</button>
+            <a href="tel:${escapeHtml(place.phone || (place.type === 'police' ? '112' : '119'))}">전화</a>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="card-hint">위급하면 앱 정보보다 112 또는 119 신고가 우선입니다. 지도 결과는 공개 장소 데이터 기준이라 운영 여부는 현장과 다를 수 있습니다.</div>`);
+  detailView.querySelectorAll('[data-help-index]').forEach(button => {
+    button.onclick = () => {
+      const place = places[Number(button.dataset.helpIndex)];
+      mapApi.panTo(place.lat, place.lng, 5);
+      gtag('event', 'help_place_focus', { type: place.type });
+    };
+  });
+  gtag('event', 'nearest_help_show');
 }
 function incidentDetail(inc) {
   const fact = incidentFactText(inc);
@@ -636,17 +781,16 @@ function incidentDetail(inc) {
     <div class="src">출처: ${inc.sources.map(s => `<a href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`).join('')}</div>`);
   gtag('event', 'incident_open', { incident_id: inc.id });
 }
-function regionDetail(r, style, rank, n) {
-  const near = state.data.incidents
-    .map(i => ({ i, km: haversineKm(r, i) })).filter(x => x.km <= 8)
-    .sort((a, b) => a.km - b.km);
+function regionDetail(r, style, ranks) {
+  const pop = regionPopulationContext(r, style, ranks);
+  const incidents = nearbyIncidentContext(r, 8);
   showDetail(`
     <span class="status" style="background:${style.color(r.total)}">${style.tag(r.total)}</span>
     <h2>${r.name}</h2>
-    <div class="area">43개 지역 중 한적한 순 ${rank}위</div>
+    <div class="area">${pop.totalRegions}개 지역 중 한적한 순 ${pop.quietRank}위 · 붐비는 순 ${pop.crowdRank}위</div>
     <div class="summary">하루 동안 이 지역을 오간 사람이 약 <b>${r.total.toLocaleString()}명</b>입니다
     (${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 ${+state.pop.day.slice(6,8)}일, 통신사 빅데이터 기준).<br>
-    ${near.length ? `반경 8km 내 보도 확인 사건 ${near.length}건 (가장 가까운 곳 ${near[0].km.toFixed(1)}km)` : '반경 8km 내 보도 확인 사건 없음'}</div>`);
+    ${incidents.detail}<br>범죄주의구간은 경찰청 생활안전지도 레이어에서 색으로 따로 확인하세요.</div>`);
   gtag('event', 'region_open', { region: r.name });
 }
 
@@ -668,19 +812,22 @@ function renderList() {
     });
   } else if (state.pop) {
     const style = popStyle(state.pop.regions);
-    const allSorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
-    const sorted = allSorted;
+    const ranks = regionRanks(state.pop.regions);
+    const sorted = ranks.quiet;
     const max = sorted.length ? sorted[sorted.length - 1].total : 1;
     resultMeta.innerHTML = `<span>장소 입력 후 Enter로 점검</span><span>지역 <b>${sorted.length}</b>곳 참고</span>`;
     sorted.forEach(r => {
-      const rank = allSorted.findIndex(x => x.name === r.name) + 1;
-      const c = style.color(r.total);
+      const pop = regionPopulationContext(r, style, ranks);
+      const incidents = nearbyIncidentContext(r, 8);
+      const c = pop.color;
       const d = document.createElement('div'); d.className = 'item';
       d.tabIndex = 0;
       d.innerHTML = `<span class="dot" style="background:${c}"></span>
-        <div class="t"><b>${r.name}</b><span>${style.tag(r.total)}</span>${state.userLocation ? `<span class="distance">내 위치에서 ${distanceLabel(r)}</span>` : ''}</div>
+        <div class="t"><b>${r.name}</b><span>${pop.tag} · 한적 ${pop.quietRank}위 · 붐빔 ${pop.crowdRank}위</span>
+        <div class="metrics"><span class="metric-pill">${pop.totalRegions}곳 중 ${pop.quietRank}위</span><span class="metric-pill${incidents.alert ? ' alert' : ''}">${incidents.label}</span></div>
+        ${state.userLocation ? `<span class="distance">내 위치에서 ${distanceLabel(r)}</span>` : ''}</div>
         <div class="bar-wrap"><small>${fmt(r.total)}명</small><div class="bar"><i style="width:${Math.max(4, r.total / max * 100)}%;background:${c}"></i></div></div>`;
-      d.onclick = () => { mapApi.panTo(r.lat, r.lng, 7); regionDetail(r, style, rank, allSorted.length); };
+      d.onclick = () => { mapApi.panTo(r.lat, r.lng, 7); regionDetail(r, style, ranks); };
       d.onkeydown = e => { if (e.key === 'Enter') d.click(); };
       el.appendChild(d);
     });
@@ -714,11 +861,13 @@ document.getElementById('reset-btn').onclick = () => {
   state.query = '';
   searchClear.hidden = true;
   mapApi.returnToJeju();
+  mapApi.clearNearestHelp();
   returnJejuBtn.hidden = true;
   renderList();
 };
 returnJejuBtn.onclick = () => {
   mapApi.returnToJeju();
+  mapApi.clearNearestHelp();
   returnJejuBtn.hidden = true;
   showToast('제주도 전체 지도로 돌아왔습니다.');
   gtag('event', 'return_jeju');
@@ -739,7 +888,8 @@ locateBtn.onclick = () => {
     locateBtn.classList.remove('locating');
     locateBtn.querySelector('span').textContent = '내 위치';
     renderList();
-    showToast('현재 위치를 지도에 표시했습니다.');
+    mapApi.showNearestHelp(loc);
+    showToast('현재 위치 기준 가까운 도움 장소를 표시했습니다.');
     gtag('event', 'location_use');
   }, () => {
     locateBtn.classList.remove('locating');
@@ -808,25 +958,30 @@ function renderPlaceResults(query, places, onPick) {
     button.onclick = () => onPick(places[Number(button.dataset.placeIndex)]);
   });
 }
+function openMapPlaceInspector(title, hint) {
+  showDetail(`
+    <h2>${escapeHtml(title)}</h2>
+    <div id="card-result" class="card-hint">${escapeHtml(hint)}</div>`);
+}
 
 function renderSafetyCard(loc, cfg, moveToLocation) {
   const style = popStyle(state.pop.regions);
-  const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+  const ranks = regionRanks(state.pop.regions);
   const region = state.pop.regions.reduce((a, r) => haversineKm(loc, r) < haversineKm(loc, a) ? r : a);
-  const rank = sorted.findIndex(x => x.name === region.name) + 1;
-  const near = state.data.incidents.map(i => ({ i, km: haversineKm(loc, i) }))
-    .filter(x => x.km <= 8).sort((a, b) => a.km - b.km);
-  const c = style.color(region.total), tag = style.tag(region.total);
-  const nearText = near.length ? `반경 8km 보도 확인 사건 ${near.length}건, 최근접 ${near[0].km.toFixed(1)}km` : '반경 8km 보도 확인 사건 없음';
-  const summaryText = `${loc.name} 안전 점검: ${nearText}. ${region.name}은 통신사 유동인구 기준 "${tag}" 지역입니다.`;
+  const pop = regionPopulationContext(region, style, ranks);
+  const incidents = nearbyIncidentContext(loc, 8);
+  const summaryText = `${loc.name} 안전 점검: ${incidents.detail}. ${region.name}은 통신사 유동인구 기준 "${pop.tag}", 한적한 순 ${pop.quietRank}위 지역입니다.`;
   document.getElementById('card-result').innerHTML = `
     <div class="safety-card" id="the-card">
       <h3>${loc.name} 안전 점검</h3>
       <div class="addr">${loc.addr}</div>
-      <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${near.length ? 'var(--accent)' : 'inherit'}">${near.length ? near.length + '건 (최근접 ' + near[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
-      <div class="row"><span>지역 붐빔도 (${region.name})</span><b><span class="tagchip" style="background:${c}">${tag}</span></b></div>
+      <div class="context">
+        <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color}">${pop.tag}</span></b></div>
+        <div class="context-box"><span>보도 사건 맥락</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.label}</b></div>
+      </div>
+      <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건 (최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
+      <div class="row"><span>지역 (${region.name})</span><b>${pop.totalRegions}곳 중 한적 ${pop.quietRank}위</b></div>
       <div class="row"><span>하루 유동인구</span><b>약 ${region.total.toLocaleString()}명</b></div>
-      <div class="row"><span>한적한 순위</span><b>43곳 중 ${rank}위</b></div>
       <div class="brand">공유용 요약 · 제주안전맵 · ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 + 언론 보도 기준</div>
     </div>
     <div class="card-actions">
@@ -835,7 +990,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
       <button id="card-copy">요약 복사</button>
     </div>
     <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도와 통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
-  gtag('event', 'card_create', { region: region.name, incidents_8km: near.length });
+  gtag('event', 'card_create', { region: region.name, incidents_8km: incidents.nearby.length });
   moveToLocation(loc);
   returnJejuBtn.hidden = false;
 
@@ -872,6 +1027,7 @@ function setupCard(map, cfg) {
   const geocoder = new kakao.maps.services.Geocoder();
   const places = new kakao.maps.services.Places();
   let marker = null;
+  const placeCategories = ['MT1', 'CS2', 'PS3', 'SC4', 'AC5', 'PK6', 'OL7', 'SW8', 'BK9', 'CT1', 'AG2', 'PO3', 'AT4', 'AD5', 'FD6', 'CE7', 'HP8', 'PM9'];
 
   const search = q => new Promise(resolve => {
     geocoder.addressSearch(q, (res, st) => {
@@ -888,6 +1044,33 @@ function setupCard(map, cfg) {
         resolve([]);
       });
     });
+  });
+  const nearbyPlaces = latLng => Promise.all(placeCategories.map(category => new Promise(resolve => {
+    places.categorySearch(category, (res, st) => {
+      if (st !== kakao.maps.services.Status.OK) {
+        resolve([]);
+        return;
+      }
+      resolve(res.map(place => ({
+        id: place.id,
+        name: place.place_name,
+        addr: place.road_address_name || place.address_name,
+        lat: +place.y,
+        lng: +place.x,
+        distance: Number(place.distance || 0)
+      })));
+    }, { location: latLng, radius: 120, sort: kakao.maps.services.SortBy.DISTANCE });
+  }))).then(groups => {
+    const seen = new Set();
+    return groups.flat()
+      .filter(place => {
+        const key = place.id || `${place.name}|${place.addr}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 15);
   });
 
   function renderCard(loc) {
@@ -932,6 +1115,18 @@ function setupCard(map, cfg) {
     gtag('event', 'card_open');
   };
   btn.onclick = () => openSafetyCheck('');
+  mapApi.inspectPoint = async latLng => {
+    openMapPlaceInspector('지도에서 누른 장소', '주변 장소 정보를 찾고 있습니다...');
+    const matches = await nearbyPlaces(latLng);
+    if (!matches.length) {
+      document.getElementById('card-result').innerHTML =
+        '<div class="card-hint">이 지점 주변에서 제공사가 공개한 장소 정보를 찾지 못했습니다. 지도 글자 자체가 아니라 장소 데이터 API 기준이라, 일부 아파트나 작은 건물은 나오지 않을 수 있습니다.</div>';
+      return;
+    }
+    renderPlaceResults('선택 지점 주변', matches, renderCard);
+    if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
+    gtag('event', 'map_place_lookup', { result_count: matches.length });
+  };
   mapApi.checkPlace = query => {
     if (!query) {
       showToast('호텔·숙소·장소 이름을 입력해 주세요.');
@@ -970,6 +1165,67 @@ async function initKakao(cfg) {
     }
     userOverlay.setPosition(pos);
     userOverlay.setMap(map);
+  };
+  const helpPlaces = new kakao.maps.services.Places();
+  let helpOverlays = [];
+  const clearHelpOverlays = () => {
+    helpOverlays.forEach(overlay => overlay.setMap(null));
+    helpOverlays = [];
+  };
+  mapApi.clearNearestHelp = clearHelpOverlays;
+  const searchHelpCategory = (origin, type, code) => new Promise(resolve => {
+    const center = new kakao.maps.LatLng(origin.lat, origin.lng);
+    helpPlaces.categorySearch(code, (res, status) => {
+      if (status !== kakao.maps.services.Status.OK || !res.length) {
+        resolve(null);
+        return;
+      }
+      const place = res[0];
+      resolve({
+        type,
+        name: place.place_name,
+        addr: place.road_address_name || place.address_name,
+        lat: Number(place.y),
+        lng: Number(place.x),
+        phone: place.phone || (type === 'police' ? '112' : '119'),
+        distanceKm: Number(place.distance || 0) / 1000
+      });
+    }, { location: center, radius: 20000, sort: kakao.maps.services.SortBy.DISTANCE });
+  });
+  const nearestKakaoHelp = async origin => {
+    const fallback = fallbackNearestHelp(origin);
+    const found = await Promise.all([
+      searchHelpCategory(origin, 'police', 'PO3'),
+      searchHelpCategory(origin, 'hospital', 'HP8')
+    ]);
+    return found.map((place, index) => place || fallback[index]);
+  };
+  const showHelpOverlays = places => {
+    clearHelpOverlays();
+    helpOverlays = places.map(place => {
+      const el = document.createElement('button');
+      el.className = `help-marker ${place.type}`;
+      el.type = 'button';
+      el.textContent = helpTypeLabel(place.type);
+      el.setAttribute('aria-label', `${helpTypeTitle(place.type)} ${place.name}`);
+      el.onclick = () => {
+        mapApi.panTo(place.lat, place.lng, 5);
+        renderNearestHelp(state.userLocation || place, places);
+      };
+      const overlay = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(place.lat, place.lng),
+        content: el,
+        yAnchor: 1,
+        zIndex: 70
+      });
+      overlay.setMap(map);
+      return overlay;
+    });
+  };
+  mapApi.showNearestHelp = async loc => {
+    const places = await nearestKakaoHelp(loc);
+    showHelpOverlays(places);
+    renderNearestHelp(loc, places);
   };
 
   // 사건: 축소하면 숫자 클러스터, 확대하면 개별 핀 (거지맵 패턴)
@@ -1019,7 +1275,7 @@ async function initKakao(cfg) {
   // 사건이 있는 지역은 빨간 테두리. "위험도 점수"가 아니라 사실(사람 수·사건 유무)만 칠한다.
   if (state.pop) {
     const style = popStyle(state.pop.regions);
-    const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+    const ranks = regionRanks(state.pop.regions);
     const byName = Object.fromEntries(state.pop.regions.map(r => [r.name, r]));
     let polygons = [];
     try {
@@ -1034,7 +1290,7 @@ async function initKakao(cfg) {
           fillColor: style.color(r.total), fillOpacity: .35
         });
         kakao.maps.event.addListener(p, 'click', () => {
-          regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length);
+          regionDetail(r, style, ranks);
         });
         polygons.push(p);
       });
@@ -1043,7 +1299,7 @@ async function initKakao(cfg) {
     const overlays = state.pop.regions.map(r => {
       const el = document.createElement('div');
       el.className = 'pop-num'; el.style.borderColor = style.color(r.total); el.style.color = style.color(r.total);
-      el.onclick = () => { regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length); mapApi.panTo(r.lat, r.lng); };
+      el.onclick = () => { regionDetail(r, style, ranks); mapApi.panTo(r.lat, r.lng); };
       const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(r.lat, r.lng), content: el, yAnchor: .5, zIndex: 20 });
       return { ov, el, r };
     });
@@ -1054,7 +1310,9 @@ async function initKakao(cfg) {
       overlays.forEach(({ ov, el, r }) => {
         if (lv >= 10) { ov.setMap(null); return; }
         if (popOn) ov.setMap(map);
-        el.innerHTML = lv >= 8 ? r.name : `${r.name} <small>· 사람 ${fmt(r.total)}</small>`;
+        const expanded = lv < 8;
+        el.classList.toggle('expanded', expanded);
+        el.innerHTML = regionLabelHtml(r, regionPopulationContext(r, style, ranks), nearbyIncidentContext(r, 8), expanded ? 'expanded' : 'mid');
       });
     };
     kakao.maps.event.addListener(map, 'zoom_changed', relabel);
@@ -1139,6 +1397,10 @@ async function initKakao(cfg) {
     }, true);
   }
   setupCard(map, cfg);
+  kakao.maps.event.addListener(map, 'click', mouseEvent => {
+    if (!state.pop || !mapApi.inspectPoint) return;
+    mapApi.inspectPoint(mouseEvent.latLng);
+  });
   return 'kakao';
 }
 
@@ -1163,11 +1425,37 @@ async function initLeaflet(cfg) {
     }
     userMarker.setLatLng([lat, lng]);
   };
+  let helpLayer = null;
+  mapApi.clearNearestHelp = () => {
+    if (helpLayer) map.removeLayer(helpLayer);
+    helpLayer = null;
+  };
+  mapApi.showNearestHelp = loc => {
+    const places = fallbackNearestHelp(loc);
+    mapApi.clearNearestHelp();
+    helpLayer = L.layerGroup();
+    places.forEach(place => {
+      L.marker([place.lat, place.lng], {
+        icon: L.divIcon({
+          html: `<button class="help-marker ${place.type}" type="button" aria-label="${helpTypeTitle(place.type)} ${escapeHtml(place.name)}">${helpTypeLabel(place.type)}</button>`,
+          className: '',
+          iconSize: [42, 28],
+          iconAnchor: [21, 28]
+        }),
+        zIndexOffset: 1100
+      }).addTo(helpLayer).on('click', () => {
+        mapApi.panTo(place.lat, place.lng, 5);
+        renderNearestHelp(loc, places);
+      });
+    });
+    helpLayer.addTo(map);
+    renderNearestHelp(loc, places);
+  };
 
   const incidentLayer = L.layerGroup();
   state.data.incidents.forEach(inc => {
     L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: incidentMarkerHtml(inc, true), className: '', iconSize: [132, 68], iconAnchor: [66, 68] }) })
-      .addTo(incidentLayer).on('click', () => incidentDetail(inc));
+      .addTo(incidentLayer).on('click', event => { L.DomEvent.stopPropagation(event); incidentDetail(inc); });
   });
   incidentLayer.addTo(map);
   document.getElementById('chip-incident').onclick = function () {
@@ -1175,7 +1463,7 @@ async function initLeaflet(cfg) {
   };
   if (state.pop) {
     const style = popStyle(state.pop.regions);
-    const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+    const ranks = regionRanks(state.pop.regions);
     const byName = Object.fromEntries(state.pop.regions.map(r => [r.name, r]));
     const layer = L.layerGroup();
     try {
@@ -1186,20 +1474,33 @@ async function initLeaflet(cfg) {
           return { color: '#8e8e93', weight: 1, opacity: .5,
                    fillColor: r ? style.color(r.total) : '#ccc', fillOpacity: .35 };
         },
-        onEachFeature: (f, l) => l.on('click', () => {
+        onEachFeature: (f, l) => l.on('click', event => {
+          L.DomEvent.stopPropagation(event);
           const r = byName[f.properties.name]; if (!r) return;
-          regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length);
+          regionDetail(r, style, ranks);
         })
       }).addTo(layer);
     } catch (e) {}
-    state.pop.regions.forEach(r => {
-      L.circleMarker([r.lat, r.lng], {
-        radius: 6 + Math.sqrt(r.total) / 18, color: style.color(r.total), weight: 1.5,
-        fillColor: style.color(r.total), fillOpacity: .3
-      }).addTo(layer).on('click', () => regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length));
+    const popMarkers = state.pop.regions.map(r => {
+      const iconFor = expanded => L.divIcon({
+        html: `<button class="pop-num${expanded ? ' expanded' : ''}" type="button" style="border-color:${style.color(r.total)};color:${style.color(r.total)}">${regionLabelHtml(r, regionPopulationContext(r, style, ranks), nearbyIncidentContext(r, 8), expanded ? 'expanded' : 'mid')}</button>`,
+        className: '',
+        iconSize: expanded ? [126, 44] : [88, 36],
+        iconAnchor: expanded ? [63, 22] : [44, 18]
+      });
+      const marker = L.marker([r.lat, r.lng], { icon: iconFor(false), zIndexOffset: 200 }).addTo(layer).on('click', event => {
+        L.DomEvent.stopPropagation(event);
+        regionDetail(r, style, ranks);
+      });
+      return { marker, iconFor };
     });
+    const relabelPop = () => {
+      const expanded = map.getZoom() >= 12;
+      popMarkers.forEach(({ marker, iconFor }) => marker.setIcon(iconFor(expanded)));
+    };
+    map.on('zoomend', relabelPop);
     wireChip('chip-pop', on => {
-      on ? layer.addTo(map) : map.removeLayer(layer);
+      if (on) { layer.addTo(map); relabelPop(); } else map.removeLayer(layer);
       document.getElementById('legend').hidden = !on;
     }, true);
     let placeMarker = null;
@@ -1269,7 +1570,10 @@ async function initLeaflet(cfg) {
       });
       const marker = L.marker([lat, lng], { icon: iconFor(false), zIndexOffset: 300 })
         .addTo(layer)
-        .on('click', () => showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`));
+        .on('click', event => {
+          L.DomEvent.stopPropagation(event);
+          showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`);
+        });
       return { marker, count, iconFor };
     });
     const relabelCctv = () => {
@@ -1282,6 +1586,9 @@ async function initLeaflet(cfg) {
       cctvUi(on);
     }, false);
   }
+  map.on('click', () => {
+    openMapPlaceInspector('지도에서 누른 위치', '이 기본 지도는 화면에 그려진 건물·상호명을 클릭 데이터로 제공하지 않습니다. 상단 검색창에 호텔, 음식점, 카페, 해변 이름을 입력해 점검해 주세요.');
+  });
   return 'osm';
 }
 
