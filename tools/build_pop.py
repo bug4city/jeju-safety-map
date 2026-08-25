@@ -48,8 +48,13 @@ for name, (lat, lng) in COORDS.items():
     q = urllib.parse.urlencode({"day": day, "hdong": "true", "destHdongNm": name})
     d = json.loads(get(f"{BASE}/population/chart/getFloatingRegionHDong?{q}"))
     total = int(d.get("total") or 0)
-    regions.append({"name": name, "lat": lat, "lng": lng, "total": total})
-    print(f"{name}: {total:,}")
+    region = {"name": name, "lat": lat, "lng": lng, "total": total}
+    # 도민(totalLocal) vs 외지인(totalOther) 분리값 — 없으면 생략하고 프론트에서 숨긴다.
+    local, other = int(d.get("totalLocal") or 0), int(d.get("totalOther") or 0)
+    if local and other:
+        region["local"], region["other"] = local, other
+    regions.append(region)
+    print(f"{name}: {total:,} (도민 {local:,} · 외지인 {other:,})")
 
 regions.sort(key=lambda r: -r["total"])
 with open(OUT, "w") as f:
