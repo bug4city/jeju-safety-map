@@ -485,7 +485,9 @@ async function initKakao(cfg) {
   if (cfg.safemapKey) {
     const img = document.createElement('img');
     img.style.cssText = 'opacity:.72;pointer-events:none;';
-    const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0, yAnchor: 0, zIndex: 5 });
+    // 앵커를 뷰포트 모서리에 두면 카카오가 화면 밖 판정으로 오버레이를 컬링해서
+    // DOM에 안 붙는다. 중앙 앵커(0.5)로 두고 이미지가 화면 전체를 덮게 한다.
+    const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0.5, yAnchor: 0.5, zIndex: 5 });
     let on = false;
     const refresh = () => {
       if (!on) return;
@@ -495,7 +497,7 @@ async function initKakao(cfg) {
       const p2 = proj.containerPointFromCoords(new kakao.maps.LatLng(sw.getLat(), ne.getLng()));
       img.width = Math.round(p2.x - p1.x); img.height = Math.round(p2.y - p1.y);
       img.src = `${CRIME_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CRMNLHSPOT_TOT&styles=A2SM_CrmnlHspot_Tot_Tot&format=image/png&transparent=TRUE&version=1.1.1&srs=EPSG:4326&bbox=${sw.getLng()},${sw.getLat()},${ne.getLng()},${ne.getLat()}&width=${img.width}&height=${img.height}`;
-      overlay.setPosition(new kakao.maps.LatLng(ne.getLat(), sw.getLng()));
+      overlay.setPosition(map.getCenter());
       overlay.setMap(map);
     };
     kakao.maps.event.addListener(map, 'idle', refresh);
