@@ -97,10 +97,9 @@ gtag('config', 'G-FSQNRGNQ5Z');
   --shadow-2:0 4px 20px rgba(0,0,0,.14);
   --fs-title:17px; --fs-md:15px; --fs-body:14px; --fs-ui:13.5px; --fs-sub:12.5px; --fs-cap:11px;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;  /* 간격은 이 4단계만 쓴다 */
-  --panel-w:360px; --sheet-peek:112px; --sheet-half:46vh; --header-h:56px;
+  --panel-w:360px; --sheet-peek:112px; --header-h:56px;
 }
 /* iOS 사파리 주소창 접힘에 맞춰 실제 보이는 높이 기준으로 계산 */
-@supports (height: 1dvh) { :root { --sheet-half:46dvh; } }
 * { box-sizing:border-box; margin:0; }
 html,body { height:100%; }
 body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif; color:var(--ink); overflow:hidden; }
@@ -144,10 +143,9 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   transition:transform .28s cubic-bezier(.3,.9,.3,1);
   display:flex; flex-direction:column;
 }
-.panel.half { transform:translateY(calc(100% - var(--sheet-half))); }
 .panel.full { transform:translateY(calc(8px + env(safe-area-inset-top))); }
-.grab { padding:var(--sp-2) 0 var(--sp-1); cursor:grab; flex:none; touch-action:none; }
-.grab::before { content:''; display:block; width:44px; height:5px; border-radius:3px; background:var(--line-strong); margin:0 auto; }
+.grab { padding:var(--sp-3) 0 var(--sp-2); cursor:grab; flex:none; touch-action:none; }
+.grab::before { content:''; display:block; width:56px; height:5px; border-radius:3px; background:var(--line-strong); margin:0 auto; }
 .panel-tools { flex:none; padding:var(--sp-1) var(--sp-4) var(--sp-3); border-bottom:1px solid var(--line); }
 .search-box {
   display:flex; align-items:center; gap:var(--sp-2); min-height:48px; padding:0 var(--sp-3);
@@ -486,13 +484,14 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   .header-action .label { display:none; }
 }
 @media (max-width: 899px) {
+  /* 상세 카드가 열려 있으면 검색창·버튼 블록을 숨겨 카드에 세로 공간을 몰아준다 */
+  .panel:has(.detail.on) .panel-tools { display:none; }
   /* 시트 접힘 상태에선 시트 바로 위, 반쯤 펼치면 그 위로. 패널(1100)보다 아래 유지 */
   .return-jeju { bottom:calc(var(--sheet-peek) + 62px); z-index:1050; }
-  body:has(.panel.half) .return-jeju { bottom:calc(var(--sheet-half) + var(--sp-3)); }
   /* 시트를 펼치면 뒤에 깔려 못 누르는 범례·출처·복귀 버튼은 같이 숨긴다 */
   .legend-stack, .foot-note, .return-jeju { transition:opacity .2s; }
-  body:has(.panel.half) .legend-stack, body:has(.panel.full) .legend-stack,
-  body:has(.panel.half) .foot-note, body:has(.panel.full) .foot-note,
+  body:has(.panel.full) .legend-stack,
+  body:has(.panel.full) .foot-note,
   body:has(.panel.full) .return-jeju { opacity:0; pointer-events:none; }
 }
 </style>
@@ -861,34 +860,22 @@ const searchClear = document.getElementById('search-clear');
 const resultMeta = document.getElementById('result-meta');
 const locateBtn = document.getElementById('locate-btn');
 const returnJejuBtn = document.getElementById('return-jeju');
-// 손잡이: 탭하면 접힘→반→전체 순환, 위아래로 끌면 한 단계씩 이동
+// 손잡이: 접힘·전체 2단. 탭하면 토글, 위아래로 조금만 끌어도 방향대로 열리고 닫힌다
 (() => {
   const grab = document.getElementById('grab');
-  const states = ['peek', 'half', 'full'];
-  const getState = () => panel.classList.contains('full') ? 'full' : panel.classList.contains('half') ? 'half' : 'peek';
-  const setState = s => {
-    panel.classList.toggle('half', s === 'half');
-    panel.classList.toggle('full', s === 'full');
-  };
-  let startY = null, moved = false;
+  const setState = s => panel.classList.toggle('full', s === 'full');
+  let startY = null;
   grab.addEventListener('pointerdown', e => {
-    startY = e.clientY; moved = false;
+    startY = e.clientY;
     grab.setPointerCapture(e.pointerId);
-  });
-  grab.addEventListener('pointermove', e => {
-    if (startY !== null && Math.abs(e.clientY - startY) > 12) moved = true;
   });
   grab.addEventListener('pointerup', e => {
     if (startY === null) return;
     const dy = e.clientY - startY;
     startY = null;
-    const i = states.indexOf(getState());
-    if (moved) {
-      if (dy < -20) setState(states[Math.min(states.length - 1, i + 1)]);
-      else if (dy > 20) setState(states[Math.max(0, i - 1)]);
-    } else {
-      setState(states[(i + 1) % states.length]);
-    }
+    if (dy < -10) setState('full');
+    else if (dy > 10) setState('peek');
+    else setState(panel.classList.contains('full') ? 'peek' : 'full');
   });
   grab.addEventListener('pointercancel', () => { startY = null; });
 })();
@@ -911,7 +898,7 @@ function showDetail(html) {
     detailView.classList.remove('on'); listView.classList.remove('off');
     if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
   };
-  if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
+  if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
 }
 function renderNearestHelp(origin, places) {
   showDetail(`
@@ -1583,7 +1570,7 @@ function setupCard(map, cfg) {
       return;
     }
     renderPlaceResults('선택 지점 주변', matches, renderCard);
-    if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
+    if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
     gtag('event', 'map_place_lookup', { result_count: matches.length });
   };
   mapApi.checkPlace = query => {
@@ -2001,7 +1988,7 @@ async function initKakao(cfg) {
     if (detailView.classList.contains('on')) {
       const back = document.getElementById('back-btn');
       if (back) back.click();
-      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('half', 'full');
+      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('full');
       return;
     }
     mapApi.inspectPoint(mouseEvent.latLng);
@@ -2239,7 +2226,7 @@ async function initLeaflet(cfg) {
     if (detailView.classList.contains('on')) {
       const back = document.getElementById('back-btn');
       if (back) back.click();
-      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('half', 'full');
+      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('full');
       return;
     }
     openMapPlaceInspector('지도에서 누른 위치', '이 기본 지도는 화면에 그려진 건물·상호명을 클릭 데이터로 제공하지 않습니다. 상단 검색창에 호텔, 음식점, 카페, 해변 이름을 입력해 점검해 주세요.');
