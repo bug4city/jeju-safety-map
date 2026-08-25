@@ -684,8 +684,11 @@ function popStyle(regions) {
   // 5단계: 진한 주황(가장 한적) → 진한 파랑(가장 붐빔). 색약에도 안전한 조합.
   // 초록 계열은 브랜드 전용이므로 데이터 색에서 뺀다. 범례 그라데이션과 함께 갱신할 것.
   const COLORS = ['#d35400', '#f0a35e', '#d9d4c5', '#7fa8d9', '#2a5ca8'];
+  // 배지 글자색: 밝은 중간 티어는 진한 글자, 양끝 진한 티어는 흰 글자.
+  const INKS = ['#fff', '#4a2b10', '#4d4738', '#1c3a63', '#fff'];
   const tier = t => cuts.findIndex(c => t < c) === -1 ? 4 : cuts.findIndex(c => t < c);
   return { color: t => COLORS[tier(t)],
+           ink: t => INKS[tier(t)],
            tag: t => ['가장 한적', '한적', '보통', '붐빔', '가장 붐빔'][tier(t)] };
 }
 function regionRanks(regions) {
@@ -713,6 +716,7 @@ function regionPopulationContext(region, style, ranks) {
   const rank = ranks.byName[region.name];
   return {
     color: style.color(region.total),
+    ink: style.ink(region.total),
     tag: style.tag(region.total),
     quietRank: rank ? rank.quietRank : 0,
     crowdRank: rank ? rank.crowdRank : 0,
@@ -825,7 +829,7 @@ function regionDetail(r, style, ranks) {
   const pop = regionPopulationContext(r, style, ranks);
   const incidents = nearbyIncidentContext(r, 8);
   showDetail(`
-    <span class="status" style="background:${style.color(r.total)}">${style.tag(r.total)}</span>
+    <span class="status" style="background:${style.color(r.total)};color:${style.ink(r.total)}">${style.tag(r.total)}</span>
     <h2>${r.name}</h2>
     <div class="area">${pop.totalRegions}개 지역 중 한적한 순 ${pop.quietRank}위 · 붐비는 순 ${pop.crowdRank}위</div>
     <div class="summary">하루 동안 이 지역을 오간 사람이 약 <b>${r.total.toLocaleString()}명</b>입니다
@@ -1038,7 +1042,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         <div class="context-box"><span>보도 사건 (8km)</span>
           <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
           <small>${incidents.nearby.length ? '최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km' : '언론 보도 확인 기준'}</small></div>
-        <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color}">${pop.tag}</span></b>
+        <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span></b>
           <small>${region.name} · 한적 ${pop.quietRank}/${pop.totalRegions}위</small></div>
         <div class="context-box"><span>공공 CCTV (500m)</span>
           <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
