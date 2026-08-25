@@ -10,7 +10,7 @@
 <meta name="keywords" content="제주안전맵, 제주 안심지도, 제주 안전지도, 제주 CCTV, 제주 비상벨, 제주 보안등, 제주 여행 안전, 제주 지도">
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="googlebot" content="index, follow, max-image-preview:large">
-<meta name="theme-color" content="#00a05a">
+<meta name="theme-color" content="#10b981">
 <meta name="format-detection" content="telephone=no">
 <link rel="canonical" href="https://jeju.kimyukah.com/">
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=2">
@@ -90,18 +90,18 @@ try {
 :root {
   /* 미니 디자인 토큰 — 색은 여기서만 정의한다 */
   --ink:#1c1c1e; --sub:#6e6e73; --card:#ffffff; --line:#ececf0;
-  --accent:#c0392b;            /* 사건(빨강) — 데이터 의미 전용 */
-  --brand:#00a05a;             /* 안전=초록. 인터랙션·선택·링크 전용, 데이터 색과 안 겹침 */
-  --brand-soft:#e6f6ee;
+  --accent:#e11d48;            /* 사건(빨강) — 데이터 의미 전용 */
+  --brand:#10b981;             /* 안전=초록. 인터랙션·선택·링크 전용, 데이터 색과 안 겹침 */
+  --brand-soft:#ecfdf5;
   --panel-muted:#f7f8fa;
-  --blue:#1f7ae0;
-  --blue-soft:#eaf3ff;
-  --cctv:#008a9a;
-  --cctv-soft:#e6f7f9;
+  --blue:#0ea5e9;
+  --blue-soft:#e0f2fe;
+  --cctv:#0891b2;
+  --cctv-soft:#e0f6fb;
   --line-strong:#d1d1d6;
   --chip-dark:#111827; --chip-dark-hover:#1f2937;   /* 헤더 다크 필 버튼 전용 */
   --placeholder:#8a8f98;
-  --focus-brand:rgba(0,160,90,.13); --focus-blue:rgba(31,122,224,.22);
+  --focus-brand:rgba(16,185,129,.16); --focus-blue:rgba(14,165,233,.25);
   --r-xs:6px; --r-sm:10px; --r-lg:16px;
   --shadow-1:0 1px 6px rgba(0,0,0,.1);
   --shadow-2:0 4px 20px rgba(0,0,0,.14);
@@ -109,32 +109,32 @@ try {
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;  /* 간격은 이 4단계만 쓴다 */
   --panel-w:360px; --sheet-peek:84px; --sheet-mid:48dvh; --header-h:56px;
   --header-bg:rgba(247,248,250,.96);
-  --insight-alert-bg:#fdf0ee;
+  --insight-alert-bg:#fff1f2;
   --overlay-bg:rgba(255,255,255,.93);
   --overlay-soft-bg:rgba(255,255,255,.75);
-  --metric-alert-bg:#fff5f4;
+  --metric-alert-bg:#fff5f6;
 }
 /* 다크 테마: 토큰만 갈아끼운다. 지도 마커·공유 카드용 흰 배경은 그대로 둔다. */
 html[data-theme="dark"] {
-  --ink:#f2f2f5; --sub:#a0a0a8; --card:#1e1f24; --line:#2c2d33;
-  --brand-soft:#12351f;
-  --panel-muted:#151519;
-  --blue-soft:#152a44;
-  --cctv-soft:#0f2e33;
-  --line-strong:#41424a;
-  --chip-dark:#2c2d33; --chip-dark-hover:#3a3b42;
-  --placeholder:#71727a;
-  --focus-brand:rgba(0,160,90,.3); --focus-blue:rgba(31,122,224,.4);
+  --ink:#f1f5f9; --sub:#94a3b8; --card:#18202f; --line:#263043;
+  --brand-soft:#0c3b2b;
+  --panel-muted:#0d1524;
+  --blue-soft:#0c2f4a;
+  --cctv-soft:#0c3540;
+  --line-strong:#3b4a63;
+  --chip-dark:#26324a; --chip-dark-hover:#324160;
+  --placeholder:#64748b;
+  --focus-brand:rgba(16,185,129,.35); --focus-blue:rgba(14,165,233,.45);
   --shadow-1:0 1px 6px rgba(0,0,0,.4);
   --shadow-2:0 4px 20px rgba(0,0,0,.5);
-  --header-bg:rgba(21,21,25,.96);
-  --insight-alert-bg:#3a1d18;
-  --overlay-bg:rgba(30,31,36,.93);
-  --overlay-soft-bg:rgba(30,31,36,.75);
-  --metric-alert-bg:#33201d;
+  --header-bg:rgba(13,21,36,.96);
+  --insight-alert-bg:#3b1220;
+  --overlay-bg:rgba(24,32,47,.93);
+  --overlay-soft-bg:rgba(24,32,47,.75);
+  --metric-alert-bg:#38141f;
   color-scheme:dark;
 }
-html[data-theme="dark"] body { background:#151519; }
+html[data-theme="dark"] body { background:#0d1524; }
 /* 지도 타일은 다크 스타일이 없어 살짝만 눌러서 눈부심을 줄인다 */
 html[data-theme="dark"] #map { filter:brightness(.82) contrast(1.02); }
 #theme-toggle { cursor:pointer; }
@@ -260,7 +260,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   display:inline-flex; align-items:center; min-height:20px; border:1px solid var(--line); border-radius:999px;
   padding:0 var(--sp-2); background:var(--card); color:var(--sub); font-size:var(--fs-cap); font-weight:700;
 }
-.metric-pill.alert { border-color:rgba(192,57,43,.32); color:var(--accent); background:var(--metric-alert-bg); }
+.metric-pill.alert { border-color:rgba(225,29,72,.32); color:var(--accent); background:var(--metric-alert-bg); }
 .bar-wrap { flex:none; width:74px; }
 .bar-wrap small { display:block; font-size:var(--fs-cap); color:var(--sub); text-align:right; margin-bottom:3px; }
 .bar { height:6px; border-radius:3px; background:var(--line); overflow:hidden; }
@@ -336,7 +336,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .legend .scale-bar { flex:1 1 56px; height:8px; border-radius:4px; min-width:56px; }
 /* 데이터 그라데이션 — JS 팔레트(popStyle/CRIME)와 동기화. design.md 참고 */
 .legend .scale-crime { background:linear-gradient(to right,#ffe27a,#f5a623,#e2573b,#b81d13); }
-.legend .scale-pop { background:linear-gradient(to right,#d35400,#f0a35e,#d9d4c5,#7fa8d9,#2a5ca8); }
+.legend .scale-pop { background:linear-gradient(to right,#ea580c,#fdba74,#e2e8f0,#7dd3fc,#0369a1); }
 .legend .sub-note { font-size:var(--fs-cap); color:var(--sub); line-height:1.4; margin-top:2px; }
 .legend .legend-cctv-icon {
   display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px;
@@ -388,20 +388,23 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 
 /* 선택한 장소 핀: 지역 라벨(zIndex 20)·히트맵 점 위에 항상 보이도록 이름표+포인터로 강조 */
 .place-pin { display:flex; flex-direction:column; align-items:center; pointer-events:none; }
+/* 검색 장소 핀: 흰 유리 필 + 작은 브랜드 점. 지도 마커라 라이트 고정 */
 .place-pin .pin-name {
   max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  background:var(--brand); color:#fff; border:2px solid #fff; border-radius:999px;
-  padding:5px 12px; font-size:var(--fs-sub); font-weight:900; box-shadow:0 3px 12px rgba(0,0,0,.35);
+  background:rgba(255,255,255,.92); backdrop-filter:blur(8px); color:#1c1c1e;
+  border:1px solid rgba(28,28,30,.08); border-radius:999px;
+  padding:6px 13px; font-size:var(--fs-sub); font-weight:700; letter-spacing:-.1px;
+  box-shadow:0 4px 14px rgba(2,6,23,.16);
 }
-.place-pin .pin-stem { width:3px; height:14px; background:var(--brand); box-shadow:0 0 0 1px rgba(255,255,255,.9); }
+.place-pin .pin-stem { width:2px; height:12px; background:var(--brand); }
 .place-pin .pin-base {
-  width:14px; height:14px; margin-top:-4px; border-radius:50%;
-  background:var(--brand); border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.4);
-  animation:pin-pulse 1.6s ease-out infinite;
+  width:10px; height:10px; margin-top:-3px; border-radius:50%;
+  background:var(--brand); border:2px solid #fff; box-shadow:0 1px 5px rgba(2,6,23,.3);
+  animation:pin-pulse 2s ease-out infinite;
 }
 @keyframes pin-pulse {
-  0% { box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 0 rgba(0,160,90,.45); }
-  100% { box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 14px rgba(0,160,90,0); }
+  0% { box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 0 rgba(16,185,129,.45); }
+  100% { box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 14px rgba(16,185,129,0); }
 }
 
 .pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
@@ -411,14 +414,14 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 }
 .incident-marker .label {
   min-height:44px; display:flex; align-items:center;
-  padding:7px 14px; border:2px solid #6e463f; border-radius:999px;
+  padding:7px 14px; border:2px solid #475569; border-radius:999px;
   background:var(--overlay-bg); color:var(--ink); white-space:nowrap;
 }
 .incident-marker .text { min-width:0; display:flex; flex-direction:column; align-items:center; line-height:1.1; }
 .incident-marker .primary { font-size:var(--fs-md); font-weight:900; letter-spacing:0; color:#17191f; }
 .incident-marker .secondary { margin-top:4px; font-size:var(--fs-sub); font-weight:700; color:var(--sub); }
 .incident-marker .anchor {
-  width:16px; height:16px; margin-top:-2px; border-radius:50%; background:#6e463f;
+  width:16px; height:16px; margin-top:-2px; border-radius:50%; background:#475569;
   border:3px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.34);
 }
 .incident-marker:focus-visible .label { outline:3px solid var(--focus-blue); outline-offset:2px; }
@@ -555,7 +558,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .empty-state b { color:var(--ink); }
 .user-loc-dot {
   display:block; width:18px; height:18px; background:var(--blue); border:3px solid #fff; border-radius:50%;
-  box-shadow:0 0 0 8px rgba(31,122,224,.18), 0 2px 10px rgba(0,0,0,.28);
+  box-shadow:0 0 0 8px rgba(14,165,233,.18), 0 2px 10px rgba(0,0,0,.28);
 }
 
 /* ── 데스크톱: 좌측 패널 ── */
@@ -867,12 +870,15 @@ function popStyle(regions) {
   const cuts = [q(.2), q(.4), q(.6), q(.8)];
   // 5단계: 진한 주황(가장 한적) → 진한 파랑(가장 붐빔). 색약에도 안전한 조합.
   // 초록 계열은 브랜드 전용이므로 데이터 색에서 뺀다. 범례 그라데이션과 함께 갱신할 것.
-  const COLORS = ['#d35400', '#f0a35e', '#d9d4c5', '#7fa8d9', '#2a5ca8'];
+  const COLORS = ['#ea580c', '#fdba74', '#e2e8f0', '#7dd3fc', '#0369a1'];
   // 배지 글자색: 밝은 중간 티어는 진한 글자, 양끝 진한 티어는 흰 글자.
-  const INKS = ['#fff', '#4a2b10', '#4d4738', '#1c3a63', '#fff'];
+  const INKS = ['#fff', '#4a2b10', '#475569', '#0c3a57', '#fff'];
+  // 라벨·점 전용 진한 변형: 채움색은 밝은 타일 위에서 텍스트·테두리로 쓰면 안 읽힌다.
+  const LABELS = ['#c2410c', '#b45309', '#64748b', '#0284c7', '#075985'];
   const tier = t => cuts.findIndex(c => t < c) === -1 ? 4 : cuts.findIndex(c => t < c);
   return { color: t => COLORS[tier(t)],
            ink: t => INKS[tier(t)],
+           label: t => LABELS[tier(t)],
            tag: t => ['가장 한적', '한적', '보통', '붐빔', '가장 붐빔'][tier(t)] };
 }
 function regionRanks(regions) {
@@ -902,6 +908,7 @@ function regionPopulationContext(region, style, ranks) {
   return {
     color: style.color(region.total),
     ink: style.ink(region.total),
+    label: style.label(region.total),
     tag: style.tag(region.total),
     quietRank: rank ? rank.quietRank : 0,
     crowdRank: rank ? rank.crowdRank : 0,
@@ -976,6 +983,10 @@ function placeShareUrl(loc) {
 // 카드가 열리면 주소창도 같은 쿼리로 맞춰서, 주소를 그대로 복사·공유해도 같은 카드가 열리게 한다.
 function syncPlaceUrl(loc) {
   const search = loc ? new URL(placeShareUrl(loc)).search : '';
+  history.replaceState(null, '', location.pathname + search);
+}
+function syncRegionUrl(region) {
+  const search = region ? `?region=${encodeURIComponent(region.name)}` : '';
   history.replaceState(null, '', location.pathname + search);
 }
 // ── 자연어 요약 + 한 줄 인사이트: 숫자를 나열하지 않고 해석해서 보여준다 ──
@@ -1123,7 +1134,7 @@ function showDetail(html) {
     detailView.classList.remove('on'); listView.classList.remove('off');
     panel.classList.remove('detail-mode');
     if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
-    syncPlaceUrl(null);
+    syncRegionUrl(null);
     if (window.matchMedia('(max-width: 899px)').matches) collapsePanelForMap();
     track('detail_back');
   };
@@ -1197,6 +1208,7 @@ function incidentDetail(inc) {
 }
 function regionDetail(r, style, ranks) {
   if (mapApi.highlightRegion) mapApi.highlightRegion(r.name);
+  syncRegionUrl(r);
   const pop = regionPopulationContext(r, style, ranks);
   const incidents = nearbyIncidentContext(r, 8);
   const cctv = nearbyCctvContext(r, 1);
@@ -1355,7 +1367,7 @@ async function renderList(opts) {
       const pop = p.region ? regionPopulationContext(p.region, style, ranks) : null;
       const d = document.createElement('div'); d.className = 'item';
       d.tabIndex = 0;
-      d.innerHTML = `<span class="dot" style="background:${pop ? pop.color : 'var(--line-strong)'}"></span>
+      d.innerHTML = `<span class="dot" style="background:${pop ? pop.label : 'var(--line-strong)'}"></span>
         <div class="t"><b>${escapeHtml(p.name)}</b><span>${escapeHtml(p.addr || '주소 정보 없음')}</span>
         <div class="metrics">${pop ? `<span class="metric-pill">${pop.tag}</span>` : ''}${p.cctvCameras != null ? `<span class="metric-pill">CCTV ${p.cctvCameras}대</span>` : ''}<span class="metric-pill${incidents.alert ? ' alert' : ''}">3km 내 ${incidents.label}</span></div>
         ${origin ? `<span class="distance">${originLabel === '내 위치' ? '내 위치에서 ' : ''}${formatDistance(p, origin)}</span>` : ''}</div>`;
@@ -1408,6 +1420,7 @@ document.getElementById('reset-btn').onclick = () => {
   mapApi.returnToJeju();
   mapApi.clearNearestHelp();
   returnJejuBtn.hidden = true;
+  syncRegionUrl(null);
   renderList();
   resetSearchSession();
 };
@@ -1415,6 +1428,7 @@ returnJejuBtn.onclick = () => {
   mapApi.returnToJeju();
   mapApi.clearNearestHelp();
   returnJejuBtn.hidden = true;
+  syncRegionUrl(null);
   showToast('제주도 전체 지도로 돌아왔습니다.');
   track('return_jeju');
 };
@@ -2157,13 +2171,13 @@ async function initKakao(cfg) {
   // 사건: 축소하면 숫자 클러스터, 확대하면 개별 핀 (거지맵 패턴)
   const clusterer = new kakao.maps.MarkerClusterer({
     map, averageCenter: true, minLevel: 9, gridSize: 80,
-    styles: [{ width: '40px', height: '40px', background: 'rgba(192,57,43,.95)', color: '#fff',
+    styles: [{ width: '40px', height: '40px', background: 'rgba(225,29,72,.95)', color: '#fff',
       borderRadius: '50%', border: '3px solid #fff', textAlign: 'center', lineHeight: '35px',
       fontWeight: '700', fontSize: '15px', boxShadow: '0 2px 10px rgba(0,0,0,.35)' }]
   });
   const pinImg = new kakao.maps.MarkerImage(
     'data:image/svg+xml;utf8,' + encodeURIComponent(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="11" cy="11" r="8" fill="#c0392b" stroke="#fff" stroke-width="3"/></svg>'),
+      '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="11" cy="11" r="8" fill="#e11d48" stroke="#fff" stroke-width="3"/></svg>'),
     new kakao.maps.Size(22, 22), { offset: new kakao.maps.Point(11, 11) });
   const markers = state.data.incidents.map(inc => {
     const m = new kakao.maps.Marker({ position: new kakao.maps.LatLng(inc.lat, inc.lng), image: pinImg });
@@ -2216,7 +2230,7 @@ async function initKakao(cfg) {
       mapApi.clearRegionHighlight();
       const p = polygonByName[name]; if (!p) return;
       selectedName = name;
-      p.setOptions({ strokeWeight: 3, strokeColor: '#00a05a', strokeOpacity: 1, fillOpacity: .5 });
+      p.setOptions({ strokeWeight: 3, strokeColor: '#10b981', strokeOpacity: 1, fillOpacity: .5 });
       p.setZIndex && p.setZIndex(10);
     };
     try {
@@ -2237,7 +2251,7 @@ async function initKakao(cfg) {
     let popOn = false;
     const overlays = state.pop.regions.map(r => {
       const el = document.createElement('div');
-      el.className = 'pop-num'; el.style.borderColor = style.color(r.total); el.style.color = style.color(r.total);
+      el.className = 'pop-num'; el.style.borderColor = style.label(r.total); el.style.color = style.label(r.total);
       el.onclick = () => { regionDetail(r, style, ranks); mapApi.panTo(r.lat, r.lng); };
       const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(r.lat, r.lng), content: el, yAnchor: .5, zIndex: 20 });
       return { ov, el, r };
@@ -2532,7 +2546,7 @@ async function initLeaflet(cfg) {
         mapApi.clearRegionHighlight();
         const l = layerByName[name]; if (!l) return;
         selectedName = name;
-        l.setStyle({ color: '#00a05a', weight: 3, opacity: 1, fillOpacity: .5 });
+        l.setStyle({ color: '#10b981', weight: 3, opacity: 1, fillOpacity: .5 });
         l.bringToFront();
       };
       L.geoJSON(geo, {
@@ -2550,7 +2564,7 @@ async function initLeaflet(cfg) {
     } catch (e) {}
     const popMarkers = state.pop.regions.map(r => {
       const iconFor = expanded => L.divIcon({
-        html: `<button class="pop-num${expanded ? ' expanded' : ''}" type="button" style="border-color:${style.color(r.total)};color:${style.color(r.total)}">${regionLabelHtml(r, regionPopulationContext(r, style, ranks), nearbyIncidentContext(r, 8), expanded ? 'expanded' : 'mid')}</button>`,
+        html: `<button class="pop-num${expanded ? ' expanded' : ''}" type="button" style="border-color:${style.label(r.total)};color:${style.label(r.total)}">${regionLabelHtml(r, regionPopulationContext(r, style, ranks), nearbyIncidentContext(r, 8), expanded ? 'expanded' : 'mid')}</button>`,
         className: '',
         iconSize: expanded ? [132, 54] : [88, 36],
         iconAnchor: expanded ? [66, 27] : [44, 18]
@@ -2728,8 +2742,20 @@ async function initLeaflet(cfg) {
   }
   track('map_loaded', { incident_count: state.data.incidents.length, map_engine: engine });
 
-  // 공유 딥링크: ?lat=&lng=&name= 로 들어오면 그 장소 카드를 바로 연다.
+  // 공유 딥링크: ?region= 으로 들어오면 읍면동 상세, ?lat=&lng=&name= 으로 들어오면 장소 카드를 바로 연다.
   const qp = new URLSearchParams(location.search);
+  const regionName = qp.get('region');
+  if (regionName && state.pop) {
+    const style = popStyle(state.pop.regions);
+    const ranks = regionRanks(state.pop.regions);
+    const region = state.pop.regions.find(r => r.name === regionName);
+    if (region) {
+      regionDetail(region, style, ranks);
+      mapApi.panTo(region.lat, region.lng);
+      track('region_deeplink_open', { region: region.name });
+      return;
+    }
+  }
   const dlLat = parseFloat(qp.get('lat')), dlLng = parseFloat(qp.get('lng'));
   if (Number.isFinite(dlLat) && Number.isFinite(dlLng) && mapApi.openPlaceCard) {
     mapApi.openPlaceCard({
