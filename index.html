@@ -221,6 +221,16 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .chip { flex:none; font-size:var(--fs-ui); border:1px solid var(--line); background:#fff; color:var(--sub); border-radius:999px; padding:var(--sp-2) var(--sp-3); cursor:pointer; box-shadow:var(--shadow-1); }
 .chip.on { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); font-weight:600; }
 .chip[hidden] { display:none; }
+.chip.more-chip { font-weight:700; letter-spacing:1px; min-width:40px; }
+.chip.more-chip.open { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); }
+.chip.more-chip.has-on::after { content:''; display:inline-block; width:6px; height:6px; margin-left:4px; vertical-align:2px; border-radius:50%; background:var(--brand); }
+.chips-more-menu {
+  position:fixed; top:calc(var(--header-h) + var(--sp-3) + env(safe-area-inset-top) + 44px); right:var(--sp-3); z-index:1000;
+  display:flex; flex-direction:column; gap:var(--sp-2); align-items:flex-end;
+  background:#fff; border:1px solid var(--line); border-radius:var(--r-md, 12px); padding:var(--sp-3); box-shadow:var(--shadow-2);
+}
+.chips-more-menu[hidden] { display:none; }
+.chips-more-menu .chip { box-shadow:none; width:100%; text-align:left; }
 .legend-stack {
   position:fixed; right:var(--sp-4); bottom:calc(var(--sheet-peek) + var(--sp-3)); z-index:900;
   display:flex; flex-direction:column; align-items:flex-end; gap:var(--sp-2); width:min(280px, calc(100vw - var(--sp-4) * 2));
@@ -268,13 +278,22 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   font-size:10px; font-weight:900; line-height:1; color:var(--ink);
 }
 .help-marker {
-  position:relative; display:flex; align-items:center; justify-content:center; min-width:42px; height:28px; padding:0 var(--sp-2);
-  border:2px solid #fff; border-radius:999px; color:#fff; box-shadow:0 2px 10px rgba(0,0,0,.28);
-  font-size:var(--fs-cap); font-weight:900; white-space:nowrap; cursor:pointer;
+  position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; padding:0;
+  border:0; background:none; cursor:pointer;
 }
-.help-marker::before { content:''; position:absolute; inset:-8px; border-radius:999px; }
-.help-marker.police { background:var(--blue); }
-.help-marker.hospital { background:var(--brand); }
+.help-marker::before { content:''; position:absolute; inset:-8px; }
+.help-marker .hm-icon {
+  display:flex; align-items:center; justify-content:center; width:26px; height:26px;
+  border:2px solid #fff; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.help-marker .hm-icon svg { display:block; }
+.help-marker .hm-icon.police { background:var(--blue); }
+.help-marker .hm-icon.hospital { background:var(--brand); }
+.help-marker .hm-label {
+  max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:var(--fs-cap); font-weight:800; color:var(--ink); line-height:1.2;
+  text-shadow:0 1px 2px #fff, 0 -1px 2px #fff, 1px 0 2px #fff, -1px 0 2px #fff;
+}
 
 /* 레이어를 처음 켰을 때 한 번만 띄우는 안내 */
 .toast {
@@ -507,11 +526,14 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   <button class="chip on" id="chip-pop" hidden>유동인구</button>
   <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
   <button class="chip" id="chip-incident">실종 사건</button>
+  <button class="chip" id="chip-police" hidden>경찰서</button>
+  <button class="chip check-btn" id="check-btn" hidden>내 숙소 안전 점검</button>
+  <button class="chip more-chip" id="chip-more" hidden aria-expanded="false" aria-controls="chips-more-menu" aria-label="레이어 더보기">⋯</button>
+</div>
+<div class="chips-more-menu" id="chips-more-menu" hidden>
   <button class="chip" id="chip-cctv" hidden>공공 CCTV</button>
   <button class="chip" id="chip-light" hidden>보안등</button>
   <button class="chip" id="chip-hospital" hidden>병원</button>
-  <button class="chip" id="chip-police" hidden>경찰서</button>
-  <button class="chip check-btn" id="check-btn" hidden>내 숙소 안전 점검</button>
 </div>
 
 <aside class="panel" id="panel">
@@ -679,6 +701,9 @@ function helpTypeLabel(type) {
 }
 function helpTypeTitle(type) {
   return type === 'police' ? '가까운 경찰서' : '가까운 병원';
+}
+function helpMarkerContent(type, name) {
+  return `<span class="hm-icon ${type}" aria-hidden="true">${helpTypeIcon(type)}</span><span class="hm-label">${escapeHtml(name)}</span>`;
 }
 function helpTypeIcon(type) {
   return type === 'police'
@@ -926,6 +951,27 @@ function renderNearestHelp(origin, places) {
   });
   gtag('event', 'nearest_help_show');
 }
+function showPoiDetail(type, place) {
+  // 카카오 장소검색 결과(place_name/y/x)를 좌측 패널 상세로 표시
+  const addr = place.road_address_name || place.address_name || '주소 정보 없음';
+  const tel = place.phone || (type === 'police' ? '112' : '119');
+  showDetail(`
+    <span class="status">${escapeHtml(type === 'police' ? '경찰' : '병원')}</span>
+    <h2>${escapeHtml(place.place_name)}</h2>
+    <div class="area">${escapeHtml((place.category_name || '').split('>').pop().trim() || helpTypeTitle(type))}</div>
+    <p>${escapeHtml(addr)}${place.phone ? ' · ' + escapeHtml(place.phone) : ''}</p>
+    <div class="card-actions">
+      <button type="button" id="poi-call">전화 ${escapeHtml(tel)}</button>
+      ${place.place_url ? `<button type="button" id="poi-kakao">카카오맵 상세</button>` : ''}
+    </div>
+    <div class="card-hint">${type === 'police'
+      ? '긴급 상황에서는 112에 먼저 신고하세요. 지구대·파출소 운영 정보는 현장과 다를 수 있습니다.'
+      : '진료 시간·응급실 운영 여부는 방문 전 전화로 확인하세요.'}</div>`);
+  document.getElementById('poi-call').onclick = () => { location.href = `tel:${tel}`; };
+  const kakaoBtn = document.getElementById('poi-kakao');
+  if (kakaoBtn) kakaoBtn.onclick = () => window.open(place.place_url, '_blank', 'noopener');
+  gtag('event', 'poi_detail', { type });
+}
 function incidentDetail(inc) {
   const fact = incidentFactText(inc);
   showDetail(`
@@ -1151,10 +1197,33 @@ function cctvIconHtml(count, showCount) {
 function wireChip(id, onToggle, defaultOn) {
   const chip = document.getElementById(id);
   chip.hidden = false;
-  chip.onclick = function () { onToggle(this.classList.toggle('on')); };
+  if (chip.closest('.chips-more-menu')) document.getElementById('chip-more').hidden = false;
+  chip.onclick = function () { onToggle(this.classList.toggle('on')); syncMoreChip(); };
   if (defaultOn) { chip.classList.add('on'); onToggle(true); }
+  syncMoreChip();
   return chip;
 }
+
+// ⋯ 더보기: 자주 안 쓰는 레이어 칩(공공 CCTV·보안등·병원)을 접어 두는 메뉴
+function syncMoreChip() {
+  const anyOn = document.querySelector('.chips-more-menu .chip.on');
+  document.getElementById('chip-more').classList.toggle('has-on', !!anyOn);
+}
+document.getElementById('chip-more').onclick = function () {
+  const menu = document.getElementById('chips-more-menu');
+  menu.hidden = !menu.hidden;
+  this.classList.toggle('open', !menu.hidden);
+  this.setAttribute('aria-expanded', String(!menu.hidden));
+};
+document.addEventListener('click', function (e) {
+  const menu = document.getElementById('chips-more-menu');
+  if (menu.hidden) return;
+  if (e.target.closest('#chips-more-menu') || e.target.closest('#chip-more')) return;
+  menu.hidden = true;
+  const more = document.getElementById('chip-more');
+  more.classList.remove('open');
+  more.setAttribute('aria-expanded', 'false');
+});
 
 function escapeHtml(value) {
   return String(value || '').replace(/[&<>"']/g, ch => ({
@@ -1608,7 +1677,7 @@ async function initKakao(cfg) {
       const el = document.createElement('button');
       el.className = `help-marker ${place.type}`;
       el.type = 'button';
-      el.innerHTML = helpTypeIcon(place.type);
+      el.innerHTML = helpMarkerContent(place.type, place.name);
       el.setAttribute('aria-label', `${helpTypeTitle(place.type)} ${place.name}`);
       el.onclick = () => {
         mapApi.panTo(place.lat, place.lng, 5);
@@ -1617,7 +1686,7 @@ async function initKakao(cfg) {
       const overlay = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(place.lat, place.lng),
         content: el,
-        yAnchor: 1,
+        yAnchor: .33,   // 아이콘 사각형 중심이 좌표에 오도록 (라벨은 그 아래)
         zIndex: 70
       });
       overlay.setMap(map);
@@ -1882,16 +1951,16 @@ async function initKakao(cfg) {
           const el = document.createElement('button');
           el.className = `help-marker ${type}`;
           el.type = 'button';
-          el.innerHTML = helpTypeIcon(type);
+          el.innerHTML = helpMarkerContent(type, place.place_name);
           el.setAttribute('aria-label', place.place_name);
           el.onclick = () => {
             mapApi.panTo(Number(place.y), Number(place.x), 5);
-            showToast(`${place.place_name} · ${place.road_address_name || place.address_name}${place.phone ? ' · ' + place.phone : ''}`, 6000);
+            showPoiDetail(type, place);
           };
           const ov = new kakao.maps.CustomOverlay({
             position: new kakao.maps.LatLng(Number(place.y), Number(place.x)),
             content: el,
-            yAnchor: 1,
+            yAnchor: .33,   // 아이콘 사각형 중심이 좌표에 오도록 (라벨은 그 아래)
             zIndex: 60
           });
           ov.setMap(map);
@@ -1970,10 +2039,10 @@ async function initLeaflet(cfg) {
     places.forEach(place => {
       L.marker([place.lat, place.lng], {
         icon: L.divIcon({
-          html: `<button class="help-marker ${place.type}" type="button" aria-label="${helpTypeTitle(place.type)} ${escapeHtml(place.name)}">${helpTypeIcon(place.type)}</button>`,
+          html: `<button class="help-marker ${place.type}" type="button" aria-label="${helpTypeTitle(place.type)} ${escapeHtml(place.name)}">${helpMarkerContent(place.type, place.name)}</button>`,
           className: '',
-          iconSize: [42, 28],
-          iconAnchor: [21, 28]
+          iconSize: [110, 46],
+          iconAnchor: [55, 15]
         }),
         zIndexOffset: 1100
       }).addTo(helpLayer).on('click', () => {
