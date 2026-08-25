@@ -176,6 +176,15 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .tool-btn:hover, .tool-btn:focus-visible { border-color:var(--line-strong); background:var(--panel-muted); outline:none; }
 .tool-btn.locating { color:var(--blue); border-color:var(--blue); background:var(--blue-soft); }
 .tool-btn.searching { color:var(--brand); border-color:var(--brand); background:var(--brand-soft); }
+.sort-chips { display:flex; gap:var(--sp-2); margin-top:var(--sp-3); overflow-x:auto; scrollbar-width:none; }
+.sort-chips::-webkit-scrollbar { display:none; }
+.sort-chip {
+  flex:none; font-size:var(--fs-sub); font-weight:600; border:1px solid var(--line); background:#fff; color:var(--sub);
+  border-radius:999px; padding:6px var(--sp-3); cursor:pointer;
+}
+.sort-chip.on { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); }
+.sort-chip:focus-visible { outline:3px solid var(--focus-brand); outline-offset:1px; }
+.sort-chip[hidden] { display:none; }
 .result-meta { display:flex; justify-content:space-between; gap:var(--sp-2); margin-top:var(--sp-3); color:var(--sub); font-size:var(--fs-sub); line-height:1.4; }
 .result-meta > span:first-child { word-break:keep-all; }
 .result-meta > span:last-child { flex:none; white-space:nowrap; }
@@ -566,6 +575,12 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
         <span>전체 보기</span>
       </button>
     </div>
+    <div class="sort-chips" id="sort-chips" aria-label="장소 목록 정렬">
+      <button class="sort-chip on" type="button" data-sort="near">가까운 순</button>
+      <button class="sort-chip" type="button" data-sort="quiet">한적한 순</button>
+      <button class="sort-chip" type="button" data-sort="busy">붐비는 순</button>
+      <button class="sort-chip" type="button" data-sort="safe">CCTV 많은 순</button>
+    </div>
     <div class="result-meta" id="result-meta"></div>
   </div>
   <div class="panel-body">
@@ -656,7 +671,7 @@ const FALLBACK_HELP_PLACES = [
   { type: 'hospital', name: '제주한라병원', addr: '제주시 도령로 65', lat: 33.489, lng: 126.486, phone: '119' },
   { type: 'hospital', name: '서귀포의료원', addr: '서귀포시 장수로 47', lat: 33.254, lng: 126.564, phone: '119' }
 ];
-const state = { data: null, pop: null, cctv: null, bells: null, lights: null, focus: null, query: '', userLocation: null, searchOrigin: null };
+const state = { data: null, pop: null, cctv: null, bells: null, lights: null, focus: null, query: '', userLocation: null, searchOrigin: null, listSort: 'near' };
 
 function loadScript(src) {
   return new Promise((ok, fail) => {
@@ -1114,6 +1129,26 @@ function regionDetail(r, style, ranks) {
 // 리스트는 "내 위치(또는 점검한 장소) 주변 장소 + 장소별 안전 맥락"을 보여준다.
 // 위치가 없으면 제주 주요 장소를 기본으로 보여준다. 지도 마커 나열은 하지 않는다.
 let listSeq = 0;
+let redrawList = null;
+// 북적북적 제주 참고: 같은 목록을 조건(거리·한적함·CCTV)으로 다시 정렬해 볼 수 있게 한다.
+function sortedPlaces(places, sort, origin) {
+  const arr = [...places];
+  const dist = p => (p.distanceKm != null ? p.distanceKm : Infinity);
+  if (sort === 'near') { if (origin) arr.sort((a, b) => dist(a) - dist(b)); }
+  else if (sort === 'quiet') arr.sort((a, b) => ((a.regionTotal != null ? a.regionTotal : Infinity) - (b.regionTotal != null ? b.regionTotal : Infinity)) || dist(a) - dist(b));
+  else if (sort === 'busy') arr.sort((a, b) => ((b.regionTotal != null ? b.regionTotal : -1) - (a.regionTotal != null ? a.regionTotal : -1)) || dist(a) - dist(b));
+  else if (sort === 'safe') arr.sort((a, b) => ((b.cctvCameras != null ? b.cctvCameras : -1) - (a.cctvCameras != null ? a.cctvCameras : -1)) || dist(a) - dist(b));
+  return arr;
+}
+document.querySelectorAll('#sort-chips .sort-chip').forEach(chip => {
+  chip.onclick = () => {
+    if (state.listSort === chip.dataset.sort) return;
+    state.listSort = chip.dataset.sort;
+    document.querySelectorAll('#sort-chips .sort-chip').forEach(c => c.classList.toggle('on', c === chip));
+    if (redrawList) redrawList();
+    track('list_sort', { sort: state.listSort, has_origin: !!(state.userLocation || state.searchOrigin) });
+  };
+});
 async function renderList(opts) {
   const keepDetail = opts && opts.keepDetail;
   const seq = ++listSeq;
@@ -1136,32 +1171,45 @@ async function renderList(opts) {
   }
   const style = state.pop ? popStyle(state.pop.regions) : null;
   const ranks = state.pop ? regionRanks(state.pop.regions) : null;
-  resultMeta.innerHTML = `<span>${origin ? escapeHtml(originLabel) + ' 주변 장소' : '제주 주요 장소 · 내 위치를 누르면 주변 기준으로 바뀝니다'}</span><span>장소 <b>${places.length}</b>곳</span>`;
-  listView.innerHTML = '';
+  // 정렬에 쓸 맥락(가장 가까운 읍면동 유동인구, 500m 내 CCTV 대수)을 장소마다 한 번만 계산한다.
   places.forEach(p => {
-    const incidents = nearbyIncidentContext(p, 3);
-    let pop = null;
     if (style) {
-      const region = state.pop.regions.reduce((a, r) => haversineKm(p, r) < haversineKm(p, a) ? r : a);
-      pop = regionPopulationContext(region, style, ranks);
+      p.region = state.pop.regions.reduce((a, r) => haversineKm(p, r) < haversineKm(p, a) ? r : a);
+      p.regionTotal = p.region.total;
     }
-    const d = document.createElement('div'); d.className = 'item';
-    d.tabIndex = 0;
-    d.innerHTML = `<span class="dot" style="background:${pop ? pop.color : 'var(--line-strong)'}"></span>
-      <div class="t"><b>${escapeHtml(p.name)}</b><span>${escapeHtml(p.addr || '주소 정보 없음')}</span>
-      <div class="metrics">${pop ? `<span class="metric-pill">${pop.tag}</span>` : ''}<span class="metric-pill${incidents.alert ? ' alert' : ''}">3km 내 ${incidents.label}</span></div>
-      ${origin ? `<span class="distance">${originLabel === '내 위치' ? '내 위치에서 ' : ''}${formatDistance(p, origin)}</span>` : ''}</div>`;
-    d.onclick = () => {
-      if (mapApi.openPlaceCard) mapApi.openPlaceCard(p);
-      else mapApi.panTo(p.lat, p.lng, 6);
-      track('nearby_place_open', {
-        origin: origin ? (state.userLocation ? 'location' : 'search') : 'default',
-        has_distance: !!origin
-      });
-    };
-    d.onkeydown = e => { if (e.key === 'Enter') d.click(); };
-    listView.appendChild(d);
+    const cctv = nearbyCctvContext(p, 0.5);
+    p.cctvCameras = cctv ? cctv.cameras : null;
   });
+  const nearChip = document.querySelector('#sort-chips [data-sort="near"]');
+  nearChip.textContent = origin ? '가까운 순' : '추천순';
+  const draw = () => {
+    resultMeta.innerHTML = `<span>${origin ? escapeHtml(originLabel) + ' 주변 장소' : '제주 주요 장소 · 내 위치를 누르면 주변 기준으로 바뀝니다'}</span><span>장소 <b>${places.length}</b>곳</span>`;
+    listView.innerHTML = '';
+    sortedPlaces(places, state.listSort, origin).forEach((p, index) => {
+      const incidents = nearbyIncidentContext(p, 3);
+      const pop = p.region ? regionPopulationContext(p.region, style, ranks) : null;
+      const d = document.createElement('div'); d.className = 'item';
+      d.tabIndex = 0;
+      d.innerHTML = `<span class="dot" style="background:${pop ? pop.color : 'var(--line-strong)'}"></span>
+        <div class="t"><b>${escapeHtml(p.name)}</b><span>${escapeHtml(p.addr || '주소 정보 없음')}</span>
+        <div class="metrics">${pop ? `<span class="metric-pill">${pop.tag}</span>` : ''}${p.cctvCameras != null ? `<span class="metric-pill">CCTV ${p.cctvCameras}대</span>` : ''}<span class="metric-pill${incidents.alert ? ' alert' : ''}">3km 내 ${incidents.label}</span></div>
+        ${origin ? `<span class="distance">${originLabel === '내 위치' ? '내 위치에서 ' : ''}${formatDistance(p, origin)}</span>` : ''}</div>`;
+      d.onclick = () => {
+        if (mapApi.openPlaceCard) mapApi.openPlaceCard(p);
+        else mapApi.panTo(p.lat, p.lng, 6);
+        track('nearby_place_open', {
+          origin: origin ? (state.userLocation ? 'location' : 'search') : 'default',
+          has_distance: !!origin,
+          sort: state.listSort,
+          rank: index + 1
+        });
+      };
+      d.onkeydown = e => { if (e.key === 'Enter') d.click(); };
+      listView.appendChild(d);
+    });
+  };
+  redrawList = draw;
+  draw();
   if (!keepDetail) { detailView.classList.remove('on'); listView.classList.remove('off'); }
 }
 searchInput.oninput = () => {
