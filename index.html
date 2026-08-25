@@ -306,19 +306,19 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 }
 .incident-marker .label {
   min-width:128px; min-height:52px; display:flex; align-items:center; gap:var(--sp-2);
-  padding:7px 13px 7px 8px; border:2px solid #a91419; border-radius:999px;
+  padding:7px 13px 7px 8px; border:2px solid #6e463f; border-radius:999px;
   background:rgba(255,255,255,.96); color:var(--ink); white-space:nowrap;
 }
 .incident-marker .icon {
   flex:none; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(145deg,#d8392e,#93070c); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+  background:linear-gradient(145deg,#8a5049,#54302a); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
 }
 .incident-marker .icon svg { width:20px; height:20px; }
 .incident-marker .text { min-width:0; display:flex; flex-direction:column; align-items:flex-start; line-height:1.1; }
 .incident-marker .primary { font-size:var(--fs-md); font-weight:900; letter-spacing:0; color:#17191f; }
 .incident-marker .secondary { margin-top:4px; font-size:var(--fs-sub); font-weight:700; color:var(--sub); }
 .incident-marker .anchor {
-  width:16px; height:16px; margin-top:-2px; border-radius:50%; background:var(--accent);
+  width:16px; height:16px; margin-top:-2px; border-radius:50%; background:#6e463f;
   border:3px solid #fff; box-shadow:0 1px 6px rgba(0,0,0,.34);
 }
 .incident-marker:focus-visible .label { outline:3px solid var(--focus-blue); outline-offset:2px; }
@@ -655,9 +655,8 @@ function formatConfirmedAt(value) {
   return `${month}.${day}${rest ? ' ' + rest : ''} 확인`;
 }
 function incidentFactText(inc) {
-  const fatalities = Number(inc.fatalities || 1);
   return {
-    primary: inc.status === '사망 확인' ? `사망 ${fatalities}명` : inc.status,
+    primary: inc.status,
     secondary: formatConfirmedAt(inc.confirmedAt) || `${inc.date} 확인`
   };
 }
@@ -666,7 +665,7 @@ function incidentMarkerHtml(inc, compact) {
   return `<button class="incident-marker${compact ? ' compact' : ''}" type="button" aria-label="${text.primary}, ${text.secondary}">
     <span class="label">
       <span class="icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="m5 12 4 4 10-10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 2c-2.5 0-4 1.9-4 4 0 1.6.8 3 1.7 4.5L6 17.5 8.5 19l3.5-5 3.5 5 2.5-1.5-3.7-7C15.2 9 16 7.6 16 6c0-2.1-1.5-4-4-4Zm0 2c1.3 0 2 .9 2 2 0 1.1-.9 2.4-2 4-1.1-1.6-2-2.9-2-4 0-1.1.7-2 2-2Z" fill="currentColor"/></svg>
       </span>
       <span class="text"><span class="primary">${text.primary}</span><span class="secondary">${text.secondary}</span></span>
     </span>
