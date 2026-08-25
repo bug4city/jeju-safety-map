@@ -380,6 +380,19 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 .safety-card .context-box { border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3); background:var(--panel-muted); }
 .safety-card .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
 .safety-card .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
+.safety-card .context-box small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
+.card-media { margin-bottom:var(--sp-3); border-radius:var(--r-sm); overflow:hidden; border:1px solid var(--line); }
+.card-media[hidden] { display:none; }
+.card-media .card-roadview { width:100%; height:150px; }
+.card-media .media-cap { display:block; padding:3px var(--sp-2); font-size:var(--fs-cap); color:var(--sub); background:var(--panel-muted); }
+.card-more { margin-top:var(--sp-2); border-top:1px solid var(--line); padding-top:var(--sp-2); }
+.card-more summary { cursor:pointer; color:var(--brand); font-weight:600; font-size:var(--fs-ui); }
+.card-more .mini-inc { padding:var(--sp-2) 0; border-bottom:1px solid var(--line); }
+.card-more .mini-inc:last-child { border-bottom:0; }
+.card-more .mini-inc b { display:block; font-size:var(--fs-body); line-height:1.4; }
+.card-more .mini-inc span { display:block; color:var(--sub); font-size:var(--fs-sub); margin:2px 0; }
+.card-more .mini-inc a { color:var(--brand); text-decoration:none; margin-right:var(--sp-2); font-size:var(--fs-sub); }
+.card-more .mini-note { color:var(--sub); font-size:var(--fs-sub); line-height:1.5; padding:var(--sp-2) 0; }
 .safety-card .brand { margin-top:var(--sp-3); font-size:var(--fs-cap); color:var(--sub); }
 .card-actions { display:flex; gap:var(--sp-2); margin-top:var(--sp-3); }
 .card-actions button { flex:1; font-size:var(--fs-ui); border:1px solid var(--line-strong); background:#fff; border-radius:var(--r-sm); padding:var(--sp-3) 0; cursor:pointer; }
@@ -410,7 +423,6 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   .header-actions { gap:var(--sp-1); }
   .header-action { min-height:32px; padding:0 var(--sp-2); }
   .header-action .label { display:none; }
-  .safety-card .context { grid-template-columns:1fr; }
 }
 @media (max-width: 700px) {
   .app-header { display:block; }
@@ -468,8 +480,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   <div class="grab" id="grab"></div>
   <div class="panel-head">
     <h1>제주안전맵</h1>
-    <p>최근 3년 7개월간 제주 성인 실종 미해결 <strong id="stat-count">15명</strong> (제주경찰청 전수조사).
-    핀은 언론 보도로 확인된 사건입니다.</p>
+    <p>내 숙소, 내가 갈 곳은 안전할까? 제주 여행 전에 미리 확인하는 안전 지도입니다.</p>
   </div>
   <div class="panel-tools">
     <label class="search-box" for="search-input">
@@ -498,6 +509,10 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 </aside>
 
 <div class="legend-stack open">
+  <div class="legend" id="incident-legend">
+    <b class="legend-title">실종 사건 <small>제주경찰청 전수조사</small></b>
+    <div class="sub-note">최근 3년 7개월간 성인 실종 미해결 <strong id="stat-count">15명</strong>.<br>이 중 언론 보도로 위치가 확인된 사건만 핀으로 표시합니다.</div>
+  </div>
   <div class="legend" id="crime-legend" hidden>
     <b class="legend-title">범죄주의구간 <small>경찰청 최근 1년</small></b>
     <div class="scale-row">
@@ -705,6 +720,27 @@ function regionPopulationContext(region, style, ranks) {
     people: fmt(region.total)
   };
 }
+function nearbyCctvContext(point, radiusKm) {
+  if (!state.cctv) return null;
+  let spots = 0, cameras = 0, safety = 0, nearestKm = Infinity;
+  state.cctv.points.forEach(([lat, lng, count, purpose]) => {
+    const km = haversineKm(point, { lat, lng });
+    if (km > radiusKm) return;
+    spots += 1;
+    cameras += count || 1;
+    if (/방범/.test(purpose || '')) safety += count || 1;
+    if (km < nearestKm) nearestKm = km;
+  });
+  return { spots, cameras, safety, nearestM: spots ? Math.round(nearestKm * 1000) : null };
+}
+function placeShareUrl(loc) {
+  const u = new URL('https://jeju.kimyukah.com/');
+  u.searchParams.set('lat', loc.lat.toFixed(5));
+  u.searchParams.set('lng', loc.lng.toFixed(5));
+  u.searchParams.set('name', loc.name || '');
+  if (loc.addr) u.searchParams.set('addr', loc.addr);
+  return u.toString();
+}
 function regionLabelHtml(region, pop, incident, mode) {
   if (mode === 'mid') return `${region.name}<small>${pop.tag}</small>`;
   return `${region.name}<small>${pop.people}명 · 한적 ${pop.quietRank}위 · ${incident.label}</small>`;
@@ -729,6 +765,7 @@ let mapApi = {
   setUserLocation: () => {},
   clearNearestHelp: () => {},
   showNearestHelp: loc => renderNearestHelp(loc, fallbackNearestHelp(loc)),
+  nearestHelp: async loc => fallbackNearestHelp(loc),
   checkPlace: () => showToast('지도 검색을 준비 중입니다.')
 };
 
@@ -737,6 +774,7 @@ function showDetail(html) {
   detailView.classList.add('on'); listView.classList.add('off');
   document.getElementById('back-btn').onclick = () => {
     detailView.classList.remove('on'); listView.classList.remove('off');
+    if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
   };
   if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
 }
@@ -783,6 +821,7 @@ function incidentDetail(inc) {
   gtag('event', 'incident_open', { incident_id: inc.id });
 }
 function regionDetail(r, style, ranks) {
+  if (mapApi.highlightRegion) mapApi.highlightRegion(r.name);
   const pop = regionPopulationContext(r, style, ranks);
   const incidents = nearbyIncidentContext(r, 8);
   showDetail(`
@@ -981,26 +1020,52 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   const region = state.pop.regions.reduce((a, r) => haversineKm(loc, r) < haversineKm(loc, a) ? r : a);
   const pop = regionPopulationContext(region, style, ranks);
   const incidents = nearbyIncidentContext(loc, 8);
+  const cctv = nearbyCctvContext(loc, 0.5);
+  const shareUrl = placeShareUrl(loc);
   const summaryText = `${loc.name} 안전 점검: ${incidents.detail}. ${region.name}은 통신사 유동인구 기준 "${pop.tag}", 한적한 순 ${pop.quietRank}위 지역입니다.`;
+  const helpFallback = fallbackNearestHelp(loc);
+  const helpLine = places => places.filter(Boolean)
+    .map(p => `${helpTypeLabel(p.type)} ${formatDistance(p, loc)}`).join(' · ');
   document.getElementById('card-result').innerHTML = `
     <div class="safety-card" id="the-card">
-      <h3>${loc.name} 안전 점검</h3>
-      <div class="addr">${loc.addr}</div>
-      <div class="context">
-        <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color}">${pop.tag}</span></b></div>
-        <div class="context-box"><span>보도 맥락</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.label}</b></div>
+      <div class="card-media" id="card-media" hidden data-html2canvas-ignore>
+        <div class="card-roadview"></div>
+        <span class="media-cap">카카오 로드뷰 · 실제 촬영 시점은 현재와 다를 수 있습니다</span>
       </div>
-      <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건 (최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
-      <div class="row"><span>지역 (${region.name})</span><b>${pop.totalRegions}곳 중 한적 ${pop.quietRank}위</b></div>
-      <div class="row"><span>하루 유동인구</span><b>약 ${region.total.toLocaleString()}명</b></div>
-      <div class="brand">공유용 요약 · 제주안전맵 · ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 + 언론 보도 기준</div>
+      <h3>${escapeHtml(loc.name)} 안전 점검</h3>
+      <div class="addr">${escapeHtml(loc.addr || '주소 정보 없음')}</div>
+      <div class="context">
+        <div class="context-box"><span>보도 사건 (8km)</span>
+          <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
+          <small>${incidents.nearby.length ? '최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km' : '언론 보도 확인 기준'}</small></div>
+        <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color}">${pop.tag}</span></b>
+          <small>${region.name} · 한적 ${pop.quietRank}/${pop.totalRegions}위</small></div>
+        <div class="context-box"><span>공공 CCTV (500m)</span>
+          <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
+          <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · 최근접 ${cctv.nearestM}m` : '행정안전부 표준데이터 기준'}</small></div>
+        <div class="context-box"><span>가까운 도움 장소</span>
+          <b id="help-tile">${helpLine(helpFallback)}</b>
+          <small id="help-tile-sub">${escapeHtml((helpFallback[0] || {}).name || '')}</small></div>
+      </div>
+      <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
+      ${incidents.nearby.length ? `
+      <details class="card-more">
+        <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
+        ${incidents.nearby.map(({ i, km }) => `
+          <div class="mini-inc">
+            <b>${escapeHtml(i.title)}</b>
+            <span>${escapeHtml(i.area)} · ${escapeHtml(i.date)} · ${escapeHtml(i.status)} · ${km.toFixed(1)}km</span>
+            ${(i.sources || []).map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>`).join('')}
+          </div>`).join('')}
+      </details>` : ''}
+      <div class="brand">공유용 요약 · 제주안전맵 · 유동인구 ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 · CCTV 행정안전부 표준데이터 · 사건은 언론 보도 기준</div>
     </div>
     <div class="card-actions">
       <button id="card-save">이미지 저장</button>
       <button id="card-kakao" class="kakao">카톡 공유</button>
       <button id="card-copy">요약 복사</button>
     </div>
-    <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도와 통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
+    <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도·CCTV·통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
   gtag('event', 'card_create', { region: region.name, incidents_8km: incidents.nearby.length });
   moveToLocation(loc);
   returnJejuBtn.hidden = false;
@@ -1009,27 +1074,60 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     renderList({ keepDetail: true });
   }
 
-  document.getElementById('card-save').onclick = async () => {
+  // 도움 장소: 폴백을 먼저 그려두고, 장소검색 결과가 오면 갈아끼운다.
+  const helpTile = document.getElementById('help-tile');
+  mapApi.nearestHelp(loc).then(places => {
+    const found = (places || []).filter(Boolean);
+    if (!helpTile.isConnected || !found.length) return;
+    helpTile.textContent = helpLine(found);
+    document.getElementById('help-tile-sub').textContent = found[0].name || '';
+  }).catch(() => {});
+  if (mapApi.mountRoadview) mapApi.mountRoadview(document.getElementById('card-media'), loc);
+
+  const captureCard = async () => {
     if (!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    const canvas = await html2canvas(document.getElementById('the-card'), { scale: 2, backgroundColor: '#fff' });
+    return html2canvas(document.getElementById('the-card'), { scale: 2, backgroundColor: '#fff' });
+  };
+  document.getElementById('card-save').onclick = async () => {
+    const canvas = await captureCard();
     const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png'); a.download = '제주안전지도_점검카드.png'; a.click();
+    const safeName = String(loc.name || '점검카드').replace(/[\\/:*?"<>|]/g, '').slice(0, 30);
+    a.href = canvas.toDataURL('image/png'); a.download = `제주안전지도_${safeName}.png`; a.click();
     gtag('event', 'card_share', { method: 'image' });
   };
   document.getElementById('card-kakao').onclick = async () => {
     if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
     if (!Kakao.isInitialized()) Kakao.init(cfg.kakaoKey);
-    Kakao.Share.sendDefault({
-      objectType: 'text',
-      text: '내 숙소 안전 점검 결과\n' + summaryText,
-      link: { mobileWebUrl: 'https://jeju.kimyukah.com', webUrl: 'https://jeju.kimyukah.com' },
-      buttonTitle: '내 숙소도 점검하기'
-    });
+    const link = { mobileWebUrl: shareUrl, webUrl: shareUrl };
+    try {
+      const canvas = await captureCard();
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      const upload = await Kakao.Share.uploadImage({ file: [new File([blob], 'card.png', { type: 'image/png' })] });
+      Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: `${loc.name} 안전 점검`,
+          description: summaryText,
+          imageUrl: upload.infos.original.url,
+          link
+        },
+        buttons: [{ title: '이 장소 확인하기', link }]
+      });
+    } catch (e) {
+      Kakao.Share.sendDefault({
+        objectType: 'text',
+        text: `${loc.name} 안전 점검 결과\n` + summaryText,
+        link,
+        buttonTitle: '이 장소 확인하기'
+      });
+    }
     gtag('event', 'card_share', { method: 'kakao' });
   };
   document.getElementById('card-copy').onclick = async () => {
-    await navigator.clipboard.writeText(summaryText + '\nhttps://jeju.kimyukah.com');
-    document.getElementById('card-copy').textContent = '복사됨!';
+    await navigator.clipboard.writeText(summaryText + '\n' + shareUrl);
+    const copyBtn = document.getElementById('card-copy');
+    copyBtn.textContent = '복사됨!';
+    setTimeout(() => { if (copyBtn.isConnected) copyBtn.textContent = '요약 복사'; }, 2000);
     gtag('event', 'card_share', { method: 'copy' });
   };
 }
@@ -1269,6 +1367,19 @@ async function initKakao(cfg) {
     showHelpOverlays(places);
     renderNearestHelp(loc, places);
   };
+  mapApi.nearestHelp = nearestKakaoHelp;
+
+  // 안전 카드 상단 로드뷰 썸네일: 80m 내 파노라마가 있을 때만 보여준다.
+  const roadviewClient = new kakao.maps.RoadviewClient();
+  mapApi.mountRoadview = (el, loc) => {
+    if (!el) return;
+    const pos = new kakao.maps.LatLng(loc.lat, loc.lng);
+    roadviewClient.getNearestPanoId(pos, 80, panoId => {
+      if (!panoId || !el.isConnected) return;
+      el.hidden = false;
+      new kakao.maps.Roadview(el.querySelector('.card-roadview')).setPanoId(panoId, pos);
+    });
+  };
 
   // 사건: 축소하면 숫자 클러스터, 확대하면 개별 핀 (거지맵 패턴)
   const clusterer = new kakao.maps.MarkerClusterer({
@@ -1309,6 +1420,7 @@ async function initKakao(cfg) {
     incidentOn = this.classList.toggle('on');
     if (incidentOn) clusterer.addMarkers(markers);
     else clusterer.removeMarkers(markers);
+    document.getElementById('incident-legend').hidden = !incidentOn;
     relabelIncidents();
   };
   relabelIncidents();
@@ -1320,20 +1432,32 @@ async function initKakao(cfg) {
     const ranks = regionRanks(state.pop.regions);
     const byName = Object.fromEntries(state.pop.regions.map(r => [r.name, r]));
     let polygons = [];
+    const polygonByName = {};
+    const baseStyle = r => ({ strokeWeight: 1, strokeColor: '#8e8e93', strokeOpacity: .5, fillColor: style.color(r.total), fillOpacity: .35 });
+    let selectedName = null;
+    mapApi.clearRegionHighlight = () => {
+      if (selectedName && polygonByName[selectedName]) polygonByName[selectedName].setOptions(baseStyle(byName[selectedName]));
+      selectedName = null;
+    };
+    mapApi.highlightRegion = name => {
+      mapApi.clearRegionHighlight();
+      const p = polygonByName[name]; if (!p) return;
+      selectedName = name;
+      p.setOptions({ strokeWeight: 3, strokeColor: '#00a05a', strokeOpacity: 1, fillOpacity: .5 });
+      p.setZIndex && p.setZIndex(10);
+    };
     try {
       const geo = await (await fetch('data/regions.geojson')).json();
       const toPaths = g => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates)
         .map(poly => poly[0].map(([lng, lat]) => new kakao.maps.LatLng(lat, lng)));
       geo.features.forEach(f => {
         const r = byName[f.properties.name]; if (!r) return;
-        const p = new kakao.maps.Polygon({
-          path: toPaths(f.geometry),
-          strokeWeight: 1, strokeColor: '#8e8e93', strokeOpacity: .5,
-          fillColor: style.color(r.total), fillOpacity: .35
-        });
+        const p = new kakao.maps.Polygon({ path: toPaths(f.geometry), ...baseStyle(r) });
         kakao.maps.event.addListener(p, 'click', () => {
           regionDetail(r, style, ranks);
+          mapApi.panTo(r.lat, r.lng);
         });
+        polygonByName[r.name] = p;
         polygons.push(p);
       });
     } catch (e) {}
@@ -1502,7 +1626,9 @@ async function initLeaflet(cfg) {
   });
   incidentLayer.addTo(map);
   document.getElementById('chip-incident').onclick = function () {
-    this.classList.toggle('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
+    const on = this.classList.toggle('on');
+    on ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
+    document.getElementById('incident-legend').hidden = !on;
   };
   if (state.pop) {
     const style = popStyle(state.pop.regions);
@@ -1511,17 +1637,36 @@ async function initLeaflet(cfg) {
     const layer = L.layerGroup();
     try {
       const geo = await (await fetch('data/regions.geojson')).json();
+      const layerByName = {};
+      const baseStyle = f => {
+        const r = byName[f.properties.name];
+        return { color: '#8e8e93', weight: 1, opacity: .5,
+                 fillColor: r ? style.color(r.total) : '#ccc', fillOpacity: .35 };
+      };
+      let selectedName = null;
+      mapApi.clearRegionHighlight = () => {
+        const l = selectedName && layerByName[selectedName];
+        if (l) l.setStyle(baseStyle(l.feature));
+        selectedName = null;
+      };
+      mapApi.highlightRegion = name => {
+        mapApi.clearRegionHighlight();
+        const l = layerByName[name]; if (!l) return;
+        selectedName = name;
+        l.setStyle({ color: '#00a05a', weight: 3, opacity: 1, fillOpacity: .5 });
+        l.bringToFront();
+      };
       L.geoJSON(geo, {
-        style: f => {
-          const r = byName[f.properties.name];
-          return { color: '#8e8e93', weight: 1, opacity: .5,
-                   fillColor: r ? style.color(r.total) : '#ccc', fillOpacity: .35 };
-        },
-        onEachFeature: (f, l) => l.on('click', event => {
-          L.DomEvent.stopPropagation(event);
-          const r = byName[f.properties.name]; if (!r) return;
-          regionDetail(r, style, ranks);
-        })
+        style: baseStyle,
+        onEachFeature: (f, l) => {
+          layerByName[f.properties.name] = l;
+          l.on('click', event => {
+            L.DomEvent.stopPropagation(event);
+            const r = byName[f.properties.name]; if (!r) return;
+            regionDetail(r, style, ranks);
+            map.panTo([r.lat, r.lng]);
+          });
+        }
       }).addTo(layer);
     } catch (e) {}
     const popMarkers = state.pop.regions.map(r => {
@@ -1657,6 +1802,19 @@ async function initLeaflet(cfg) {
     engine = await initLeaflet(cfg);
   }
   gtag('event', 'map_loaded', { incident_count: state.data.incidents.length, map_engine: engine });
+
+  // 공유 딥링크: ?lat=&lng=&name= 로 들어오면 그 장소 카드를 바로 연다.
+  const qp = new URLSearchParams(location.search);
+  const dlLat = parseFloat(qp.get('lat')), dlLng = parseFloat(qp.get('lng'));
+  if (Number.isFinite(dlLat) && Number.isFinite(dlLng) && mapApi.openPlaceCard) {
+    mapApi.openPlaceCard({
+      name: qp.get('name') || '공유된 장소',
+      addr: qp.get('addr') || '',
+      lat: dlLat,
+      lng: dlLng
+    });
+    gtag('event', 'card_deeplink_open');
+  }
 })();
 </script>
 </body>
