@@ -10,7 +10,9 @@
      활용신청제라 safemap.go.kr에서 "안전비상벨(objtId=137)" 활용신청이 승인돼 있어야 한다.
   2. 공공데이터포털 전국안전비상벨위치표준데이터(15028206) — DATA_GO_KR_KEY.
 
-보안등 소스: 공공데이터포털 전국보안등정보표준데이터(15017320) — DATA_GO_KR_KEY 필수.
+보안등 소스 (둘 중 되는 쪽을 쓴다):
+  1. 생활안전지도 IF_0102 — safemapKey, "보안등(objtId=220)" 활용신청 승인 필요.
+  2. 공공데이터포털 전국보안등정보표준데이터(15017320) — DATA_GO_KR_KEY.
 odcloud 표준데이터 uddi는 개정판마다 바뀔 수 있어 후보 경로를 순서대로 시도한다.
 """
 import json
@@ -30,6 +32,7 @@ DATASETS = [
     {
         "name": "안전비상벨",
         "out": "bells.json",
+        "safemap": "IF_0032",   # safemap objtId=137
         "source": "행정안전부 전국안전비상벨위치표준데이터",
         "routes": [
             "15028206/v1/uddi:9fa7f510-a7ed-475c-952d-bbb823f5b0dd",
@@ -39,6 +42,7 @@ DATASETS = [
     {
         "name": "보안등",
         "out": "lights.json",
+        "safemap": "IF_0102",   # safemap objtId=220
         "source": "행정안전부 전국보안등정보표준데이터",
         "routes": [
             "15017320/v1/standard-securityLight",
@@ -95,14 +99,14 @@ def to_points(rows):
     return pts
 
 
-def fetch_safemap_bells():
-    """생활안전지도 IF_0032 (활용신청 승인 필요). 전국 응답이라 to_points에서 제주만 남긴다."""
+def fetch_safemap(code):
+    """생활안전지도 REST API (데이터셋별 활용신청 승인 필요). 전국 응답이라 to_points에서 제주만 남긴다."""
     rows, page = [], 1
     while True:
         q = urllib.parse.urlencode({
             "serviceKey": SAFEMAP_KEY, "pageNo": page, "numOfRows": 1000, "type": "json",
         })
-        with urllib.request.urlopen(f"https://www.safemap.go.kr/openapi2/IF_0032?{q}", timeout=60) as r:
+        with urllib.request.urlopen(f"https://www.safemap.go.kr/openapi2/{code}?{q}", timeout=60) as r:
             d = json.load(r)
         header = d.get("header") or {}
         if header.get("resultCode") not in ("00", "0", None):
@@ -128,12 +132,12 @@ def write_out(ds, pts, total):
 
 for ds in DATASETS:
     rows, src, last_err = None, ds["source"], None
-    if ds["name"] == "안전비상벨" and SAFEMAP_KEY:
+    if ds.get("safemap") and SAFEMAP_KEY:
         try:
-            rows = fetch_safemap_bells()
-            src = "행정안전부 생활안전지도 안전비상벨(IF_0032)"
+            rows = fetch_safemap(ds["safemap"])
+            src = f"행정안전부 생활안전지도 {ds['name']}({ds['safemap']})"
         except Exception as e:  # noqa: BLE001 — 표준데이터로 폴백
-            last_err = f"safemap IF_0032: {e}"
+            last_err = f"safemap {ds['safemap']}: {e}"
             print(f"[안내] {last_err} → 공공데이터포털 표준데이터로 폴백")
     if rows is None and KEY:
         for route in ds["routes"]:
@@ -143,7 +147,7 @@ for ds in DATASETS:
             except Exception as e:  # noqa: BLE001 — 경로 후보 시도
                 last_err = f"{route}: {e}"
     if rows is None:
-        need = "safemap 활용신청(objtId=137)" if ds["name"] == "안전비상벨" else "DATA_GO_KR_KEY"
+        need = f"safemap 활용신청 또는 DATA_GO_KR_KEY" if ds.get("safemap") else "DATA_GO_KR_KEY"
         print(f"[실패] {ds['name']}: {last_err or need + ' 필요'}")
         continue
     ds["source"] = src
