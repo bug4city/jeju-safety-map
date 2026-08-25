@@ -7,7 +7,6 @@
 <meta name="description" content="제주 실종 사건과 안전 정보를 지도에서 확인하세요. 언론 보도 기반, 출처 링크 포함.">
 <meta property="og:title" content="제주 안전지도">
 <meta property="og:description" content="제주에서 최근 어디서 실종 사건이 있었는지 지도로 확인하세요.">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <!-- GA4: 측정 ID 발급 후 G-XXXXXXXXXX 교체 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
@@ -49,7 +48,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:12px; right:12px; z-index:900;
   font-size:11px; color:var(--sub); background:rgba(255,255,255,.88); border-radius:10px; padding:8px 12px; line-height:1.5;
 }
-.pin-dot { background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); }
+.pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); }
 </style>
 </head>
 <body>
@@ -75,17 +74,14 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   모든 정보는 언론 보도를 출처와 함께 정리한 것입니다.
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const map = L.map('map', { zoomControl:false }).setView([33.38, 126.53], 10);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 18,
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+// 네이버 지도 NCP 키. 콘솔에서 발급 후 교체하고, Web 서비스 URL에 https://jeju.kimyukah.com 등록 필요.
+// 키가 없거나 로드에 실패하면 OSM(Leaflet)으로 자동 폴백한다.
+const NAVER_KEY = 'NAVER_NCP_KEY_HERE';
 
+const CENTER = { lat: 33.38, lng: 126.53 };
 const sheet = document.getElementById('sheet');
 document.getElementById('sheet-close').onclick = () => sheet.classList.remove('open');
-map.on('click', () => sheet.classList.remove('open'));
 
 function openSheet(inc) {
   document.getElementById('s-status').textContent = inc.status;
@@ -98,17 +94,62 @@ function openSheet(inc) {
   gtag('event', 'incident_open', { incident_id: inc.id });
 }
 
+function loadScript(src) {
+  return new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = ok; s.onerror = fail;
+    document.head.appendChild(s);
+  });
+}
+
+async function initNaver(data) {
+  await loadScript(`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_KEY}`);
+  if (!window.naver || !naver.maps) throw new Error('naver maps unavailable');
+  const map = new naver.maps.Map('map', {
+    center: new naver.maps.LatLng(CENTER.lat, CENTER.lng),
+    zoom: 10,
+    scaleControl: false, logoControlOptions: { position: naver.maps.Position.BOTTOM_LEFT }
+  });
+  naver.maps.Event.addListener(map, 'click', () => sheet.classList.remove('open'));
+  data.incidents.forEach(inc => {
+    const m = new naver.maps.Marker({
+      position: new naver.maps.LatLng(inc.lat, inc.lng),
+      map,
+      icon: { content: '<span class="pin-dot"></span>', anchor: new naver.maps.Point(9, 9) }
+    });
+    naver.maps.Event.addListener(m, 'click', () => openSheet(inc));
+  });
+  return 'naver';
+}
+
+async function initLeaflet(data) {
+  const css = document.createElement('link');
+  css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(css);
+  await loadScript('https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
+  const map = L.map('map', { zoomControl: false }).setView([CENTER.lat, CENTER.lng], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  map.on('click', () => sheet.classList.remove('open'));
+  data.incidents.forEach(inc => {
+    L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: '<span class="pin-dot"></span>', className: '', iconSize: [18, 18] }) })
+      .addTo(map).on('click', () => openSheet(inc));
+  });
+  return 'osm';
+}
+
 fetch('data/incidents.json')
   .then(r => r.json())
-  .then(d => {
-    document.getElementById('stat-count').textContent = d.stats.unresolvedAdultMissing + '명';
-    d.incidents.forEach(inc => {
-      const m = L.marker([inc.lat, inc.lng], {
-        icon: L.divIcon({ className:'pin-dot', iconSize:[18,18] })
-      }).addTo(map);
-      m.on('click', () => openSheet(inc));
-    });
-    gtag('event', 'map_loaded', { incident_count: d.incidents.length });
+  .then(async data => {
+    document.getElementById('stat-count').textContent = data.stats.unresolvedAdultMissing + '명';
+    let engine;
+    try {
+      engine = NAVER_KEY.startsWith('NAVER_') ? await initLeaflet(data) : await initNaver(data);
+    } catch (e) {
+      engine = await initLeaflet(data);
+    }
+    gtag('event', 'map_loaded', { incident_count: data.incidents.length, map_engine: engine });
   });
 </script>
 </body>
