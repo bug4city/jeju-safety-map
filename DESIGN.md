@@ -29,7 +29,7 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 - `IncidentFactMarker`: map-native white pill marker for confirmed fatality incidents. The primary line shows the outcome count (`사망 1명`), the secondary line shows the confirmation date/time when available (`8.24 확인`, `8.24 08:40 확인`). Confirmation state is carried by the red icon and border, not by spending the text slot on `현장 확인 완료`.
 - `ReturnJejuButton`: floating map button shown after the user leaves the 제주 overview via current location or place search; one tap returns to the 제주 center and restores the island-level map.
 - `AppHeader`: fixed top brand bar with favicon + 제주안전맵 on the left and compact external action pills on the right. Mobile preserves the brand and collapses long labels before icons.
-- `CctvLayer`: optional map overlay using compact teal dots; at close zoom each dot labels the camera count so CCTV coverage is visible without competing with incident pins.
+- `CctvLayer`: optional map overlay using compact teal dots for public CCTV locations; at close zoom each dot labels the camera count so CCTV coverage is visible without competing with incident pins. Purpose labels clarify that the layer mixes traffic, facility, disaster, and safety cameras.
 
 ## 5. States
 

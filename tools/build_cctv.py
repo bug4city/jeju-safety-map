@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""전국CCTV표준데이터에서 제주 방범 CCTV만 추려 data/cctv.json을 만든다.
+"""전국CCTV표준데이터에서 제주 공공 CCTV를 추려 data/cctv.json을 만든다.
 
 사용법:
   python3 tools/build_cctv.py
@@ -55,15 +55,15 @@ if KEY:
 else:
     rows = csv_rows()
 
-# 방범 목적만 남긴다. 교통 단속 카메라는 "안심" 신호가 아니다.
+# "근처 CCTV 존재" 확인이 목적이므로 방범만 남기지 않는다.
+# 대신 목적을 함께 저장해 방범 CCTV처럼 오해하지 않게 표시한다.
 pts = []
+purpose_counts = {}
 for r in rows:
     sido = str(r.get("ctprvnNm") or r.get("시도명") or "")
     if sido and sido != "제주특별자치도":
         continue
     purpose = str(r.get("instlPurposeType") or r.get("설치목적구분") or "")
-    if "방범" not in purpose and "생활방범" not in purpose:
-        continue
     try:
         lat = float(r.get("latitude") or r.get("위도") or r.get("WGS84위도"))
         lng = float(r.get("longitude") or r.get("경도") or r.get("WGS84경도"))
@@ -75,12 +75,16 @@ for r in rows:
         cnt = int(r.get("cameraCnt") or r.get("카메라대수") or 1)
     except (TypeError, ValueError):
         cnt = 1
-    pts.append([round(lat, 5), round(lng, 5), cnt])
+    label = purpose or "기타"
+    purpose_counts[label] = purpose_counts.get(label, 0) + cnt
+    pts.append([round(lat, 5), round(lng, 5), cnt, label])
 
 with open(OUT, "w") as f:
     json.dump({
-        "source": "행정안전부 전국CCTV표준데이터 (방범 목적만)",
+        "source": "행정안전부 전국CCTV표준데이터 (공공 CCTV 전체)",
         "count": len(pts),
+        "cameraTotal": sum(p[2] for p in pts),
+        "purposeCounts": purpose_counts,
         "points": pts,
     }, f, ensure_ascii=False)
-print(f"제주 방범 CCTV {len(pts)}개 → data/cctv.json (전체 응답 {len(rows)}행)")
+print(f"제주 공공 CCTV {len(pts)}곳/{sum(p[2] for p in pts)}대 → data/cctv.json (전체 응답 {len(rows)}행)")

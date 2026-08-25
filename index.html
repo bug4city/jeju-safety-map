@@ -408,7 +408,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   <button class="chip on" id="chip-incident">실종 사건</button>
   <button class="chip on" id="chip-pop" hidden>유동인구</button>
   <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
-  <button class="chip" id="chip-cctv" hidden>방범 CCTV</button>
+  <button class="chip" id="chip-cctv" hidden>공공 CCTV</button>
   <button class="chip check-btn" id="check-btn" hidden>내 숙소 안전 점검</button>
 </div>
 
@@ -472,9 +472,9 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
     </div>
   </div>
   <div class="legend" id="cctv-legend" hidden>
-    <b class="legend-title">방범 CCTV <small>행정안전부 표준데이터</small></b>
-    <div><i style="background:var(--cctv);border:2px solid #fff"></i>방범 목적 CCTV 위치</div>
-    <div class="sub-note">확대하면 카메라 대수를 함께 표시합니다.</div>
+    <b class="legend-title">공공 CCTV <small>행정안전부 표준데이터</small></b>
+    <div><i style="background:var(--cctv);border:2px solid #fff"></i>공공 CCTV 위치</div>
+    <div class="sub-note">방범·교통·시설물·재난 목적을 함께 표시합니다.</div>
   </div>
   <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="true">ⓘ 범례</button>
 </div>
@@ -767,7 +767,7 @@ function cctvUi(on) {
   document.getElementById('cctv-legend').hidden = !on;
   if (on && !localStorage.getItem('cctvHintShown')) {
     localStorage.setItem('cctvHintShown', '1');
-    showToast('방범 목적 CCTV 위치를 표시합니다. 카메라별 실제 촬영 범위나 작동 상태를 보장하는 정보는 아닙니다.', 7000);
+    showToast('공공 CCTV 위치를 표시합니다. 방범 전용이 아니며 실제 촬영 범위나 작동 상태를 보장하는 정보는 아닙니다.', 7000);
   }
 }
 
@@ -1069,14 +1069,14 @@ async function initKakao(cfg) {
 
   if (state.cctv) {
     let cctvOn = false;
-    const overlays = state.cctv.points.map(([lat, lng, count]) => {
+    const overlays = state.cctv.points.map(([lat, lng, count, purpose]) => {
       const el = document.createElement('button');
       el.className = 'cctv-dot';
       el.type = 'button';
-      el.setAttribute('aria-label', `방범 CCTV ${count}대`);
+      el.setAttribute('aria-label', `공공 CCTV ${count}대, ${purpose || '목적 미상'}`);
       el.onclick = () => {
         mapApi.panTo(lat, lng, 6);
-        showToast(`이 지점에 방범 CCTV ${count}대가 등록되어 있습니다.`);
+        showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`);
         gtag('event', 'cctv_open');
       };
       const ov = new kakao.maps.CustomOverlay({
@@ -1261,15 +1261,15 @@ async function initLeaflet(cfg) {
   }
   if (state.cctv) {
     const layer = L.layerGroup();
-    const cctvMarkers = state.cctv.points.map(([lat, lng, count]) => {
+    const cctvMarkers = state.cctv.points.map(([lat, lng, count, purpose]) => {
       const iconFor = close => L.divIcon({
-        html: `<button class="cctv-dot${close ? ' count' : ''}" type="button" aria-label="방범 CCTV ${count}대">${close ? count : ''}</button>`,
+        html: `<button class="cctv-dot${close ? ' count' : ''}" type="button" aria-label="공공 CCTV ${count}대, ${purpose || '목적 미상'}">${close ? count : ''}</button>`,
         className: '',
         iconSize: close ? [28, 18] : [18, 18]
       });
       const marker = L.marker([lat, lng], { icon: iconFor(false), zIndexOffset: 300 })
         .addTo(layer)
-        .on('click', () => showToast(`이 지점에 방범 CCTV ${count}대가 등록되어 있습니다.`));
+        .on('click', () => showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`));
       return { marker, count, iconFor };
     });
     const relabelCctv = () => {
