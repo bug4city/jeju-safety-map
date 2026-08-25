@@ -667,8 +667,8 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
     </div>
     <div class="result-meta" id="result-meta"></div>
     <div class="quiet-top" id="quiet-top" hidden>
-      <span class="quiet-top-label">🛡️ 사람 많고 사건 없는 동네 TOP</span>
-      <div class="quiet-top-chips" id="quiet-top-chips" aria-label="유동인구가 많고 보도 사건이 없는 동네 바로가기"></div>
+      <span class="quiet-top-label">🛡️ 사람 많이 다니는 동네 TOP</span>
+      <div class="quiet-top-chips" id="quiet-top-chips" aria-label="유동인구가 많은 동네 바로가기"></div>
     </div>
   </div>
   <div class="panel-body">
@@ -1256,8 +1256,9 @@ function regionDetail(r, style, ranks) {
   track('region_open', { region: r.name });
 }
 
-// 안심 동네 TOP 칩: 안전맵에서는 "한적"이 아니라 "사람이 많이 다니고 사건이 없는 곳"이
-// 좋은 신호다. 유동인구 상위 지역 중 반경 8km 보도 확인 사건이 없는 곳만 추린다.
+// 사람 많이 다니는 동네 TOP: 안전맵에서는 "한적"이 아니라 유동인구가 좋은 신호다.
+// 라벨은 유동인구 사실만 말한다 — "사건 없음"을 공개 기준으로 내걸면 목록에 없는
+// 동네에 낙인을 찍는 역명제가 되므로, 보도 사건 지역 제외는 조용한 필터로만 유지한다.
 function renderQuietTop() {
   const wrap = document.getElementById('quiet-top');
   if (!state.pop) return;
