@@ -7,13 +7,12 @@
 <meta name="description" content="제주 실종 사건과 안전 정보를 지도에서 확인하세요. 언론 보도 기반, 출처 링크 포함.">
 <meta property="og:title" content="제주 안전지도">
 <meta property="og:description" content="제주에서 최근 어디서 실종 사건이 있었는지 지도로 확인하세요.">
-<!-- GA4: 측정 ID 발급 후 G-XXXXXXXXXX 교체 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-FSQNRGNQ5Z"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', 'G-XXXXXXXXXX');
+gtag('config', 'G-FSQNRGNQ5Z');
 </script>
 <style>
 :root {
@@ -358,14 +357,10 @@ function setupCard(map, cfg) {
       if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
       if (!Kakao.isInitialized()) Kakao.init(cfg.kakaoKey);
       Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: '내 숙소 안전 점검 결과',
-          description: summaryText,
-          imageUrl: 'https://jeju.kimyukah.com/og-card.png',
-          link: { mobileWebUrl: 'https://jeju.kimyukah.com', webUrl: 'https://jeju.kimyukah.com' }
-        },
-        buttons: [{ title: '내 숙소도 점검하기', link: { mobileWebUrl: 'https://jeju.kimyukah.com', webUrl: 'https://jeju.kimyukah.com' } }]
+        objectType: 'text',
+        text: '\uD83D\uDD0D 내 숙소 안전 점검 결과\n' + summaryText,
+        link: { mobileWebUrl: 'https://jeju.kimyukah.com', webUrl: 'https://jeju.kimyukah.com' },
+        buttonTitle: '내 숙소도 점검하기'
       });
       gtag('event', 'card_share', { method: 'kakao' });
     };
