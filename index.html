@@ -118,6 +118,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   font-size:var(--fs-md); font-weight:800; letter-spacing:0;
 }
 .header-brand img { flex:none; width:32px; height:32px; border-radius:8px; box-shadow:var(--shadow-1); }
+.header-brand h1 { font-size:inherit; font-weight:inherit; margin:0; }
 .header-actions { display:flex; align-items:center; gap:var(--sp-2); flex:none; }
 .header-action {
   min-height:40px; border:1px solid rgba(255,255,255,.12); border-radius:999px; padding:0 var(--sp-3);
@@ -147,12 +148,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .panel.full { transform:translateY(calc(8px + env(safe-area-inset-top))); }
 .grab { padding:var(--sp-2) 0 var(--sp-1); cursor:grab; flex:none; touch-action:none; }
 .grab::before { content:''; display:block; width:44px; height:5px; border-radius:3px; background:var(--line-strong); margin:0 auto; }
-.panel-head { padding:var(--sp-1) var(--sp-4) var(--sp-2); flex:none; }
-.panel-head h1 { font-size:var(--fs-title); }
-.panel-head p { font-size:var(--fs-sub); color:var(--sub); margin-top:var(--sp-1); line-height:1.5; word-break:keep-all; overflow-wrap:break-word; }
-.panel-head strong { color:var(--accent); }
-.panel-head .panel-sub { font-size:var(--fs-small, 12px); opacity:.85; }
-.panel-tools { flex:none; padding:0 var(--sp-4) var(--sp-3); border-bottom:1px solid var(--line); }
+.panel-tools { flex:none; padding:var(--sp-1) var(--sp-4) var(--sp-3); border-bottom:1px solid var(--line); }
 .search-box {
   display:flex; align-items:center; gap:var(--sp-2); min-height:48px; padding:0 var(--sp-3);
   border:1px solid var(--line-strong); border-radius:var(--r-sm); background:#fff; box-shadow:0 1px 0 rgba(0,0,0,.02);
@@ -470,7 +466,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   .panel { left:0; right:auto; top:calc(var(--header-h) + env(safe-area-inset-top)); bottom:0; width:var(--panel-w); height:calc(100% - var(--header-h) - env(safe-area-inset-top));
     border-radius:0; transform:none !important; box-shadow:var(--shadow-2); }
   .grab { display:none; }
-  .panel-head { padding-top:var(--sp-4); }   /* grab 핸들이 사라지므로 상단 여백 복원 */
+  .panel-tools { padding-top:var(--sp-4); }   /* grab 핸들이 사라지므로 상단 여백 복원 */
   .chips { left:calc(var(--panel-w) + var(--sp-4)); }
   .legend-stack { bottom:var(--sp-4); }
   .foot-note { left:calc(var(--panel-w) + var(--sp-4)); bottom:var(--sp-4); max-width:360px; }
@@ -505,7 +501,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 <header class="app-header" aria-label="제주안전맵 상단 메뉴">
   <a class="header-brand" href="https://jeju.kimyukah.com" aria-label="제주안전맵 홈">
     <img src="assets/favicon-32.png" width="32" height="32" alt="">
-    <span>제주안전맵</span>
+    <h1>제주안전맵</h1>
   </a>
   <nav class="header-actions" aria-label="외부 링크">
     <a class="header-action compact-label" href="https://discord.gg/UX9YQWxvYb" target="_blank" rel="noopener" aria-label="장난감병동 디스코드에서 피드백 보내기">
@@ -540,10 +536,6 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 
 <aside class="panel" id="panel">
   <div class="grab" id="grab"></div>
-  <div class="panel-head">
-    <h1>제주안전맵</h1>
-    <p>내 숙소, 내가 갈 곳은 안전할까? 제주 여행 전에 미리 확인하는 안심 지도입니다.</p>
-  </div>
   <div class="panel-tools">
     <label class="search-box" for="search-input">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.2-4.2m1.2-5.3a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
