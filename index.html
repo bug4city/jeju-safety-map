@@ -504,11 +504,11 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 <div id="map"></div>
 
 <div class="chips">
+  <button class="chip on" id="chip-pop" hidden>유동인구</button>
+  <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
+  <button class="chip" id="chip-incident">실종 사건</button>
   <button class="chip" id="chip-cctv" hidden>공공 CCTV</button>
   <button class="chip" id="chip-light" hidden>보안등</button>
-  <button class="chip on" id="chip-pop" hidden>유동인구</button>
-  <button class="chip" id="chip-incident">실종 사건</button>
-  <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
   <button class="chip check-btn" id="check-btn" hidden>내 숙소 안전 점검</button>
 </div>
 
@@ -587,6 +587,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 <script>
 const CENTER = { lat: 33.38, lng: 126.53 };
 const CRIME_WMS = 'https://www.safemap.go.kr/openapi2/IF_0087_WMS';
+const LIGHT_WMS = 'https://www.safemap.go.kr/openapi2/IF_0102_WMS';
 const FALLBACK_PLACES = [
   { keys: ['제주공항', '제주국제공항', '공항'], name: '제주국제공항', addr: '제주시 공항로 2', lat: 33.506, lng: 126.493 },
   { keys: ['롯데호텔', '롯데호텔제주', '롯데 제주'], name: '롯데호텔 제주', addr: '서귀포시 색달동 2812-4', lat: 33.248, lng: 126.410 },
@@ -1097,6 +1098,12 @@ function cctvUi(on) {
   if (on && !localStorage.getItem('cctvHintShown')) {
     localStorage.setItem('cctvHintShown', '1');
     showToast('공공 CCTV 위치를 표시합니다. 방범 전용이 아니며 실제 촬영 범위나 작동 상태를 보장하는 정보는 아닙니다.', 7000);
+  }
+}
+function lightUi(on) {
+  if (on && !localStorage.getItem('lightHintShown')) {
+    localStorage.setItem('lightHintShown', '1');
+    showToast('지자체가 등록한 보안등(방범 조명) 위치를 표시합니다. 밤길이 얼마나 밝은지 가늠하는 참고 자료이며, 실제 점등 여부를 보장하지는 않습니다.', 7000);
   }
 }
 
@@ -1741,37 +1748,48 @@ async function initKakao(cfg) {
     }, true);
   }
 
-  // 범죄주의구간 WMS: 화면 bbox 이미지를 CustomOverlay로 덮고 idle마다 갱신
+  // 생활안전지도 WMS 레이어(범죄주의구간·보안등): 화면 bbox 이미지를 CustomOverlay로 덮고 idle마다 갱신
   if (cfg.safemapKey) {
-    const img = document.createElement('img');
-    img.style.cssText = 'opacity:.5;pointer-events:none;';
-    // 앵커를 뷰포트 모서리에 두면 카카오가 화면 밖 판정으로 오버레이를 컬링해서
-    // DOM에 안 붙는다. 중앙 앵커(0.5)로 두고 이미지가 화면 전체를 덮게 한다.
-    const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0.5, yAnchor: 0.5, zIndex: 5 });
-    let on = false;
-    const refresh = () => {
-      if (!on) return;
-      const b = map.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast();
-      const proj = map.getProjection();
-      const p1 = proj.containerPointFromCoords(new kakao.maps.LatLng(ne.getLat(), sw.getLng()));
-      const p2 = proj.containerPointFromCoords(new kakao.maps.LatLng(sw.getLat(), ne.getLng()));
-      img.width = Math.round(p2.x - p1.x); img.height = Math.round(p2.y - p1.y);
-      img.src = `${CRIME_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CRMNLHSPOT_TOT&styles=A2SM_CrmnlHspot_Tot_Tot&format=image/png&transparent=TRUE&version=1.1.1&srs=EPSG:4326&bbox=${sw.getLng()},${sw.getLat()},${ne.getLng()},${ne.getLat()}&width=${img.width}&height=${img.height}`;
-      overlay.setPosition(map.getCenter());
-      overlay.setMap(map);
+    const wmsChip = (chipId, wmsQuery, opts) => {
+      const img = document.createElement('img');
+      img.style.cssText = `opacity:${opts.opacity};pointer-events:none;`;
+      // 앵커를 뷰포트 모서리에 두면 카카오가 화면 밖 판정으로 오버레이를 컬링해서
+      // DOM에 안 붙는다. 중앙 앵커(0.5)로 두고 이미지가 화면 전체를 덮게 한다.
+      const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0.5, yAnchor: 0.5, zIndex: opts.zIndex });
+      let on = false;
+      const refresh = () => {
+        if (!on) return;
+        const b = map.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast();
+        const proj = map.getProjection();
+        const p1 = proj.containerPointFromCoords(new kakao.maps.LatLng(ne.getLat(), sw.getLng()));
+        const p2 = proj.containerPointFromCoords(new kakao.maps.LatLng(sw.getLat(), ne.getLng()));
+        img.width = Math.round(p2.x - p1.x); img.height = Math.round(p2.y - p1.y);
+        img.src = `${wmsQuery}&format=image/png&transparent=TRUE&version=1.1.1&srs=EPSG:4326&bbox=${sw.getLng()},${sw.getLat()},${ne.getLng()},${ne.getLat()}&width=${img.width}&height=${img.height}`;
+        overlay.setPosition(map.getCenter());
+        overlay.setMap(map);
+      };
+      kakao.maps.event.addListener(map, 'idle', refresh);
+      // 기본 on 여부는 opts.defaultOn: 초기 자동 켜짐일 때는 첫 화면(제주 전역 뷰)을
+      // 유지하고, 사용자가 직접 켤 때만 시내 축척(디테일이 보이는)으로 데려간다.
+      let initial = !!opts.defaultOn;
+      wireChip(chipId, v => {
+        on = v;
+        if (on) {
+          if (!initial && map.getLevel() >= 9) { map.setLevel(7); map.panTo(new kakao.maps.LatLng(33.505, 126.525)); }
+          refresh();
+        } else overlay.setMap(null);
+        initial = false;
+        opts.onToggle(on);
+      }, opts.defaultOn);
     };
-    kakao.maps.event.addListener(map, 'idle', refresh);
-    // 기본 꺼짐: 첫 화면은 안전시설(CCTV) 중심으로 보여주고,
-    // 사용자가 직접 켤 때만 시내 축척(격자가 보이는)으로 데려간다.
-    wireChip('chip-crime', v => {
-      on = v;
-      if (on) {
-        if (map.getLevel() >= 9) { map.setLevel(7); map.panTo(new kakao.maps.LatLng(33.505, 126.525)); }
-        refresh();
-      } else overlay.setMap(null);
-      crimeUi(on);
-      gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
-    }, false);
+    wmsChip('chip-crime', `${CRIME_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CRMNLHSPOT_TOT&styles=A2SM_CrmnlHspot_Tot_Tot`, {
+      opacity: .5, zIndex: 5, defaultOn: true,
+      onToggle: on => { crimeUi(on); gtag('event', 'layer_toggle', { layer: 'crime_zone', on }); }
+    });
+    wmsChip('chip-light', `${LIGHT_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CMMNPOI_SECULIGHT`, {
+      opacity: .8, zIndex: 6,
+      onToggle: on => { lightUi(on); gtag('event', 'layer_toggle', { layer: 'security_light', on }); }
+    });
   }
   setupCard(map, cfg);
   kakao.maps.event.addListener(map, 'click', mouseEvent => {
@@ -1962,7 +1980,13 @@ async function initLeaflet(cfg) {
       format: 'image/png', transparent: true, version: '1.1.1',
       serviceKey: cfg.safemapKey, opacity: .45
     });
-    wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); crimeUi(on); }, false);
+    wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); crimeUi(on); }, true);
+    const lightWms = L.tileLayer.wms(LIGHT_WMS, {
+      layers: 'A2SM_CMMNPOI_SECULIGHT',
+      format: 'image/png', transparent: true, version: '1.1.1',
+      serviceKey: cfg.safemapKey, opacity: .8
+    });
+    wireChip('chip-light', on => { on ? lightWms.addTo(map) : map.removeLayer(lightWms); lightUi(on); }, false);
   }
   if (state.cctv) {
     const layer = L.layerGroup();
