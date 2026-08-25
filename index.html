@@ -225,7 +225,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .chip.more-chip.open { background:var(--brand-soft); border-color:var(--brand); color:var(--brand); }
 .chip.more-chip.has-on::after { content:''; display:inline-block; width:6px; height:6px; margin-left:4px; vertical-align:2px; border-radius:50%; background:var(--brand); }
 .chips-more-menu {
-  position:fixed; top:calc(var(--header-h) + var(--sp-3) + env(safe-area-inset-top) + 44px); right:var(--sp-3); z-index:1000;
+  position:fixed; z-index:1000;
   display:flex; flex-direction:column; gap:var(--sp-2); align-items:flex-end;
   background:#fff; border:1px solid var(--line); border-radius:var(--r-md, 12px); padding:var(--sp-3); box-shadow:var(--shadow-2);
 }
@@ -1212,6 +1212,12 @@ function syncMoreChip() {
 document.getElementById('chip-more').onclick = function () {
   const menu = document.getElementById('chips-more-menu');
   menu.hidden = !menu.hidden;
+  if (!menu.hidden) {
+    // ⋯ 버튼 바로 아래에 정렬 (칩 바가 가로 스크롤이라 메뉴는 밖에서 fixed로 띄운다)
+    const rect = this.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 8) + 'px';
+    menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8)) + 'px';
+  }
   this.classList.toggle('open', !menu.hidden);
   this.setAttribute('aria-expanded', String(!menu.hidden));
 };
@@ -1321,12 +1327,12 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
             ${(i.sources || []).map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>`).join('')}
           </div>`).join('')}
       </details>` : ''}
-      <div class="brand">공유용 요약 · 제주안전맵 · 유동인구 ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 · CCTV 행정안전부 표준데이터 · 사건은 언론 보도 기준</div>
+      <div class="brand">공유용 요약 · 제주안전맵 jeju.kimyukah.com · 유동인구 ${state.pop.day.slice(0,4)}.${state.pop.day.slice(4,6)} 통신사 데이터 · CCTV 행정안전부 표준데이터 · 사건은 언론 보도 기준</div>
     </div>
     <div class="card-actions">
       <button id="card-save">이미지 저장</button>
       <button id="card-kakao" class="kakao">카톡 공유</button>
-      <button id="card-copy">요약 복사</button>
+      <button id="card-x">X 공유</button>
       <button id="card-webshare" hidden>공유</button>
     </div>
     <div class="card-hint">친구에게 보내기 좋은 요약입니다. 안전 판정이 아니라 공개 보도·CCTV·통신사 유동인구를 한 번에 확인하는 참고 자료입니다.</div>`;
@@ -1377,7 +1383,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     const canvas = await captureCard();
     const a = document.createElement('a');
     const safeName = String(loc.name || '점검카드').replace(/[\\/:*?"<>|]/g, '').slice(0, 30);
-    a.href = canvas.toDataURL('image/png'); a.download = `제주안전지도_${safeName}.png`; a.click();
+    a.href = canvas.toDataURL('image/png'); a.download = `제주안전맵_${safeName}.png`; a.click();
     gtag('event', 'card_share', { method: 'image' });
   };
   document.getElementById('card-kakao').onclick = async () => {
@@ -1417,24 +1423,19 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       try {
         await navigator.share({
-          files: [new File([blob], '제주안전지도_점검카드.png', { type: 'image/png' })],
+          files: [new File([blob], '제주안전맵_점검카드.png', { type: 'image/png' })],
           text: summaryText + '\n' + shareUrl
         });
         gtag('event', 'card_share', { method: 'webshare' });
       } catch (e) {}
     };
   }
-  document.getElementById('card-copy').onclick = async () => {
-    const copyBtn = document.getElementById('card-copy');
-    try {
-      await navigator.clipboard.writeText(summaryText + '\n' + shareUrl);
-    } catch (e) {
-      showToast('이 환경에서는 자동 복사가 막혀 있어요. 카톡 공유나 이미지 저장을 이용해 주세요.');
-      return;
-    }
-    copyBtn.textContent = '복사됨!';
-    setTimeout(() => { if (copyBtn.isConnected) copyBtn.textContent = '요약 복사'; }, 2000);
-    gtag('event', 'card_share', { method: 'copy' });
+  document.getElementById('card-x').onclick = () => {
+    const u = new URL('https://x.com/intent/post');
+    u.searchParams.set('text', summaryText);
+    u.searchParams.set('url', shareUrl);
+    window.open(u.toString(), '_blank', 'noopener');
+    gtag('event', 'card_share', { method: 'x' });
   };
 }
 
