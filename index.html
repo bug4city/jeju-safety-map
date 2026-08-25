@@ -49,6 +49,10 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   font-size:11px; color:var(--sub); background:rgba(255,255,255,.88); border-radius:10px; padding:8px 12px; line-height:1.5;
 }
 .pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); }
+.chips { display:flex; gap:8px; margin-top:10px; }
+.chip { font-size:13px; border:1px solid #d1d1d6; background:#fff; color:var(--sub); border-radius:999px; padding:5px 12px; cursor:pointer; }
+.chip.on { background:var(--ink); border-color:var(--ink); color:#fff; }
+.chip[hidden] { display:none; }
 </style>
 </head>
 <body>
@@ -58,6 +62,10 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   <h1>제주 안전지도</h1>
   <p>최근 3년 7개월간 제주 성인 실종 미해결 <strong id="stat-count">15명</strong> (제주경찰청 전수조사).
   아래 핀은 언론 보도로 확인된 사건입니다.</p>
+  <div class="chips">
+    <button class="chip on" id="chip-incident">실종 사건</button>
+    <button class="chip" id="chip-cctv" hidden>방범 CCTV</button>
+  </div>
 </header>
 
 <section class="sheet" id="sheet" aria-live="polite">
@@ -132,11 +140,46 @@ async function initLeaflet(data) {
     maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
   map.on('click', () => sheet.classList.remove('open'));
+  const incidentLayer = L.layerGroup().addTo(map);
   data.incidents.forEach(inc => {
     L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: '<span class="pin-dot"></span>', className: '', iconSize: [18, 18] }) })
-      .addTo(map).on('click', () => openSheet(inc));
+      .addTo(incidentLayer).on('click', () => openSheet(inc));
   });
+  document.getElementById('chip-incident').onclick = function () {
+    this.classList.toggle('on');
+    this.classList.contains('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
+  };
+  initCctv(map).catch(() => {});
   return 'osm';
+}
+
+// 방범 CCTV 히트맵. data/cctv.json이 아직 없으면(인증키 미발급) 칩 자체를 숨긴 채 둔다.
+async function initCctv(map) {
+  const res = await fetch('data/cctv.json');
+  if (!res.ok) return;
+  const cctv = await res.json();
+  await loadScript('https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js');
+  const heat = L.heatLayer(cctv.points.map(p => [p[0], p[1], Math.min(p[2], 4)]), {
+    radius: 14, blur: 18, minOpacity: .25,
+    gradient: { .3: '#7fb2f0', .6: '#2f7de1', 1: '#0a4fa8' }  // 파랑 계열: 위험(빨강)과 구분되는 "안심" 색
+  });
+  // 확대하면 개별 지점도 보여준다. 히트맵만으로는 "우리 골목에 있나"를 답할 수 없다.
+  const dots = L.layerGroup();
+  cctv.points.forEach(p => dots.addLayer(
+    L.circleMarker([p[0], p[1]], { radius: 4, color: '#0a4fa8', weight: 1, fillOpacity: .8 })));
+  let on = false;
+  const sync = () => {
+    if (!on) return;
+    map.getZoom() >= 15 ? (map.hasLayer(dots) || dots.addTo(map)) : map.removeLayer(dots);
+  };
+  map.on('zoomend', sync);
+  const chip = document.getElementById('chip-cctv');
+  chip.hidden = false;
+  chip.onclick = function () {
+    on = this.classList.toggle('on');
+    if (on) { heat.addTo(map); sync(); } else { map.removeLayer(heat); map.removeLayer(dots); }
+    gtag('event', 'layer_toggle', { layer: 'cctv', on });
+  };
 }
 
 fetch('data/incidents.json')
