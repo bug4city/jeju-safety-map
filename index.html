@@ -65,6 +65,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   <div class="chips">
     <button class="chip on" id="chip-incident">실종 사건</button>
     <button class="chip" id="chip-cctv" hidden>방범 CCTV</button>
+    <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
   </div>
 </header>
 
@@ -150,7 +151,31 @@ async function initLeaflet(data) {
     this.classList.contains('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
   };
   initCctv(map).catch(() => {});
+  initCrimeWms(map).catch(() => {});
   return 'osm';
+}
+
+// 경찰청 범죄주의구간(5대 범죄 밀도, 생활안전지도 WMS). 우리가 위험도를 판정하지 않고
+// 국가 데이터를 그대로 오버레이만 한다. 키는 공개 repo에 커밋하지 않으려고
+// 서버에만 두는 config.json에서 읽는다. 없으면 칩을 숨긴 채 둔다.
+async function initCrimeWms(map) {
+  const res = await fetch('config.json');
+  if (!res.ok) return;
+  const cfg = await res.json();
+  if (!cfg.safemapKey) return;
+  const wms = L.tileLayer.wms('https://www.safemap.go.kr/openapi2/IF_0087_WMS', {
+    layers: 'A2SM_CRMNLHSPOT_TOT', styles: 'A2SM_CrmnlHspot_Tot_Tot',
+    format: 'image/png', transparent: true, version: '1.1.1',
+    serviceKey: cfg.safemapKey,
+    opacity: .55, attribution: '범죄주의구간 © 경찰청·생활안전지도'
+  });
+  const chip = document.getElementById('chip-crime');
+  chip.hidden = false;
+  chip.onclick = function () {
+    const on = this.classList.toggle('on');
+    on ? wms.addTo(map) : map.removeLayer(wms);
+    gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
+  };
 }
 
 // 방범 CCTV 히트맵. data/cctv.json이 아직 없으면(인증키 미발급) 칩 자체를 숨긴 채 둔다.
