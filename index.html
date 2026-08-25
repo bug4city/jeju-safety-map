@@ -1483,26 +1483,45 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     a.href = canvas.toDataURL('image/png'); a.download = `제주안전맵_${safeName}.png`; a.click();
     track('card_share', { method: 'image' });
   };
-  document.getElementById('card-kakao').onclick = async () => {
-    track('card_share_start', { method: 'kakao' });
+  // 카톡 공유: 클릭 후 캡처·업로드를 기다리면 사파리에서 제스처가 만료되어
+  // 앱 실행이 차단되고 "카카오톡이 실행되지 않나요?" 페이지로 빠진다.
+  // SDK와 카드 이미지를 미리 준비해두고, 클릭 시에는 동기적으로 sendDefault만 부른다.
+  let kakaoImageUrl = null;
+  const kakaoReady = (async () => {
     if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
     if (!Kakao.isInitialized()) Kakao.init(cfg.kakaoKey);
-    const link = { mobileWebUrl: shareUrl, webUrl: shareUrl };
+  })();
+  // 비동기 행(범죄등급·편의점 수 등)이 채워진 뒤 캡처되도록 잠시 기다린다.
+  setTimeout(async () => {
     try {
+      await kakaoReady;
+      if (!document.getElementById('the-card')) return;
       const canvas = await captureCard();
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
       const upload = await Kakao.Share.uploadImage({ file: [new File([blob], 'card.png', { type: 'image/png' })] });
+      kakaoImageUrl = upload.infos.original.url;
+    } catch (e) {}
+  }, 1500);
+  document.getElementById('card-kakao').onclick = () => {
+    track('card_share_start', { method: 'kakao', cached: !!kakaoImageUrl });
+    if (!window.Kakao || !Kakao.isInitialized()) {
+      showToast('공유 준비 중입니다. 잠시 후 다시 눌러주세요.');
+      track('card_share_error', { method: 'kakao' });
+      return;
+    }
+    const link = { mobileWebUrl: shareUrl, webUrl: shareUrl };
+    if (kakaoImageUrl) {
       Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
           title: `${loc.name} 안전 점검`,
           description: summaryText,
-          imageUrl: upload.infos.original.url,
+          imageUrl: kakaoImageUrl,
           link
         },
         buttons: [{ title: '이 장소 확인하기', link }]
       });
-    } catch (e) {
+    } else {
       Kakao.Share.sendDefault({
         objectType: 'text',
         text: `${loc.name} 안전 점검 결과\n` + summaryText,
