@@ -234,7 +234,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .panel.detail-mode .quiet-top { display:none; }
 /* 한적한 동네 TOP: 탐색 진입점 칩 줄 (북적북적 제주 패턴) */
 .quiet-top { margin-top:var(--sp-3); }
-.quiet-top-label { display:block; font-size:var(--fs-sub); font-weight:700; color:var(--sub); margin-bottom:var(--sp-2); }
+.quiet-top-label { display:block; font-size:var(--fs-cap); font-weight:700; color:var(--sub); letter-spacing:.2px; margin-bottom:var(--sp-2); }
 .quiet-top-chips { display:flex; gap:var(--sp-2); overflow-x:auto; scrollbar-width:none; }
 .quiet-top-chips::-webkit-scrollbar { display:none; }
 .quiet-chip {
@@ -273,14 +273,14 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .back { border:0; background:none; color:var(--brand); font-size:var(--fs-body); padding:var(--sp-2) 0 var(--sp-3); cursor:pointer; }
 .detail .status { display:inline-block; font-size:var(--fs-sub); font-weight:700; color:#fff; background:var(--accent); border-radius:var(--r-xs); padding:2px var(--sp-2); margin-bottom:var(--sp-2); }
 .detail h2 { font-size:var(--fs-title); margin-bottom:2px; }
-.detail .area { font-size:var(--fs-ui); color:var(--sub); margin-bottom:var(--sp-2); }
+.detail .area { font-size:var(--fs-sub); color:var(--sub); margin-bottom:var(--sp-2); }
 .detail .summary { font-size:var(--fs-body); line-height:1.65; margin-bottom:var(--sp-3); }
 /* 숫자를 문장으로 풀어주는 요약 + 한 줄 인사이트 (북적북적 제주 패턴) */
-.summary-text { font-size:var(--fs-body); line-height:1.65; color:var(--ink); margin:var(--sp-2) 0; word-break:keep-all; }
+.summary-text { font-size:var(--fs-body); line-height:1.65; color:var(--ink); margin:var(--sp-3) 0 var(--sp-1); word-break:keep-all; }
 .summary-text b { font-weight:700; }
 .src-caption { font-size:var(--fs-cap); color:var(--sub); margin-bottom:var(--sp-2); }
 .insight {
-  display:block; margin:var(--sp-2) 0 var(--sp-3); padding:var(--sp-2) var(--sp-3);
+  display:block; margin:var(--sp-3) 0; padding:var(--sp-2) var(--sp-3);
   border-radius:var(--r-sm); background:var(--brand-soft); color:var(--ink);
   font-size:var(--fs-ui); font-weight:700; line-height:1.55; word-break:keep-all;
 }
@@ -289,7 +289,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .insight.alert b, .insight.alert { color:var(--accent); }
 .insight.alert small { color:var(--sub); }
 /* 도민 vs 외지인 유동인구 비율 바 (북적북적 제주 패턴) */
-.split-row { margin:var(--sp-2) 0 var(--sp-3); }
+.split-row { margin:var(--sp-3) 0; }
 .split-bar { height:8px; border-radius:999px; background:var(--cctv); overflow:hidden; }
 .split-bar i { display:block; height:100%; background:var(--blue); border-radius:999px 0 0 999px; }
 .split-ends { display:flex; justify-content:space-between; font-size:var(--fs-cap); color:var(--sub); margin-top:var(--sp-1); }
@@ -493,14 +493,15 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .safety-card.capturing { border:1px solid var(--line); border-radius:var(--r-lg); padding:var(--sp-4); background:#fff; }
 .safety-card.capturing h3, .safety-card.capturing .brand { display:block; }
 .safety-card h3 { font-size:var(--fs-md); margin-bottom:2px; }
-.safety-card .addr { font-size:var(--fs-cap); color:var(--sub); margin-bottom:var(--sp-3); }
+.safety-card .addr { font-size:var(--fs-sub); color:var(--sub); margin-bottom:var(--sp-2); }
 .safety-card .place-link { color:var(--brand); text-decoration:none; font-weight:700; }
 .safety-card .row { display:flex; justify-content:space-between; gap:var(--sp-3); font-size:var(--fs-ui); padding:var(--sp-2) 0; border-top:1px solid var(--line); }
+.safety-card .row span { color:var(--sub); }
 .safety-card .row:first-of-type { border-top:0; }
 .safety-card .row b { text-align:right; white-space:nowrap; }
 /* 길찾기: 지도 앱 바로가기 (북적북적 제주 N/K/T 패턴) */
 .route-row { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); margin-top:var(--sp-3); }
-.route-row > span { font-size:var(--fs-ui); font-weight:700; color:var(--sub); }
+.route-row > span { font-size:var(--fs-cap); font-weight:700; color:var(--sub); letter-spacing:.2px; }
 .route-btns { display:flex; gap:var(--sp-2); }
 .route-btn {
   width:36px; height:36px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
@@ -525,7 +526,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 }
 /* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
 .near-regions { margin-top:var(--sp-3); border-top:1px solid var(--line); padding-top:var(--sp-2); }
-.near-regions h4 { font-size:var(--fs-ui); margin-bottom:var(--sp-1); }
+.near-regions h4 { font-size:var(--fs-cap); font-weight:700; color:var(--sub); letter-spacing:.2px; margin-bottom:var(--sp-1); }
 .near-region { display:flex; align-items:center; justify-content:space-between; gap:var(--sp-2); width:100%; border:0; background:none; text-align:left; font-size:var(--fs-ui); padding:var(--sp-2) 0; border-bottom:1px solid var(--line); cursor:pointer; }
 .near-region:last-child { border-bottom:0; }
 .near-region small { color:var(--sub); font-size:var(--fs-cap); }
@@ -533,7 +534,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .card-media[hidden] { display:none; }
 .card-media .card-roadview { width:100%; height:150px; }
 .card-media .media-cap { display:block; padding:3px var(--sp-2); font-size:var(--fs-cap); color:var(--sub); background:var(--panel-muted); }
-.card-more { margin-top:var(--sp-2); border-top:1px solid var(--line); padding-top:var(--sp-2); }
+.card-more { margin-top:var(--sp-3); border-top:1px solid var(--line); padding-top:var(--sp-2); }
 .card-more summary { cursor:pointer; color:var(--brand); font-weight:600; font-size:var(--fs-ui); }
 .card-more .mini-inc { padding:var(--sp-2) 0; border-bottom:1px solid var(--line); }
 .card-more .mini-inc:last-child { border-bottom:0; }

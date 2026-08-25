@@ -7,6 +7,8 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 ## 2. Tokens
 
 - Color: `--ink` primary text, `--sub` secondary text, `--card` panels, `--line` hairlines, `--line-strong` controls, `--accent` incident red, `--brand` safety green, `--brand-soft` selected green tint, `--panel-muted` quiet panel background, `--blue` location/distance affordance, `--cctv` CCTV data teal, `--cctv-soft` CCTV tint.
+- Theming: dark mode redefines tokens only under `html[data-theme="dark"]` (no per-component dark branches). Map markers and the share-capture card stay light by design.
+- Detail typography: every text in the detail/card surface uses one of six roles (screen title, meta, body summary, section label, value, caption) documented in `docs/design.md`; blocks stack on a uniform `--sp-3` vertical rhythm.
 - Radius: `--r-sm` controls, `--r-lg` panel/card shells, pill controls use `999px`.
 - Shadow: `--shadow-1` controls and chips, `--shadow-2` fixed panels and floating primary controls.
 - Type: `--fs-title`, `--fs-body`, `--fs-ui`, `--fs-sub`, `--fs-cap`.
