@@ -16,92 +16,137 @@ gtag('js', new Date());
 gtag('config', 'G-XXXXXXXXXX');
 </script>
 <style>
-:root { --ink:#1c1c1e; --sub:#6e6e73; --accent:#c0392b; --card:#ffffff; }
+:root {
+  --ink:#1c1c1e; --sub:#6e6e73; --accent:#c0392b; --card:#ffffff;
+  --calm:#0e7c7b; --quiet:#e07b00; --line:#ececf0;
+  --panel-w:360px; --sheet-peek:112px; --sheet-half:46vh;
+}
 * { box-sizing:border-box; margin:0; }
 html,body { height:100%; }
-body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; color:var(--ink); }
+body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; color:var(--ink); overflow:hidden; }
 #map { position:fixed; inset:0; }
-.banner {
-  position:fixed; top:calc(12px + env(safe-area-inset-top)); left:12px; right:12px; z-index:1000;
-  background:var(--card); border-radius:14px; padding:12px 16px;
-  box-shadow:0 4px 20px rgba(0,0,0,.15);
-}
-.banner h1 { font-size:16px; }
-.banner p { font-size:13px; color:var(--sub); margin-top:4px; line-height:1.45; }
-.banner strong { color:var(--accent); }
-.sheet {
+
+/* ── 패널: 모바일은 바텀시트, 데스크톱은 좌측 고정 ── */
+.panel {
   position:fixed; left:0; right:0; bottom:0; z-index:1100;
-  background:var(--card); border-radius:18px 18px 0 0; padding:18px 18px calc(18px + env(safe-area-inset-bottom));
-  box-shadow:0 -6px 24px rgba(0,0,0,.2);
-  transform:translateY(110%); transition:transform .25s ease;
-  max-height:60vh; overflow-y:auto;
+  background:var(--card); border-radius:18px 18px 0 0;
+  box-shadow:0 -6px 24px rgba(0,0,0,.18);
+  height:85vh; transform:translateY(calc(100% - var(--sheet-peek)));
+  transition:transform .28s cubic-bezier(.3,.9,.3,1);
+  display:flex; flex-direction:column;
 }
-.sheet.open { transform:translateY(0); }
-.sheet .status { display:inline-block; font-size:12px; font-weight:700; color:#fff; background:var(--accent); border-radius:6px; padding:2px 8px; margin-bottom:8px; }
-.sheet h2 { font-size:17px; margin-bottom:2px; }
-.sheet .area { font-size:13px; color:var(--sub); margin-bottom:10px; }
-.sheet .summary { font-size:14px; line-height:1.6; margin-bottom:12px; }
-.sheet .src { font-size:13px; }
-.sheet .src a { color:#0a66c2; text-decoration:none; margin-right:10px; }
-.sheet .close { position:absolute; top:10px; right:14px; border:0; background:none; font-size:22px; color:var(--sub); cursor:pointer; }
-.foot {
-  position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:12px; right:12px; z-index:900;
-  font-size:11px; color:var(--sub); background:rgba(255,255,255,.88); border-radius:10px; padding:8px 12px; line-height:1.5;
-}
-.pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
-.pop-label { background:rgba(255,255,255,.95); border-radius:8px; padding:4px 8px; font-size:12px; box-shadow:0 1px 6px rgba(0,0,0,.25); white-space:nowrap; }
-.pop-label small { color:var(--sub); }
-.chips { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.chip { font-size:13px; border:1px solid #d1d1d6; background:#fff; color:var(--sub); border-radius:999px; padding:5px 12px; cursor:pointer; }
+.panel.half { transform:translateY(calc(100% - var(--sheet-half))); }
+.panel.full { transform:translateY(calc(8px + env(safe-area-inset-top))); }
+.grab { padding:10px 0 4px; cursor:grab; flex:none; }
+.grab::before { content:''; display:block; width:44px; height:5px; border-radius:3px; background:#d8d8dd; margin:0 auto; }
+.panel-head { padding:2px 18px 10px; flex:none; }
+.panel-head h1 { font-size:17px; }
+.panel-head p { font-size:12.5px; color:var(--sub); margin-top:3px; line-height:1.5; }
+.panel-head strong { color:var(--accent); }
+.tabs { display:flex; gap:6px; padding:0 14px 10px; flex:none; }
+.tab { flex:1; font-size:13.5px; padding:8px 0; border:1px solid var(--line); background:#fff; color:var(--sub); border-radius:10px; cursor:pointer; }
+.tab.on { background:var(--ink); border-color:var(--ink); color:#fff; font-weight:600; }
+.panel-body { flex:1; overflow-y:auto; overscroll-behavior:contain; padding:0 14px calc(20px + env(safe-area-inset-bottom)); }
+
+.item { display:flex; align-items:center; gap:12px; padding:12px 6px; border-bottom:1px solid var(--line); cursor:pointer; }
+.item .dot { flex:none; width:12px; height:12px; border-radius:50%; }
+.item .t { flex:1; min-width:0; }
+.item .t b { display:block; font-size:14.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.item .t span { font-size:12.5px; color:var(--sub); }
+.item .badge { flex:none; font-size:11.5px; font-weight:700; border-radius:6px; padding:3px 7px; color:#fff; }
+.bar-wrap { flex:none; width:74px; }
+.bar-wrap small { display:block; font-size:11px; color:var(--sub); text-align:right; margin-bottom:3px; }
+.bar { height:6px; border-radius:3px; background:#f0f0f4; overflow:hidden; }
+.bar i { display:block; height:100%; border-radius:3px; }
+
+/* 상세 뷰 */
+.detail { display:none; padding:4px 4px 20px; }
+.detail.on { display:block; }
+.list-view.off { display:none; }
+.back { border:0; background:none; color:#0a66c2; font-size:14px; padding:6px 0 10px; cursor:pointer; }
+.detail .status { display:inline-block; font-size:12px; font-weight:700; color:#fff; background:var(--accent); border-radius:6px; padding:2px 8px; margin-bottom:8px; }
+.detail h2 { font-size:17px; margin-bottom:2px; }
+.detail .area { font-size:13px; color:var(--sub); margin-bottom:10px; }
+.detail .summary { font-size:14px; line-height:1.65; margin-bottom:12px; }
+.detail .src { font-size:13px; }
+.detail .src a { color:#0a66c2; text-decoration:none; margin-right:10px; }
+
+/* 지도 위 요소 */
+.chips { position:fixed; top:calc(10px + env(safe-area-inset-top)); left:10px; right:10px; z-index:1000; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; }
+.chip { flex:none; font-size:13px; border:1px solid #d1d1d6; background:#fff; color:var(--sub); border-radius:999px; padding:7px 13px; cursor:pointer; box-shadow:0 1px 6px rgba(0,0,0,.12); }
 .chip.on { background:var(--ink); border-color:var(--ink); color:#fff; }
 .chip[hidden] { display:none; }
+.legend {
+  position:fixed; right:10px; bottom:calc(var(--sheet-peek) + 12px); z-index:900;
+  background:rgba(255,255,255,.93); border-radius:10px; padding:7px 11px; font-size:11.5px;
+  box-shadow:0 1px 8px rgba(0,0,0,.15); line-height:1.7;
+}
+.legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+.legend[hidden] { display:none; }
+
+.pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
+.pop-num {
+  background:#fff; border:2px solid; border-radius:999px; padding:3px 9px;
+  font-size:12px; font-weight:700; box-shadow:0 1px 6px rgba(0,0,0,.22); cursor:pointer; white-space:nowrap;
+}
+.pop-num small { font-weight:500; }
+.cluster-num {
+  width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700;
+  border:3px solid #fff; box-shadow:0 2px 10px rgba(0,0,0,.35); cursor:pointer;
+}
+.foot-note { position:fixed; left:10px; bottom:calc(var(--sheet-peek) + 12px); z-index:890; max-width:46vw;
+  font-size:10.5px; color:var(--sub); background:rgba(255,255,255,.88); border-radius:8px; padding:6px 9px; line-height:1.45; }
+
+/* ── 데스크톱: 좌측 패널 ── */
+@media (min-width: 900px) {
+  .panel { left:0; right:auto; top:0; bottom:0; width:var(--panel-w); height:100%;
+    border-radius:0; transform:none !important; box-shadow:4px 0 18px rgba(0,0,0,.1); }
+  .grab { display:none; }
+  .chips { left:calc(var(--panel-w) + 14px); }
+  .legend { bottom:18px; }
+  .foot-note { left:calc(var(--panel-w) + 14px); bottom:18px; max-width:360px; }
+}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<header class="banner">
-  <h1>제주 안전지도</h1>
-  <p>최근 3년 7개월간 제주 성인 실종 미해결 <strong id="stat-count">15명</strong> (제주경찰청 전수조사).
-  아래 핀은 언론 보도로 확인된 사건입니다.</p>
-  <div class="chips">
-    <button class="chip on" id="chip-incident">실종 사건</button>
-    <button class="chip" id="chip-cctv" hidden>방범 CCTV</button>
-    <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
-    <button class="chip" id="chip-pop" hidden>유동인구</button>
+<div class="chips">
+  <button class="chip on" id="chip-incident">실종 사건</button>
+  <button class="chip on" id="chip-pop" hidden>유동인구</button>
+  <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
+  <button class="chip" id="chip-cctv" hidden>방범 CCTV</button>
+</div>
+
+<aside class="panel" id="panel">
+  <div class="grab" id="grab"></div>
+  <div class="panel-head">
+    <h1>제주 안전지도</h1>
+    <p>최근 3년 7개월간 제주 성인 실종 미해결 <strong id="stat-count">15명</strong> (제주경찰청 전수조사).
+    핀은 언론 보도로 확인된 사건입니다.</p>
   </div>
-</header>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="incident">실종 사건</button>
+    <button class="tab" data-tab="region">한적한 지역</button>
+  </div>
+  <div class="panel-body">
+    <div class="list-view" id="list-view"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+</aside>
 
-<section class="sheet" id="sheet" aria-live="polite">
-  <button class="close" id="sheet-close" aria-label="닫기">&times;</button>
-  <span class="status" id="s-status"></span>
-  <h2 id="s-title"></h2>
-  <div class="area" id="s-area"></div>
-  <div class="summary" id="s-summary"></div>
-  <div class="src" id="s-sources"></div>
-</section>
+<div class="legend" id="legend" hidden>
+  <div><i style="background:var(--quiet)"></i>한적 (유동인구 하위 1/3)</div>
+  <div><i style="background:var(--calm)"></i>붐빔 (유동인구 상위 1/3)</div>
+</div>
 
-<footer class="foot">
-  사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시했습니다. 정확한 지점이 아닙니다.
-  모든 정보는 언론 보도와 공공데이터를 출처와 함께 정리한 것입니다.
-</footer>
+<div class="foot-note">사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시. 언론 보도·공공데이터 기반, 출처 표기.</div>
 
 <script>
 const CENTER = { lat: 33.38, lng: 126.53 };
 const CRIME_WMS = 'https://www.safemap.go.kr/openapi2/IF_0087_WMS';
-const sheet = document.getElementById('sheet');
-document.getElementById('sheet-close').onclick = () => sheet.classList.remove('open');
-
-function openSheet(inc) {
-  document.getElementById('s-status').textContent = inc.status;
-  document.getElementById('s-title').textContent = inc.title;
-  document.getElementById('s-area').textContent = inc.area + ' · ' + inc.date;
-  document.getElementById('s-summary').textContent = inc.summary;
-  document.getElementById('s-sources').innerHTML =
-    '출처: ' + inc.sources.map(s => `<a href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`).join('');
-  sheet.classList.add('open');
-  gtag('event', 'incident_open', { incident_id: inc.id });
-}
+const state = { data: null, pop: null, tab: 'incident', focus: null };
 
 function loadScript(src) {
   return new Promise((ok, fail) => {
@@ -110,52 +155,167 @@ function loadScript(src) {
     document.head.appendChild(s);
   });
 }
-
-function wireChip(id, onToggle) {
-  const chip = document.getElementById(id);
-  chip.hidden = false;
-  chip.onclick = function () { onToggle(this.classList.toggle('on')); };
-  return chip;
+function haversineKm(a, b) {
+  const R = 6371, d = Math.PI / 180;
+  const x = Math.sin((b.lat - a.lat) * d / 2) ** 2 +
+    Math.cos(a.lat * d) * Math.cos(b.lat * d) * Math.sin((b.lng - a.lng) * d / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(x));
 }
-
+function fmt(n) { return n >= 10000 ? (n / 10000).toFixed(1).replace(/\.0$/, '') + '만' : n.toLocaleString(); }
 function popStyle(regions) {
   const totals = regions.map(r => r.total).sort((a, b) => a - b);
   const q = p => totals[Math.floor(totals.length * p)];
   const [lo, hi] = [q(1 / 3), q(2 / 3)];
-  // 상위 1/3 청록(사람 많음), 하위 1/3 주황(인적 드묾). 판정이 아니라 사실(사람 수) 표시다.
-  return { color: t => t >= hi ? '#0e7c7b' : t >= lo ? '#8e8e93' : '#e07b00' };
+  return { color: t => t >= hi ? '#0e7c7b' : t >= lo ? '#8e8e93' : '#e07b00',
+           tag: t => t >= hi ? '붐빔' : t >= lo ? '보통' : '한적' };
 }
 
-// ── 카카오맵 엔진 ─────────────────────────────────────────────
-async function initKakao(data, cfg) {
-  await loadScript(`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${cfg.kakaoKey}&autoload=false`);
+// ── 패널(목록/상세) : 거지맵 패턴 — 목록 항목 ↔ 지도 이동 연동, 상세는 같은 패널에서 전환 ──
+const panel = document.getElementById('panel');
+const listView = document.getElementById('list-view');
+const detailView = document.getElementById('detail');
+document.getElementById('grab').onclick = () => {
+  panel.classList.toggle('half', !panel.classList.contains('half') && !panel.classList.contains('full'));
+  if (!panel.classList.contains('half')) panel.classList.remove('full');
+};
+let mapApi = { panTo: () => {} };
+
+function showDetail(html) {
+  detailView.innerHTML = '<button class="back" id="back-btn">&larr; 목록으로</button>' + html;
+  detailView.classList.add('on'); listView.classList.add('off');
+  document.getElementById('back-btn').onclick = () => {
+    detailView.classList.remove('on'); listView.classList.remove('off');
+  };
+  if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('half');
+}
+function incidentDetail(inc) {
+  showDetail(`
+    <span class="status">${inc.status}</span>
+    <h2>${inc.title}</h2>
+    <div class="area">${inc.area} · ${inc.date}</div>
+    <div class="summary">${inc.summary}</div>
+    <div class="src">출처: ${inc.sources.map(s => `<a href="${s.url}" target="_blank" rel="noopener">${s.name}</a>`).join('')}</div>`);
+  gtag('event', 'incident_open', { incident_id: inc.id });
+}
+function regionDetail(r, style, rank, n) {
+  const near = state.data.incidents
+    .map(i => ({ i, km: haversineKm(r, i) })).filter(x => x.km <= 8)
+    .sort((a, b) => a.km - b.km);
+  showDetail(`
+    <span class="status" style="background:${style.color(r.total)}">${style.tag(r.total)}</span>
+    <h2>${r.name}</h2>
+    <div class="area">유동인구 ${r.total.toLocaleString()}명 · 43개 중 한적한 순 ${rank}위</div>
+    <div class="summary">${state.pop.day.slice(0,4)}년 ${+state.pop.day.slice(4,6)}월 기준, 통신사 빅데이터(제주 인구정책 통합플랫폼).<br>
+    ${near.length ? `반경 8km 내 보도 확인 사건 ${near.length}건 (가장 가까운 곳 ${near[0].km.toFixed(1)}km)` : '반경 8km 내 보도 확인 사건 없음'}</div>`);
+  gtag('event', 'region_open', { region: r.name });
+}
+
+function renderList() {
+  const el = listView; el.innerHTML = '';
+  if (state.tab === 'incident') {
+    state.data.incidents.forEach(inc => {
+      const d = document.createElement('div'); d.className = 'item';
+      d.innerHTML = `<span class="dot" style="background:var(--accent)"></span>
+        <div class="t"><b>${inc.title}</b><span>${inc.area} · ${inc.date}</span></div>
+        <span class="badge" style="background:var(--accent)">${inc.status}</span>`;
+      d.onclick = () => { mapApi.panTo(inc.lat, inc.lng, 7); incidentDetail(inc); };
+      el.appendChild(d);
+    });
+  } else if (state.pop) {
+    const style = popStyle(state.pop.regions);
+    const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+    const max = sorted[sorted.length - 1].total;
+    sorted.forEach((r, idx) => {
+      const c = style.color(r.total);
+      const d = document.createElement('div'); d.className = 'item';
+      d.innerHTML = `<span class="dot" style="background:${c}"></span>
+        <div class="t"><b>${r.name}</b><span>${style.tag(r.total)}</span></div>
+        <div class="bar-wrap"><small>${fmt(r.total)}명</small><div class="bar"><i style="width:${Math.max(4, r.total / max * 100)}%;background:${c}"></i></div></div>`;
+      d.onclick = () => { mapApi.panTo(r.lat, r.lng, 7); regionDetail(r, style, idx + 1, sorted.length); };
+      el.appendChild(d);
+    });
+  }
+  detailView.classList.remove('on'); listView.classList.remove('off');
+}
+document.getElementById('tabs').onclick = e => {
+  const t = e.target.closest('.tab'); if (!t) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  state.tab = t.dataset.tab; renderList();
+  gtag('event', 'tab_switch', { tab: state.tab });
+};
+
+function wireChip(id, onToggle, defaultOn) {
+  const chip = document.getElementById(id);
+  chip.hidden = false;
+  chip.onclick = function () { onToggle(this.classList.toggle('on')); };
+  if (defaultOn) { chip.classList.add('on'); onToggle(true); }
+  return chip;
+}
+
+// ── 카카오맵 엔진 ──
+async function initKakao(cfg) {
+  await loadScript(`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${cfg.kakaoKey}&autoload=false&libraries=clusterer,services`);
   await new Promise(ok => kakao.maps.load(ok));
   const map = new kakao.maps.Map(document.getElementById('map'), {
     center: new kakao.maps.LatLng(CENTER.lat, CENTER.lng), level: 10
   });
-  kakao.maps.event.addListener(map, 'click', () => sheet.classList.remove('open'));
-
-  // 실종 사건 핀
-  const pins = data.incidents.map(inc => {
-    const el = document.createElement('span');
-    el.className = 'pin-dot';
-    el.onclick = e => { e.stopPropagation(); openSheet(inc); };
-    return new kakao.maps.CustomOverlay({
-      position: new kakao.maps.LatLng(inc.lat, inc.lng), content: el, yAnchor: .5, zIndex: 30
-    });
-  });
-  const showPins = on => pins.forEach(p => p.setMap(on ? map : null));
-  showPins(true);
-  document.getElementById('chip-incident').onclick = function () {
-    showPins(this.classList.toggle('on'));
+  mapApi.panTo = (lat, lng, level) => {
+    if (level != null && map.getLevel() > level) map.setLevel(level);
+    map.panTo(new kakao.maps.LatLng(lat, lng));
   };
 
-  // 범죄주의구간: 카카오맵은 WMS를 지원하지 않아서, 현재 화면 bbox로 WMS 이미지를
-  // 한 장 받아 CustomOverlay로 덮고 idle마다 갱신한다.
+  // 사건: 축소하면 숫자 클러스터, 확대하면 개별 핀 (거지맵 패턴)
+  const clusterer = new kakao.maps.MarkerClusterer({
+    map, averageCenter: true, minLevel: 9, gridSize: 80,
+    styles: [{ width: '40px', height: '40px', background: 'rgba(192,57,43,.95)', color: '#fff',
+      borderRadius: '50%', border: '3px solid #fff', textAlign: 'center', lineHeight: '35px',
+      fontWeight: '700', fontSize: '15px', boxShadow: '0 2px 10px rgba(0,0,0,.35)' }]
+  });
+  const pinImg = new kakao.maps.MarkerImage(
+    'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22"><circle cx="11" cy="11" r="8" fill="#c0392b" stroke="#fff" stroke-width="3"/></svg>'),
+    new kakao.maps.Size(22, 22), { offset: new kakao.maps.Point(11, 11) });
+  const markers = state.data.incidents.map(inc => {
+    const m = new kakao.maps.Marker({ position: new kakao.maps.LatLng(inc.lat, inc.lng), image: pinImg });
+    kakao.maps.event.addListener(m, 'click', () => { incidentDetail(inc); mapApi.panTo(inc.lat, inc.lng); });
+    return m;
+  });
+  clusterer.addMarkers(markers);
+  document.getElementById('chip-incident').onclick = function () {
+    this.classList.toggle('on') ? clusterer.addMarkers(markers) : clusterer.removeMarkers(markers);
+  };
+
+  // 유동인구: 축소하면 숫자만, 확대하면 지역명까지 (기본 켜짐)
+  if (state.pop) {
+    const style = popStyle(state.pop.regions);
+    const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+    const overlays = state.pop.regions.map(r => {
+      const el = document.createElement('div');
+      el.className = 'pop-num'; el.style.borderColor = style.color(r.total); el.style.color = style.color(r.total);
+      el.onclick = () => { regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length); mapApi.panTo(r.lat, r.lng); };
+      const ov = new kakao.maps.CustomOverlay({ position: new kakao.maps.LatLng(r.lat, r.lng), content: el, yAnchor: .5, zIndex: 20 });
+      return { ov, el, r };
+    });
+    const relabel = () => {
+      const zoomedOut = map.getLevel() >= 10;
+      overlays.forEach(({ el, r }) => {
+        el.innerHTML = zoomedOut ? fmt(r.total) : `${r.name} <small>${fmt(r.total)}명</small>`;
+      });
+    };
+    kakao.maps.event.addListener(map, 'zoom_changed', relabel);
+    relabel();
+    wireChip('chip-pop', on => {
+      overlays.forEach(o => o.ov.setMap(on ? map : null));
+      document.getElementById('legend').hidden = !on;
+      gtag('event', 'layer_toggle', { layer: 'population', on });
+    }, true);
+  }
+
+  // 범죄주의구간 WMS: 화면 bbox 이미지를 CustomOverlay로 덮고 idle마다 갱신
   if (cfg.safemapKey) {
     const img = document.createElement('img');
     img.style.cssText = 'opacity:.55;pointer-events:none;';
-    const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0, yAnchor: 0, zIndex: 10 });
+    const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0, yAnchor: 0, zIndex: 5 });
     let on = false;
     const refresh = () => {
       if (!on) return;
@@ -174,38 +334,11 @@ async function initKakao(data, cfg) {
       gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
     });
   }
-
-  // 유동인구 버블
-  try {
-    const pop = await (await fetch('data/pop.json')).json();
-    const { color } = popStyle(pop.regions);
-    const label = new kakao.maps.CustomOverlay({ yAnchor: 1.3, zIndex: 40 });
-    const circles = pop.regions.map(r => {
-      const c = new kakao.maps.Circle({
-        center: new kakao.maps.LatLng(r.lat, r.lng),
-        radius: 400 + Math.sqrt(r.total) * 6,
-        strokeWeight: 1.5, strokeColor: color(r.total), strokeOpacity: .9,
-        fillColor: color(r.total), fillOpacity: .3
-      });
-      kakao.maps.event.addListener(c, 'click', () => {
-        label.setContent(`<div class="pop-label">${r.name} · ${r.total.toLocaleString()}명<br><small>${pop.day.slice(0,4)}.${pop.day.slice(4,6)} 기준 유동인구</small></div>`);
-        label.setPosition(new kakao.maps.LatLng(r.lat, r.lng));
-        label.setMap(map);
-      });
-      return c;
-    });
-    wireChip('chip-pop', on => {
-      circles.forEach(c => c.setMap(on ? map : null));
-      if (!on) label.setMap(null);
-      gtag('event', 'layer_toggle', { layer: 'population', on });
-    });
-  } catch (e) {}
-
   return 'kakao';
 }
 
-// ── OSM(Leaflet) 폴백 ─────────────────────────────────────────
-async function initLeaflet(data, cfg) {
+// ── OSM(Leaflet) 폴백: 클러스터 없이 기본 표시만 ──
+async function initLeaflet(cfg) {
   const css = document.createElement('link');
   css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   document.head.appendChild(css);
@@ -214,62 +347,52 @@ async function initLeaflet(data, cfg) {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
-  map.on('click', () => sheet.classList.remove('open'));
+  mapApi.panTo = (lat, lng, level) => map.setView([lat, lng], Math.max(map.getZoom(), 12));
 
-  const incidentLayer = L.layerGroup().addTo(map);
-  data.incidents.forEach(inc => {
+  state.data.incidents.forEach(inc => {
     L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: '<span class="pin-dot"></span>', className: '', iconSize: [18, 18] }) })
-      .addTo(incidentLayer).on('click', () => openSheet(inc));
+      .addTo(map).on('click', () => incidentDetail(inc));
   });
-  document.getElementById('chip-incident').onclick = function () {
-    this.classList.toggle('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
-  };
-
+  if (state.pop) {
+    const style = popStyle(state.pop.regions);
+    const sorted = [...state.pop.regions].sort((a, b) => a.total - b.total);
+    const layer = L.layerGroup();
+    state.pop.regions.forEach(r => {
+      L.circleMarker([r.lat, r.lng], {
+        radius: 6 + Math.sqrt(r.total) / 18, color: style.color(r.total), weight: 1.5,
+        fillColor: style.color(r.total), fillOpacity: .3
+      }).addTo(layer).on('click', () => regionDetail(r, style, sorted.findIndex(x => x.name === r.name) + 1, sorted.length));
+    });
+    wireChip('chip-pop', on => {
+      on ? layer.addTo(map) : map.removeLayer(layer);
+      document.getElementById('legend').hidden = !on;
+    }, true);
+  }
   if (cfg.safemapKey) {
     const wms = L.tileLayer.wms(CRIME_WMS, {
       layers: 'A2SM_CRMNLHSPOT_TOT', styles: 'A2SM_CrmnlHspot_Tot_Tot',
       format: 'image/png', transparent: true, version: '1.1.1',
-      serviceKey: cfg.safemapKey, opacity: .55, attribution: '범죄주의구간 © 경찰청·생활안전지도'
+      serviceKey: cfg.safemapKey, opacity: .55
     });
-    wireChip('chip-crime', on => {
-      on ? wms.addTo(map) : map.removeLayer(wms);
-      gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
-    });
+    wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); });
   }
-
-  try {
-    const pop = await (await fetch('data/pop.json')).json();
-    const { color } = popStyle(pop.regions);
-    const layer = L.layerGroup();
-    pop.regions.forEach(r => {
-      L.circleMarker([r.lat, r.lng], {
-        radius: 6 + Math.sqrt(r.total) / 18,
-        color: color(r.total), weight: 1.5, fillColor: color(r.total), fillOpacity: .3
-      }).addTo(layer).bindTooltip(
-        `${r.name} · ${r.total.toLocaleString()}명<br><small>${pop.day.slice(0,4)}.${pop.day.slice(4,6)} 기준 유동인구</small>`
-      );
-    });
-    wireChip('chip-pop', on => {
-      on ? layer.addTo(map) : map.removeLayer(layer);
-      gtag('event', 'layer_toggle', { layer: 'population', on });
-    });
-  } catch (e) {}
-
   return 'osm';
 }
 
 (async () => {
-  const data = await (await fetch('data/incidents.json')).json();
-  document.getElementById('stat-count').textContent = data.stats.unresolvedAdultMissing + '명';
+  state.data = await (await fetch('data/incidents.json')).json();
+  document.getElementById('stat-count').textContent = state.data.stats.unresolvedAdultMissing + '명';
+  try { state.pop = await (await fetch('data/pop.json')).json(); } catch (e) {}
+  renderList();
   let cfg = {};
   try { const r = await fetch('config.json'); if (r.ok) cfg = await r.json(); } catch (e) {}
   let engine;
   try {
-    engine = cfg.kakaoKey ? await initKakao(data, cfg) : await initLeaflet(data, cfg);
+    engine = cfg.kakaoKey ? await initKakao(cfg) : await initLeaflet(cfg);
   } catch (e) {
-    engine = await initLeaflet(data, cfg);
+    engine = await initLeaflet(cfg);
   }
-  gtag('event', 'map_loaded', { incident_count: data.incidents.length, map_engine: engine });
+  gtag('event', 'map_loaded', { incident_count: state.data.incidents.length, map_engine: engine });
 })();
 </script>
 </body>
