@@ -927,6 +927,12 @@ function collapsePanelForMap() {
   setPanelState('peek');
 }
 
+function nextPanelState() {
+  if (panel.classList.contains('full')) return 'peek';
+  if (panel.classList.contains('mid')) return 'full';
+  return 'mid';
+}
+
 // 손잡이: 접힘·반시트·전체 3단. 지도 클릭 상세는 반시트에서 시작하고, 필요할 때만 전체로 올린다
 (() => {
   const grab = document.getElementById('grab');
@@ -941,13 +947,13 @@ function collapsePanelForMap() {
     startY = null;
     if (dy < -10) setPanelState(panel.classList.contains('mid') || panel.classList.contains('full') ? 'full' : 'mid');
     else if (dy > 10) setPanelState(panel.classList.contains('full') ? 'mid' : 'peek');
-    else setPanelState(panel.classList.contains('full') ? 'mid' : panel.classList.contains('mid') ? 'peek' : 'mid');
+    else setPanelState(nextPanelState());
   });
   grab.addEventListener('pointercancel', () => { startY = null; });
   grab.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
-    setPanelState(panel.classList.contains('full') ? 'mid' : panel.classList.contains('mid') ? 'peek' : 'mid');
+    setPanelState(nextPanelState());
   });
 })();
 let mapApi = {
