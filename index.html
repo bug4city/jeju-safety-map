@@ -66,6 +66,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
     <button class="chip on" id="chip-incident">실종 사건</button>
     <button class="chip" id="chip-cctv" hidden>방범 CCTV</button>
     <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
+    <button class="chip" id="chip-pop" hidden>유동인구</button>
   </div>
 </header>
 
@@ -152,7 +153,37 @@ async function initLeaflet(data) {
   };
   initCctv(map).catch(() => {});
   initCrimeWms(map).catch(() => {});
+  initPop(map).catch(() => {});
   return 'osm';
+}
+
+// 읍면동별 유동인구(통신사 빅데이터, 제주 인구정책 통합플랫폼). 붐비는 곳과 한적한 곳을
+// 한눈에 구분하는 용도다. 상위 1/3은 청록(사람 많음), 하위 1/3은 주황(인적 드묾).
+// 판정이 아니라 사실(사람 수) 표시라서 지역 낙인 리스크가 낮다.
+async function initPop(map) {
+  const res = await fetch('data/pop.json');
+  if (!res.ok) return;
+  const pop = await res.json();
+  const totals = pop.regions.map(r => r.total).sort((a, b) => a - b);
+  const q = p => totals[Math.floor(totals.length * p)];
+  const [lo, hi] = [q(1 / 3), q(2 / 3)];
+  const color = t => t >= hi ? '#0e7c7b' : t >= lo ? '#8e8e93' : '#e07b00';
+  const layer = L.layerGroup();
+  pop.regions.forEach(r => {
+    L.circleMarker([r.lat, r.lng], {
+      radius: 6 + Math.sqrt(r.total) / 18,
+      color: color(r.total), weight: 1.5, fillColor: color(r.total), fillOpacity: .3
+    }).addTo(layer).bindTooltip(
+      `${r.name} · ${r.total.toLocaleString()}명<br><small>${pop.day.slice(0,4)}.${pop.day.slice(4,6)} 기준 유동인구</small>`
+    );
+  });
+  const chip = document.getElementById('chip-pop');
+  chip.hidden = false;
+  chip.onclick = function () {
+    const on = this.classList.toggle('on');
+    on ? layer.addTo(map) : map.removeLayer(layer);
+    gtag('event', 'layer_toggle', { layer: 'population', on });
+  };
 }
 
 // 경찰청 범죄주의구간(5대 범죄 밀도, 생활안전지도 WMS). 우리가 위험도를 판정하지 않고
