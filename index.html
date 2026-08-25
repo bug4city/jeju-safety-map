@@ -100,7 +100,7 @@ function track(name, params) {
   --shadow-2:0 4px 20px rgba(0,0,0,.14);
   --fs-title:17px; --fs-md:15px; --fs-body:14px; --fs-ui:13.5px; --fs-sub:12.5px; --fs-cap:11px;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px;  /* 간격은 이 4단계만 쓴다 */
-  --panel-w:360px; --sheet-peek:112px; --header-h:56px;
+  --panel-w:360px; --sheet-peek:84px; --sheet-mid:48dvh; --header-h:56px;
 }
 /* iOS 사파리 주소창 접힘에 맞춰 실제 보이는 높이 기준으로 계산 */
 * { box-sizing:border-box; margin:0; }
@@ -146,6 +146,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   transition:transform .28s cubic-bezier(.3,.9,.3,1);
   display:flex; flex-direction:column;
 }
+.panel.mid { transform:translateY(calc(100% - min(var(--sheet-mid), 430px))); }
 .panel.full { transform:translateY(calc(8px + env(safe-area-inset-top))); }
 .grab { padding:var(--sp-3) 0 var(--sp-2); cursor:grab; flex:none; touch-action:none; }
 .grab::before { content:''; display:block; width:56px; height:5px; border-radius:3px; background:var(--line-strong); margin:0 auto; }
@@ -489,10 +490,19 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 @media (max-width: 899px) {
   /* 상세 카드가 열려 있으면 검색창·버튼 블록을 숨겨 카드에 세로 공간을 몰아준다 */
   .panel:has(.detail.on) .panel-tools { display:none; }
+  .safety-card .context, .detail .context { grid-template-columns:1fr; }
+  .context-box .help-place { align-items:flex-start; justify-content:space-between; gap:var(--sp-2); }
+  .context-box .help-place button { flex:1; min-width:0; }
+  .context-box .help-place a { flex:none; }
+  .card-actions { flex-wrap:wrap; }
+  .card-actions button { flex-basis:calc(50% - var(--sp-1)); }
   /* 시트 접힘 상태에선 시트 바로 위, 반쯤 펼치면 그 위로. 패널(1100)보다 아래 유지 */
   .return-jeju { bottom:calc(var(--sheet-peek) + 62px); z-index:1050; }
   /* 시트를 펼치면 뒤에 깔려 못 누르는 범례·출처·복귀 버튼은 같이 숨긴다 */
   .legend-stack, .foot-note, .return-jeju { transition:opacity .2s; }
+  body:has(.panel.mid) .legend-stack,
+  body:has(.panel.mid) .foot-note,
+  body:has(.panel.mid) .return-jeju,
   body:has(.panel.full) .legend-stack,
   body:has(.panel.full) .foot-note,
   body:has(.panel.full) .return-jeju { opacity:0; pointer-events:none; }
@@ -537,7 +547,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 </div>
 
 <aside class="panel" id="panel">
-  <div class="grab" id="grab"></div>
+  <div class="grab" id="grab" role="button" tabindex="0" aria-label="정보 시트 열고 닫기" aria-expanded="false"></div>
   <div class="panel-tools">
     <label class="search-box" for="search-input">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.2-4.2m1.2-5.3a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -904,13 +914,22 @@ document.addEventListener('click', e => {
   if (!anchor) return;
   track('link_click', classifyLink(anchor));
 });
-// 손잡이: 접힘·전체 2단. 탭하면 토글, 위아래로 조금만 끌어도 방향대로 열리고 닫힌다
+function setPanelState(stateName) {
+  const next = stateName === 'full' ? 'full' : stateName === 'mid' ? 'mid' : 'peek';
+  panel.classList.toggle('mid', next === 'mid');
+  panel.classList.toggle('full', next === 'full');
+  const grab = document.getElementById('grab');
+  grab.setAttribute('aria-expanded', String(next !== 'peek'));
+  track('panel_sheet_change', { state: next });
+}
+
+function collapsePanelForMap() {
+  setPanelState('peek');
+}
+
+// 손잡이: 접힘·반시트·전체 3단. 지도 클릭 상세는 반시트에서 시작하고, 필요할 때만 전체로 올린다
 (() => {
   const grab = document.getElementById('grab');
-  const setState = s => {
-    panel.classList.toggle('full', s === 'full');
-    track('panel_sheet_change', { state: s });
-  };
   let startY = null;
   grab.addEventListener('pointerdown', e => {
     startY = e.clientY;
@@ -920,11 +939,16 @@ document.addEventListener('click', e => {
     if (startY === null) return;
     const dy = e.clientY - startY;
     startY = null;
-    if (dy < -10) setState('full');
-    else if (dy > 10) setState('peek');
-    else setState(panel.classList.contains('full') ? 'peek' : 'full');
+    if (dy < -10) setPanelState(panel.classList.contains('mid') || panel.classList.contains('full') ? 'full' : 'mid');
+    else if (dy > 10) setPanelState(panel.classList.contains('full') ? 'mid' : 'peek');
+    else setPanelState(panel.classList.contains('full') ? 'mid' : panel.classList.contains('mid') ? 'peek' : 'mid');
   });
   grab.addEventListener('pointercancel', () => { startY = null; });
+  grab.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    setPanelState(panel.classList.contains('full') ? 'mid' : panel.classList.contains('mid') ? 'peek' : 'mid');
+  });
 })();
 let mapApi = {
   panTo: () => {},
@@ -945,9 +969,10 @@ function showDetail(html) {
     detailView.classList.remove('on'); listView.classList.remove('off');
     if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
     syncPlaceUrl(null);
+    if (window.matchMedia('(max-width: 899px)').matches) collapsePanelForMap();
     track('detail_back');
   };
-  if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
+  if (window.matchMedia('(max-width: 899px)').matches) setPanelState('mid');
 }
 function renderNearestHelp(origin, places) {
   showDetail(`
@@ -1298,7 +1323,7 @@ function escapeHtml(value) {
 function renderPlaceResults(query, places, onPick) {
   const result = document.getElementById('card-result');
   if (!places.length) {
-    result.innerHTML = `<div class="card-hint"><b>${escapeHtml(query)}</b> 위치를 찾지 못했습니다. 호텔명, 음식점명, 해변명처럼 장소 이름을 조금 더 구체적으로 입력해 주세요.</div>`;
+    result.innerHTML = `<div class="card-hint"><b>${escapeHtml(query)}</b> 위치를 찾지 못했습니다. 제주 안 장소만 검색됩니다. 호텔명, 음식점명, 해변명처럼 장소 이름을 조금 더 구체적으로 입력해 주세요.</div>`;
     track('place_search_no_results');
     return;
   }
@@ -1530,21 +1555,32 @@ function setupCard(map, cfg) {
   let marker = null;
   const placeCategories = ['MT1', 'CS2', 'PS3', 'SC4', 'AC5', 'PK6', 'OL7', 'SW8', 'BK9', 'CT1', 'AG2', 'PO3', 'AT4', 'AD5', 'FD6', 'CE7', 'HP8', 'PM9'];
 
+  // 제주도 전역(추자도·우도·마라도 포함) 대략 범위 — 이 밖 결과는 다른 지방이므로 버린다
+  const inJeju = (lat, lng) => lat >= 33.05 && lat <= 34.05 && lng >= 126.08 && lng <= 127.05;
+  const jejuBounds = new kakao.maps.LatLngBounds(
+    new kakao.maps.LatLng(33.05, 126.08),
+    new kakao.maps.LatLng(34.05, 127.05)
+  );
   const search = q => new Promise(resolve => {
     geocoder.addressSearch(q, (res, st) => {
-      if (st === kakao.maps.services.Status.OK && res[0])
+      if (st === kakao.maps.services.Status.OK && res[0] && inJeju(+res[0].y, +res[0].x))
         return resolve([{ name: q, addr: res[0].address_name, lat: +res[0].y, lng: +res[0].x }]);
       places.keywordSearch(q + ' 제주', (res2, st2) => {
-        if (st2 === kakao.maps.services.Status.OK && res2.length)
-          return resolve(res2.slice(0, 15).map(place => ({
-            id: place.id,
-            name: place.place_name,
-            addr: place.road_address_name || place.address_name,
-            lat: +place.y,
-            lng: +place.x
-          })));
+        if (st2 === kakao.maps.services.Status.OK && res2.length) {
+          const matches = res2
+            .filter(place => inJeju(+place.y, +place.x))
+            .slice(0, 15)
+            .map(place => ({
+              id: place.id,
+              name: place.place_name,
+              addr: place.road_address_name || place.address_name,
+              lat: +place.y,
+              lng: +place.x
+            }));
+          if (matches.length) return resolve(matches);
+        }
         resolve([]);
-      });
+      }, { bounds: jejuBounds });
     });
   });
   const nearbyPlaces = latLng => Promise.all(placeCategories.map(category => new Promise(resolve => {
@@ -1631,7 +1667,7 @@ function setupCard(map, cfg) {
   btn.onclick = () => {
     detailView.classList.remove('on');
     listView.classList.remove('off');
-    if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
+    if (window.matchMedia('(max-width: 899px)').matches) setPanelState('full');
     searchInput.focus();
     track('card_open', { source: 'chip' });
   };
@@ -1676,12 +1712,12 @@ function setupCard(map, cfg) {
     if (matches[0].distance <= 30) {
       openMapPlaceInspector(matches[0].name, '안전 정보를 정리하는 중...');
       renderCard(matches[0]);
-      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
+      if (window.matchMedia('(max-width: 899px)').matches) setPanelState('mid');
       track('map_place_lookup', { result_count: matches.length, direct_open: 1 });
       return;
     }
     renderPlaceResults('선택 지점 주변', matches, renderCard);
-    if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
+    if (window.matchMedia('(max-width: 899px)').matches) setPanelState('mid');
     track('map_place_lookup', { result_count: matches.length });
   };
   mapApi.checkPlace = query => {
@@ -2103,7 +2139,7 @@ async function initKakao(cfg) {
     if (detailView.classList.contains('on')) {
       const back = document.getElementById('back-btn');
       if (back) back.click();
-      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('full');
+      if (window.matchMedia('(max-width: 899px)').matches) collapsePanelForMap();
       track('map_detail_dismiss', { engine: 'kakao' });
       return;
     }
@@ -2362,7 +2398,7 @@ async function initLeaflet(cfg) {
     if (detailView.classList.contains('on')) {
       const back = document.getElementById('back-btn');
       if (back) back.click();
-      if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('full');
+      if (window.matchMedia('(max-width: 899px)').matches) collapsePanelForMap();
       track('map_detail_dismiss', { engine: 'osm' });
       return;
     }
