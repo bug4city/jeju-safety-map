@@ -2161,16 +2161,26 @@ async function initKakao(cfg) {
     }, { location: new kakao.maps.LatLng(loc.lat, loc.lng), radius: 500 });
   });
 
-  // 안전 카드 상단 로드뷰 썸네일: 80m 내 파노라마가 있을 때만 보여준다.
+  // 안전 카드 상단 로드뷰 썸네일: POI 좌표가 건물 안쪽으로 찍힌 경우가 있어 반경을 단계적으로 넓힌다.
   const roadviewClient = new kakao.maps.RoadviewClient();
   mapApi.mountRoadview = (el, loc) => {
     if (!el) return;
     const pos = new kakao.maps.LatLng(loc.lat, loc.lng);
-    roadviewClient.getNearestPanoId(pos, 80, panoId => {
-      if (!panoId || !el.isConnected) return;
-      el.hidden = false;
-      new kakao.maps.Roadview(el.querySelector('.card-roadview')).setPanoId(panoId, pos);
-    });
+    const roadviewBox = el.querySelector('.card-roadview');
+    const radii = [80, 140, 240];
+    const tryRadius = index => {
+      roadviewClient.getNearestPanoId(pos, radii[index], panoId => {
+        if (!el.isConnected) return;
+        if (!panoId) {
+          if (index < radii.length - 1) tryRadius(index + 1);
+          return;
+        }
+        if (!roadviewBox) return;
+        el.hidden = false;
+        new kakao.maps.Roadview(roadviewBox).setPanoId(panoId, pos);
+      });
+    };
+    tryRadius(0);
   };
 
   // 사건: 축소하면 숫자 클러스터, 확대하면 개별 핀 (거지맵 패턴)
