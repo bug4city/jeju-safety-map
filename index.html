@@ -1866,7 +1866,7 @@ async function initKakao(cfg) {
       if (on) relabelCctv(); else overlays.forEach(o => o.ov.setMap(null));
       cctvUi(on);
       gtag('event', 'layer_toggle', { layer: 'cctv', on });
-    }, true);
+    }, false);
   }
 
   // 생활안전지도 WMS 레이어(범죄주의구간·보안등): 화면 bbox 이미지를 CustomOverlay로 덮고 idle마다 갱신
@@ -2229,7 +2229,7 @@ async function initLeaflet(cfg) {
       cctvOn = on;
       relabelCctv();
       cctvUi(on);
-    }, true);
+    }, false);
   }
   map.on('click', () => {
     // 상세가 열려 있으면 지도 탭은 닫기로 동작 (모바일에서 시트를 치우는 자연스러운 방법)
