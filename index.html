@@ -513,17 +513,19 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .safety-card .tagchip, .detail .tagchip { display:inline-block; font-size:var(--fs-cap); font-weight:700; color:#fff; border-radius:var(--r-xs); padding:2px var(--sp-2); }
 .safety-card .context, .detail .context { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin:var(--sp-3) 0; }
 .safety-card .context-box, .detail .context-box { border:1px solid var(--line); border-radius:var(--r-sm); padding:var(--sp-3); background:var(--panel-muted); }
-.safety-card .context-box span, .detail .context-box span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
-.safety-card .context-box b, .detail .context-box b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
-.safety-card .context-box small, .detail .context-box small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
-/* 도움 장소 타일: 장소 이름을 주 정보로, 종류·거리를 보조로 한 줄씩. 이름은 지도 이동 버튼 */
-.context-box .help-place { display:flex; align-items:baseline; gap:var(--sp-1); margin-top:3px; }
-.context-box .help-place button { border:0; background:none; padding:0; text-align:left; cursor:pointer; color:var(--sub); font-size:var(--fs-cap); line-height:1.4; }
-.context-box .help-place b { display:inline; margin:0; font-size:var(--fs-ui); color:var(--brand); text-decoration:underline; text-underline-offset:2px; }
+.safety-card .context-box > span, .detail .context-box > span { display:block; color:var(--sub); font-size:var(--fs-cap); font-weight:700; }
+.safety-card .context-box > b, .detail .context-box > b { display:block; margin-top:3px; font-size:var(--fs-body); line-height:1.3; }
+.safety-card .context-box > small, .detail .context-box > small { display:block; margin-top:2px; color:var(--sub); font-size:var(--fs-cap); font-weight:400; line-height:1.35; }
+/* 도움 장소 타일: 전체 폭 한 줄 — 이름(지도 이동 버튼)+카카오맵 링크 왼쪽, 종류·거리 오른쪽 */
+.context-box.help-box { grid-column:1 / -1; }
+.context-box .help-place { display:flex; align-items:center; gap:var(--sp-1); margin-top:var(--sp-1); }
+.context-box .help-place button { border:0; background:none; padding:0; text-align:left; cursor:pointer; }
+.context-box .help-place b { font-size:var(--fs-ui); font-weight:700; color:var(--ink); }
 .context-box .help-place a {
-  display:inline-flex; align-items:center; justify-content:center; min-width:32px; min-height:32px; margin:-8px 0;
+  display:inline-flex; align-items:center; justify-content:center; min-width:28px; min-height:28px; margin:-6px 0;
   color:var(--brand); text-decoration:none; font-size:var(--fs-ui);
 }
+.context-box .help-place small { margin-left:auto; color:var(--sub); font-size:var(--fs-cap); white-space:nowrap; }
 /* 지역 상세: 한적↔붐빔 축 위 현재 지역 위치 표시. 그라데이션은 popStyle 팔레트와 동기화 */
 .near-regions { margin-top:var(--sp-3); border-top:1px solid var(--line); padding-top:var(--sp-2); }
 .near-regions h4 { font-size:var(--fs-cap); font-weight:700; color:var(--sub); letter-spacing:.2px; margin-bottom:var(--sp-1); }
@@ -1598,8 +1600,8 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   let shownHelp = helpFallback.filter(Boolean);
   const helpLine = places => places
     .map((p, i) => `<span class="help-place">
-      <button type="button" data-help-i="${i}"><b>${escapeHtml(p.name)}</b> ${helpTypeLabel(p.type)} · ${formatDistance(p, loc)}</button>
-      ${p.id ? `<a href="https://place.map.kakao.com/${encodeURIComponent(p.id)}" target="_blank" rel="noopener" aria-label="카카오맵에서 ${escapeHtml(p.name)} 열기">&#x2197;&#xFE0E;</a>` : ''}
+      <button type="button" data-help-i="${i}"><b>${escapeHtml(p.name)}</b>${p.id ? `</button><a href="https://place.map.kakao.com/${encodeURIComponent(p.id)}" target="_blank" rel="noopener" aria-label="카카오맵에서 ${escapeHtml(p.name)} 열기">&#x2197;&#xFE0E;</a>` : '</button>'}
+      <small>${helpTypeLabel(p.type)} · ${formatDistance(p, loc)}</small>
     </span>`).join('');
   const bindHelpTile = () => document.querySelectorAll('#help-tile [data-help-i]').forEach(button => {
     button.onclick = () => {
@@ -1624,13 +1626,10 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         <div class="context-box"><span>공공 CCTV (500m)</span>
           <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
           <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · ${cctv.nearestM}m 거리` : '행정안전부 표준데이터 기준'}</small></div>
-        <div class="context-box"><span>가까운 도움 장소</span>
-          <div id="help-tile">${helpLine(shownHelp)}</div></div>
         <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span></b>
-          <small>${region.name} · ${pop.totalRegions}곳 중 붐비는 순 ${pop.crowdRank}위</small></div>
-        <div class="context-box"><span>보도 사건 (8km)</span>
-          <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
-          <small>${incidents.nearby.length ? incidents.nearby[0].km.toFixed(1) + 'km 거리' : incidentDataBasisText() + ' 없음'}</small></div>
+          <small>${pop.totalRegions}곳 중 붐비는 순 ${pop.crowdRank}위</small></div>
+        <div class="context-box help-box"><span>가까운 도움 장소</span>
+          <div id="help-tile">${helpLine(shownHelp)}</div></div>
       </div>
       ${state.bells ? `<div class="row"><span>안전비상벨 (500m)</span><b>${bellCount ? bellCount + '개' : '없음'}</b></div>` : ''}
       ${state.lights ? `<div class="row"><span>보안등 (500m)</span><b>${lightCount ? lightCount + '개' : '없음'}</b></div>` : ''}
