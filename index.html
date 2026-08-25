@@ -117,6 +117,8 @@ try {
 /* 다크 테마: 토큰만 갈아끼운다. 지도 마커·공유 카드용 흰 배경은 그대로 둔다. */
 html[data-theme="dark"] {
   --ink:#f1f5f9; --sub:#94a3b8; --card:#18202f; --line:#263043;
+  /* 다크에서는 인터랙션·데이터 색을 한 단계 밝은 톤으로 — 라이트용 600대는 어두운 배경에서 탁해진다 */
+  --brand:#34d399; --blue:#38bdf8; --cctv:#22d3ee; --accent:#fb7185;
   --brand-soft:#0c3b2b;
   --panel-muted:#0d1524;
   --blue-soft:#0c2f4a;
@@ -135,8 +137,12 @@ html[data-theme="dark"] {
   color-scheme:dark;
 }
 html[data-theme="dark"] body { background:#0d1524; }
-/* 지도 타일은 다크 스타일이 없어 살짝만 눌러서 눈부심을 줄인다 */
-html[data-theme="dark"] #map { filter:brightness(.82) contrast(1.02); }
+/* 카카오·OSM 모두 다크 타일이 없어 타일 이미지만 invert+hue-rotate로 다크화한다.
+   src 기준이라 지도 위 라벨·핀·WMS 레이어(safemap)는 원색 유지 — #map 전체에 필터 금지 */
+html[data-theme="dark"] #map img[src*="daumcdn.net"],
+html[data-theme="dark"] #map img[src*="openstreetmap.org"] {
+  filter:invert(1) hue-rotate(180deg) brightness(.92) saturate(.55) contrast(.92);
+}
 #theme-toggle { cursor:pointer; }
 #theme-toggle .icon-sun { display:none; }
 html[data-theme="dark"] #theme-toggle .icon-moon { display:none; }
@@ -653,7 +659,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   <div class="panel-tools">
     <label class="search-box" for="search-input">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.2-4.2m1.2-5.3a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input id="search-input" type="search" placeholder="호텔·숙소·장소 안전 점검" autocomplete="off" enterkeyhint="search">
+      <input id="search-input" type="search" placeholder="호텔·숙소·장소 검색" autocomplete="off" enterkeyhint="search">
       <button class="icon-btn" id="search-clear" type="button" aria-label="검색어 지우기" hidden>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
@@ -1942,7 +1948,6 @@ function setupCard(map, cfg) {
   const openSafetyCheck = query => {
     const submitted = (query || '').trim();
     showDetail(`
-      <h2>장소 안전 점검</h2>
       ${submitted ? '' : `
         <div class="card-input">
           <input id="addr-input" type="text" placeholder="호텔·식당·카페·해변 이름" enterkeyhint="search">
@@ -2602,7 +2607,6 @@ async function initLeaflet(cfg) {
     const openFallbackSafetyCheck = query => {
       const submitted = (query || '').trim();
       showDetail(`
-        <h2>장소 안전 점검</h2>
         ${submitted ? '' : `
           <div class="card-input">
             <input id="addr-input" type="text" placeholder="호텔·식당·카페·해변 이름" enterkeyhint="search">
