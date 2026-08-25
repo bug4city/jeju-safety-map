@@ -1477,10 +1477,23 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
   };
   document.getElementById('card-save').onclick = async () => {
     track('card_share_start', { method: 'image' });
+    // 모바일은 a.download가 동작하지 않아, 새 탭에 이미지를 띄우고 길게 눌러 저장하게 한다.
+    // 캡처를 기다린 뒤 window.open 하면 팝업으로 차단되므로 클릭 시점에 빈 탭을 먼저 연다.
+    const win = window.matchMedia('(max-width: 899px)').matches ? window.open('', '_blank') : null;
     const canvas = await captureCard();
-    const a = document.createElement('a');
+    const dataUrl = canvas.toDataURL('image/png');
     const safeName = String(loc.name || '점검카드').replace(/[\\/:*?"<>|]/g, '').slice(0, 30);
-    a.href = canvas.toDataURL('image/png'); a.download = `제주안전맵_${safeName}.png`; a.click();
+    if (win) {
+      win.document.write(`<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1">`
+        + `<title>제주안전맵_${safeName}</title>`
+        + `<body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center">`
+        + `<p style="color:#aaa;font:13px sans-serif;margin:12px">이미지를 길게 눌러 저장하세요</p>`
+        + `<img src="${dataUrl}" style="width:100%;max-width:600px">`);
+      win.document.close();
+    } else {
+      const a = document.createElement('a');
+      a.href = dataUrl; a.download = `제주안전맵_${safeName}.png`; a.click();
+    }
     track('card_share', { method: 'image' });
   };
   // 카톡 공유: 클릭 후 캡처·업로드를 기다리면 사파리에서 제스처가 만료되어
