@@ -48,8 +48,10 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   position:fixed; bottom:calc(8px + env(safe-area-inset-bottom)); left:12px; right:12px; z-index:900;
   font-size:11px; color:var(--sub); background:rgba(255,255,255,.88); border-radius:10px; padding:8px 12px; line-height:1.5;
 }
-.pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); }
-.chips { display:flex; gap:8px; margin-top:10px; }
+.pin-dot { display:block; width:18px; height:18px; background:var(--accent); border:2px solid #fff; border-radius:50%; box-shadow:0 1px 6px rgba(0,0,0,.4); cursor:pointer; }
+.pop-label { background:rgba(255,255,255,.95); border-radius:8px; padding:4px 8px; font-size:12px; box-shadow:0 1px 6px rgba(0,0,0,.25); white-space:nowrap; }
+.pop-label small { color:var(--sub); }
+.chips { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
 .chip { font-size:13px; border:1px solid #d1d1d6; background:#fff; color:var(--sub); border-radius:999px; padding:5px 12px; cursor:pointer; }
 .chip.on { background:var(--ink); border-color:var(--ink); color:#fff; }
 .chip[hidden] { display:none; }
@@ -81,15 +83,12 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 
 <footer class="foot">
   사건 위치는 피해자 보호를 위해 읍면 중심 수준으로 표시했습니다. 정확한 지점이 아닙니다.
-  모든 정보는 언론 보도를 출처와 함께 정리한 것입니다.
+  모든 정보는 언론 보도와 공공데이터를 출처와 함께 정리한 것입니다.
 </footer>
 
 <script>
-// 네이버 지도 NCP 키. 콘솔에서 발급 후 교체하고, Web 서비스 URL에 https://jeju.kimyukah.com 등록 필요.
-// 키가 없거나 로드에 실패하면 OSM(Leaflet)으로 자동 폴백한다.
-const NAVER_KEY = 'NAVER_NCP_KEY_HERE';
-
 const CENTER = { lat: 33.38, lng: 126.53 };
+const CRIME_WMS = 'https://www.safemap.go.kr/openapi2/IF_0087_WMS';
 const sheet = document.getElementById('sheet');
 document.getElementById('sheet-close').onclick = () => sheet.classList.remove('open');
 
@@ -112,27 +111,101 @@ function loadScript(src) {
   });
 }
 
-async function initNaver(data) {
-  await loadScript(`https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_KEY}`);
-  if (!window.naver || !naver.maps) throw new Error('naver maps unavailable');
-  const map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(CENTER.lat, CENTER.lng),
-    zoom: 10,
-    scaleControl: false, logoControlOptions: { position: naver.maps.Position.BOTTOM_LEFT }
-  });
-  naver.maps.Event.addListener(map, 'click', () => sheet.classList.remove('open'));
-  data.incidents.forEach(inc => {
-    const m = new naver.maps.Marker({
-      position: new naver.maps.LatLng(inc.lat, inc.lng),
-      map,
-      icon: { content: '<span class="pin-dot"></span>', anchor: new naver.maps.Point(9, 9) }
-    });
-    naver.maps.Event.addListener(m, 'click', () => openSheet(inc));
-  });
-  return 'naver';
+function wireChip(id, onToggle) {
+  const chip = document.getElementById(id);
+  chip.hidden = false;
+  chip.onclick = function () { onToggle(this.classList.toggle('on')); };
+  return chip;
 }
 
-async function initLeaflet(data) {
+function popStyle(regions) {
+  const totals = regions.map(r => r.total).sort((a, b) => a - b);
+  const q = p => totals[Math.floor(totals.length * p)];
+  const [lo, hi] = [q(1 / 3), q(2 / 3)];
+  // 상위 1/3 청록(사람 많음), 하위 1/3 주황(인적 드묾). 판정이 아니라 사실(사람 수) 표시다.
+  return { color: t => t >= hi ? '#0e7c7b' : t >= lo ? '#8e8e93' : '#e07b00' };
+}
+
+// ── 카카오맵 엔진 ─────────────────────────────────────────────
+async function initKakao(data, cfg) {
+  await loadScript(`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${cfg.kakaoKey}&autoload=false`);
+  await new Promise(ok => kakao.maps.load(ok));
+  const map = new kakao.maps.Map(document.getElementById('map'), {
+    center: new kakao.maps.LatLng(CENTER.lat, CENTER.lng), level: 10
+  });
+  kakao.maps.event.addListener(map, 'click', () => sheet.classList.remove('open'));
+
+  // 실종 사건 핀
+  const pins = data.incidents.map(inc => {
+    const el = document.createElement('span');
+    el.className = 'pin-dot';
+    el.onclick = e => { e.stopPropagation(); openSheet(inc); };
+    return new kakao.maps.CustomOverlay({
+      position: new kakao.maps.LatLng(inc.lat, inc.lng), content: el, yAnchor: .5, zIndex: 30
+    });
+  });
+  const showPins = on => pins.forEach(p => p.setMap(on ? map : null));
+  showPins(true);
+  document.getElementById('chip-incident').onclick = function () {
+    showPins(this.classList.toggle('on'));
+  };
+
+  // 범죄주의구간: 카카오맵은 WMS를 지원하지 않아서, 현재 화면 bbox로 WMS 이미지를
+  // 한 장 받아 CustomOverlay로 덮고 idle마다 갱신한다.
+  if (cfg.safemapKey) {
+    const img = document.createElement('img');
+    img.style.cssText = 'opacity:.55;pointer-events:none;';
+    const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0, yAnchor: 0, zIndex: 10 });
+    let on = false;
+    const refresh = () => {
+      if (!on) return;
+      const b = map.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast();
+      const proj = map.getProjection();
+      const p1 = proj.containerPointFromCoords(new kakao.maps.LatLng(ne.getLat(), sw.getLng()));
+      const p2 = proj.containerPointFromCoords(new kakao.maps.LatLng(sw.getLat(), ne.getLng()));
+      img.width = Math.round(p2.x - p1.x); img.height = Math.round(p2.y - p1.y);
+      img.src = `${CRIME_WMS}?serviceKey=${cfg.safemapKey}&request=GetMap&layers=A2SM_CRMNLHSPOT_TOT&styles=A2SM_CrmnlHspot_Tot_Tot&format=image/png&transparent=TRUE&version=1.1.1&srs=EPSG:4326&bbox=${sw.getLng()},${sw.getLat()},${ne.getLng()},${ne.getLat()}&width=${img.width}&height=${img.height}`;
+      overlay.setPosition(new kakao.maps.LatLng(ne.getLat(), sw.getLng()));
+      overlay.setMap(map);
+    };
+    kakao.maps.event.addListener(map, 'idle', refresh);
+    wireChip('chip-crime', v => {
+      on = v; on ? refresh() : overlay.setMap(null);
+      gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
+    });
+  }
+
+  // 유동인구 버블
+  try {
+    const pop = await (await fetch('data/pop.json')).json();
+    const { color } = popStyle(pop.regions);
+    const label = new kakao.maps.CustomOverlay({ yAnchor: 1.3, zIndex: 40 });
+    const circles = pop.regions.map(r => {
+      const c = new kakao.maps.Circle({
+        center: new kakao.maps.LatLng(r.lat, r.lng),
+        radius: 400 + Math.sqrt(r.total) * 6,
+        strokeWeight: 1.5, strokeColor: color(r.total), strokeOpacity: .9,
+        fillColor: color(r.total), fillOpacity: .3
+      });
+      kakao.maps.event.addListener(c, 'click', () => {
+        label.setContent(`<div class="pop-label">${r.name} · ${r.total.toLocaleString()}명<br><small>${pop.day.slice(0,4)}.${pop.day.slice(4,6)} 기준 유동인구</small></div>`);
+        label.setPosition(new kakao.maps.LatLng(r.lat, r.lng));
+        label.setMap(map);
+      });
+      return c;
+    });
+    wireChip('chip-pop', on => {
+      circles.forEach(c => c.setMap(on ? map : null));
+      if (!on) label.setMap(null);
+      gtag('event', 'layer_toggle', { layer: 'population', on });
+    });
+  } catch (e) {}
+
+  return 'kakao';
+}
+
+// ── OSM(Leaflet) 폴백 ─────────────────────────────────────────
+async function initLeaflet(data, cfg) {
   const css = document.createElement('link');
   css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   document.head.appendChild(css);
@@ -142,114 +215,62 @@ async function initLeaflet(data) {
     maxZoom: 18, attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
   map.on('click', () => sheet.classList.remove('open'));
+
   const incidentLayer = L.layerGroup().addTo(map);
   data.incidents.forEach(inc => {
     L.marker([inc.lat, inc.lng], { icon: L.divIcon({ html: '<span class="pin-dot"></span>', className: '', iconSize: [18, 18] }) })
       .addTo(incidentLayer).on('click', () => openSheet(inc));
   });
   document.getElementById('chip-incident').onclick = function () {
-    this.classList.toggle('on');
-    this.classList.contains('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
+    this.classList.toggle('on') ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
   };
-  initCctv(map).catch(() => {});
-  initCrimeWms(map).catch(() => {});
-  initPop(map).catch(() => {});
+
+  if (cfg.safemapKey) {
+    const wms = L.tileLayer.wms(CRIME_WMS, {
+      layers: 'A2SM_CRMNLHSPOT_TOT', styles: 'A2SM_CrmnlHspot_Tot_Tot',
+      format: 'image/png', transparent: true, version: '1.1.1',
+      serviceKey: cfg.safemapKey, opacity: .55, attribution: '범죄주의구간 © 경찰청·생활안전지도'
+    });
+    wireChip('chip-crime', on => {
+      on ? wms.addTo(map) : map.removeLayer(wms);
+      gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
+    });
+  }
+
+  try {
+    const pop = await (await fetch('data/pop.json')).json();
+    const { color } = popStyle(pop.regions);
+    const layer = L.layerGroup();
+    pop.regions.forEach(r => {
+      L.circleMarker([r.lat, r.lng], {
+        radius: 6 + Math.sqrt(r.total) / 18,
+        color: color(r.total), weight: 1.5, fillColor: color(r.total), fillOpacity: .3
+      }).addTo(layer).bindTooltip(
+        `${r.name} · ${r.total.toLocaleString()}명<br><small>${pop.day.slice(0,4)}.${pop.day.slice(4,6)} 기준 유동인구</small>`
+      );
+    });
+    wireChip('chip-pop', on => {
+      on ? layer.addTo(map) : map.removeLayer(layer);
+      gtag('event', 'layer_toggle', { layer: 'population', on });
+    });
+  } catch (e) {}
+
   return 'osm';
 }
 
-// 읍면동별 유동인구(통신사 빅데이터, 제주 인구정책 통합플랫폼). 붐비는 곳과 한적한 곳을
-// 한눈에 구분하는 용도다. 상위 1/3은 청록(사람 많음), 하위 1/3은 주황(인적 드묾).
-// 판정이 아니라 사실(사람 수) 표시라서 지역 낙인 리스크가 낮다.
-async function initPop(map) {
-  const res = await fetch('data/pop.json');
-  if (!res.ok) return;
-  const pop = await res.json();
-  const totals = pop.regions.map(r => r.total).sort((a, b) => a - b);
-  const q = p => totals[Math.floor(totals.length * p)];
-  const [lo, hi] = [q(1 / 3), q(2 / 3)];
-  const color = t => t >= hi ? '#0e7c7b' : t >= lo ? '#8e8e93' : '#e07b00';
-  const layer = L.layerGroup();
-  pop.regions.forEach(r => {
-    L.circleMarker([r.lat, r.lng], {
-      radius: 6 + Math.sqrt(r.total) / 18,
-      color: color(r.total), weight: 1.5, fillColor: color(r.total), fillOpacity: .3
-    }).addTo(layer).bindTooltip(
-      `${r.name} · ${r.total.toLocaleString()}명<br><small>${pop.day.slice(0,4)}.${pop.day.slice(4,6)} 기준 유동인구</small>`
-    );
-  });
-  const chip = document.getElementById('chip-pop');
-  chip.hidden = false;
-  chip.onclick = function () {
-    const on = this.classList.toggle('on');
-    on ? layer.addTo(map) : map.removeLayer(layer);
-    gtag('event', 'layer_toggle', { layer: 'population', on });
-  };
-}
-
-// 경찰청 범죄주의구간(5대 범죄 밀도, 생활안전지도 WMS). 우리가 위험도를 판정하지 않고
-// 국가 데이터를 그대로 오버레이만 한다. 키는 공개 repo에 커밋하지 않으려고
-// 서버에만 두는 config.json에서 읽는다. 없으면 칩을 숨긴 채 둔다.
-async function initCrimeWms(map) {
-  const res = await fetch('config.json');
-  if (!res.ok) return;
-  const cfg = await res.json();
-  if (!cfg.safemapKey) return;
-  const wms = L.tileLayer.wms('https://www.safemap.go.kr/openapi2/IF_0087_WMS', {
-    layers: 'A2SM_CRMNLHSPOT_TOT', styles: 'A2SM_CrmnlHspot_Tot_Tot',
-    format: 'image/png', transparent: true, version: '1.1.1',
-    serviceKey: cfg.safemapKey,
-    opacity: .55, attribution: '범죄주의구간 © 경찰청·생활안전지도'
-  });
-  const chip = document.getElementById('chip-crime');
-  chip.hidden = false;
-  chip.onclick = function () {
-    const on = this.classList.toggle('on');
-    on ? wms.addTo(map) : map.removeLayer(wms);
-    gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
-  };
-}
-
-// 방범 CCTV 히트맵. data/cctv.json이 아직 없으면(인증키 미발급) 칩 자체를 숨긴 채 둔다.
-async function initCctv(map) {
-  const res = await fetch('data/cctv.json');
-  if (!res.ok) return;
-  const cctv = await res.json();
-  await loadScript('https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js');
-  const heat = L.heatLayer(cctv.points.map(p => [p[0], p[1], Math.min(p[2], 4)]), {
-    radius: 14, blur: 18, minOpacity: .25,
-    gradient: { .3: '#7fb2f0', .6: '#2f7de1', 1: '#0a4fa8' }  // 파랑 계열: 위험(빨강)과 구분되는 "안심" 색
-  });
-  // 확대하면 개별 지점도 보여준다. 히트맵만으로는 "우리 골목에 있나"를 답할 수 없다.
-  const dots = L.layerGroup();
-  cctv.points.forEach(p => dots.addLayer(
-    L.circleMarker([p[0], p[1]], { radius: 4, color: '#0a4fa8', weight: 1, fillOpacity: .8 })));
-  let on = false;
-  const sync = () => {
-    if (!on) return;
-    map.getZoom() >= 15 ? (map.hasLayer(dots) || dots.addTo(map)) : map.removeLayer(dots);
-  };
-  map.on('zoomend', sync);
-  const chip = document.getElementById('chip-cctv');
-  chip.hidden = false;
-  chip.onclick = function () {
-    on = this.classList.toggle('on');
-    if (on) { heat.addTo(map); sync(); } else { map.removeLayer(heat); map.removeLayer(dots); }
-    gtag('event', 'layer_toggle', { layer: 'cctv', on });
-  };
-}
-
-fetch('data/incidents.json')
-  .then(r => r.json())
-  .then(async data => {
-    document.getElementById('stat-count').textContent = data.stats.unresolvedAdultMissing + '명';
-    let engine;
-    try {
-      engine = NAVER_KEY.startsWith('NAVER_') ? await initLeaflet(data) : await initNaver(data);
-    } catch (e) {
-      engine = await initLeaflet(data);
-    }
-    gtag('event', 'map_loaded', { incident_count: data.incidents.length, map_engine: engine });
-  });
+(async () => {
+  const data = await (await fetch('data/incidents.json')).json();
+  document.getElementById('stat-count').textContent = data.stats.unresolvedAdultMissing + '명';
+  let cfg = {};
+  try { const r = await fetch('config.json'); if (r.ok) cfg = await r.json(); } catch (e) {}
+  let engine;
+  try {
+    engine = cfg.kakaoKey ? await initKakao(data, cfg) : await initLeaflet(data, cfg);
+  } catch (e) {
+    engine = await initLeaflet(data, cfg);
+  }
+  gtag('event', 'map_loaded', { incident_count: data.incidents.length, map_engine: engine });
+})();
 </script>
 </body>
 </html>
