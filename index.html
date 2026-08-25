@@ -701,7 +701,7 @@ function nearbyIncidentContext(point, radiusKm) {
     .sort((a, b) => a.km - b.km);
   return {
     nearby,
-    label: nearby.length >= 3 ? '보도 사건 높음' : nearby.length ? '보도 사건 있음' : '보도 사건 낮음',
+    label: nearby.length ? `사건 ${nearby.length}건` : '사건 없음',
     detail: nearby.length ? `반경 ${radiusKm}km 보도 확인 사건 ${nearby.length}건 (최근접 ${nearby[0].km.toFixed(1)}km)` : `반경 ${radiusKm}km 보도 확인 사건 없음`,
     alert: nearby.length > 0
   };
@@ -995,7 +995,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
       <div class="addr">${loc.addr}</div>
       <div class="context">
         <div class="context-box"><span>지역 붐빔도</span><b><span class="tagchip" style="background:${pop.color}">${pop.tag}</span></b></div>
-        <div class="context-box"><span>보도 사건 맥락</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.label}</b></div>
+        <div class="context-box"><span>보도 맥락</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.label}</b></div>
       </div>
       <div class="row"><span>반경 8km 내 보도 확인 사건</span><b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건 (최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km)' : '없음'}</b></div>
       <div class="row"><span>지역 (${region.name})</span><b>${pop.totalRegions}곳 중 한적 ${pop.quietRank}위</b></div>
