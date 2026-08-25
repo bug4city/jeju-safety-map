@@ -899,7 +899,8 @@ function classifyLink(anchor) {
   return { link_type: url.origin === location.origin ? 'internal' : 'external', destination: host || 'same_origin' };
 }
 document.addEventListener('click', e => {
-  const anchor = e.target.closest && e.target.closest('a[href]');
+  if (!(e.target instanceof Element)) return;
+  const anchor = e.target.closest('a[href]');
   if (!anchor) return;
   track('link_click', classifyLink(anchor));
 });
@@ -944,6 +945,7 @@ function showDetail(html) {
     detailView.classList.remove('on'); listView.classList.remove('off');
     if (mapApi.clearRegionHighlight) mapApi.clearRegionHighlight();
     syncPlaceUrl(null);
+    track('detail_back');
   };
   if (window.matchMedia('(max-width: 899px)').matches) panel.classList.add('full');
 }
@@ -997,7 +999,10 @@ function showPoiDetail(type, place) {
       : '진료 시간·응급실 운영 여부는 방문 전 전화로 확인하세요.'}</div>`);
   document.getElementById('poi-call').onclick = () => { location.href = `tel:${tel}`; };
   const kakaoBtn = document.getElementById('poi-kakao');
-  if (kakaoBtn) kakaoBtn.onclick = () => window.open(place.place_url, '_blank', 'noopener');
+  if (kakaoBtn) kakaoBtn.onclick = () => {
+    window.open(place.place_url, '_blank', 'noopener');
+    track('poi_external_open', { type, destination: 'kakao_place' });
+  };
   track('poi_detail', { type });
 }
 function incidentDetail(inc) {
@@ -1069,6 +1074,7 @@ function regionDetail(r, style, ranks) {
       const next = neighbors[Number(button.dataset.nearIndex)].x;
       regionDetail(next, style, ranks);
       mapApi.panTo(next.lat, next.lng);
+      track('near_region_open');
     };
   });
   track('region_open', { region: r.name });
@@ -1117,7 +1123,10 @@ async function renderList(opts) {
     d.onclick = () => {
       if (mapApi.openPlaceCard) mapApi.openPlaceCard(p);
       else mapApi.panTo(p.lat, p.lng, 6);
-      track('nearby_place_open', { origin: origin ? (state.userLocation ? 'location' : 'search') : 'default' });
+      track('nearby_place_open', {
+        origin: origin ? (state.userLocation ? 'location' : 'search') : 'default',
+        has_distance: !!origin
+      });
     };
     d.onkeydown = e => { if (e.key === 'Enter') d.click(); };
     listView.appendChild(d);
@@ -1125,22 +1134,29 @@ async function renderList(opts) {
   if (!keepDetail) { detailView.classList.remove('on'); listView.classList.remove('off'); }
 }
 searchInput.oninput = () => {
+  if (searchInput.value) beginSearchSession('panel_search');
   state.query = searchInput.value;
   searchClear.hidden = !state.query;
+};
+searchInput.onfocus = () => {
+  track('search_focus', { has_query: !!searchInput.value.trim() });
 };
 searchInput.onkeydown = e => {
   if (e.key === 'Enter') {
     e.preventDefault();
-    mapApi.checkPlace(searchInput.value.trim());
+    submitSearch(searchInput.value, 'panel_search');
   }
 };
 searchClear.onclick = () => {
+  track('search_clear', { query_length: state.query.trim().length });
   searchInput.value = '';
   state.query = '';
   searchClear.hidden = true;
   searchInput.focus();
+  resetSearchSession();
 };
 document.getElementById('reset-btn').onclick = () => {
+  track('map_reset', { had_search_origin: !!state.searchOrigin, had_user_location: !!state.userLocation });
   searchInput.value = '';
   state.query = '';
   state.searchOrigin = null;
@@ -1149,6 +1165,7 @@ document.getElementById('reset-btn').onclick = () => {
   mapApi.clearNearestHelp();
   returnJejuBtn.hidden = true;
   renderList();
+  resetSearchSession();
 };
 returnJejuBtn.onclick = () => {
   mapApi.returnToJeju();
@@ -1158,8 +1175,10 @@ returnJejuBtn.onclick = () => {
   track('return_jeju');
 };
 locateBtn.onclick = () => {
+  track('location_request');
   if (!navigator.geolocation) {
     showToast('이 브라우저에서는 현재 위치를 사용할 수 없습니다.');
+    track('location_unavailable');
     return;
   }
   locateBtn.classList.add('locating');
@@ -1180,6 +1199,7 @@ locateBtn.onclick = () => {
     locateBtn.classList.remove('locating');
     locateBtn.querySelector('span').textContent = '내 위치';
     showToast('현재 위치 권한을 허용하면 내 위치 주변으로 지도를 이동할 수 있습니다.');
+    track('location_error');
   }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 60000 });
 };
 
@@ -1193,6 +1213,7 @@ if (window.matchMedia('(max-width: 899px)').matches) {
 legendToggle.onclick = function () {
   const open = legendStack.classList.toggle('open');
   this.setAttribute('aria-expanded', open);
+  track('legend_toggle', { on: open });
 };
 
 // 범죄주의구간 부속 UI: 범례는 켠 동안, 오해 방지 안내는 최초 1회만
@@ -1226,7 +1247,12 @@ function wireChip(id, onToggle, defaultOn) {
   const chip = document.getElementById(id);
   chip.hidden = false;
   if (chip.closest('.chips-more-menu')) document.getElementById('chip-more').hidden = false;
-  chip.onclick = function () { onToggle(this.classList.toggle('on')); syncMoreChip(); };
+  chip.onclick = function () {
+    const on = this.classList.toggle('on');
+    track('chip_toggle', { chip: id.replace(/^chip-/, ''), on });
+    onToggle(on);
+    syncMoreChip();
+  };
   if (defaultOn) { chip.classList.add('on'); onToggle(true); }
   syncMoreChip();
   return chip;
@@ -1248,6 +1274,7 @@ document.getElementById('chip-more').onclick = function () {
   }
   this.classList.toggle('open', !menu.hidden);
   this.setAttribute('aria-expanded', String(!menu.hidden));
+  track('layer_more_menu_toggle', { on: !menu.hidden });
 };
 document.addEventListener('click', function (e) {
   const menu = document.getElementById('chips-more-menu');
@@ -1272,8 +1299,10 @@ function renderPlaceResults(query, places, onPick) {
   const result = document.getElementById('card-result');
   if (!places.length) {
     result.innerHTML = `<div class="card-hint"><b>${escapeHtml(query)}</b> 위치를 찾지 못했습니다. 호텔명, 음식점명, 해변명처럼 장소 이름을 조금 더 구체적으로 입력해 주세요.</div>`;
+    track('place_search_no_results');
     return;
   }
+  track('place_search_results', { result_count: places.length });
   const label = places.length === 1 ? '검색 결과 1곳' : `검색 결과 ${places.length}곳`;
   result.innerHTML = `
     <div class="card-hint"><b>${escapeHtml(query)}</b> ${label}입니다. 점검할 장소를 선택하세요.</div>
@@ -1285,7 +1314,10 @@ function renderPlaceResults(query, places, onPick) {
         </button>`).join('')}
     </div>`;
   result.querySelectorAll('.place-result').forEach(button => {
-    button.onclick = () => onPick(places[Number(button.dataset.placeIndex)]);
+    button.onclick = () => {
+      track('place_result_select', { rank: Number(button.dataset.placeIndex) + 1, result_count: places.length });
+      onPick(places[Number(button.dataset.placeIndex)]);
+    };
   });
 }
 function openMapPlaceInspector(title, hint) {
@@ -1413,6 +1445,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     });
   };
   document.getElementById('card-save').onclick = async () => {
+    track('card_share_start', { method: 'image' });
     const canvas = await captureCard();
     const a = document.createElement('a');
     const safeName = String(loc.name || '점검카드').replace(/[\\/:*?"<>|]/g, '').slice(0, 30);
@@ -1420,6 +1453,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     track('card_share', { method: 'image' });
   };
   document.getElementById('card-kakao').onclick = async () => {
+    track('card_share_start', { method: 'kakao' });
     if (!window.Kakao) await loadScript('https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js');
     if (!Kakao.isInitialized()) Kakao.init(cfg.kakaoKey);
     const link = { mobileWebUrl: shareUrl, webUrl: shareUrl };
@@ -1455,6 +1489,7 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
     if (!window.html2canvas) loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
     let cachedFile = null;
     webshareBtn.onclick = async () => {
+      track('card_share_start', { method: 'webshare', cached: !!cachedFile });
       try {
         if (!cachedFile) {
           const canvas = await captureCard();
@@ -1465,13 +1500,18 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
         cachedFile = null;
         track('card_share', { method: 'webshare' });
       } catch (e) {
-        if (e && e.name === 'AbortError') return;
+        if (e && e.name === 'AbortError') {
+          track('card_share_cancel', { method: 'webshare' });
+          return;
+        }
         // 제스처 만료로 거부된 경우: 이미지는 준비됐으니 바로 다시 누르면 즉시 공유된다.
         showToast('이미지 준비 완료. 공유 버튼을 한 번 더 눌러주세요.');
+        track('card_share_error', { method: 'webshare' });
       }
     };
   }
   document.getElementById('card-x').onclick = () => {
+    track('card_share_start', { method: 'x' });
     const u = new URL('https://x.com/intent/post');
     u.searchParams.set('text', summaryText);
     u.searchParams.set('url', shareUrl);
@@ -1562,10 +1602,15 @@ function setupCard(map, cfg) {
     const go = async () => {
       const input = document.getElementById('addr-input');
       const q = submitted || (input ? input.value.trim() : '');
-      if (!q) return;
+      if (!q) {
+        track('search_empty_submit', { source: 'card_form', query_length: 0 });
+        return;
+      }
+      if (!submitted) track('search_submit', { source: 'card_form', query_length: q.length });
       document.getElementById('card-result').textContent = '검색 중...';
       const matches = await search(q);
       if (matches.length === 1) {
+        track('place_result_auto_select', { result_count: 1 });
         renderCard(matches[0]);
         return;
       }
@@ -1623,6 +1668,7 @@ function setupCard(map, cfg) {
     if (!matches.length) {
       document.getElementById('card-result').innerHTML =
         '<div class="card-hint">이 지점 주변에서 제공사가 공개한 장소 정보를 찾지 못했습니다. 지도 글자 자체가 아니라 장소 데이터 API 기준이라, 일부 아파트나 작은 건물은 나오지 않을 수 있습니다.</div>';
+      track('map_place_lookup', { result_count: 0 });
       return;
     }
     // POI 라벨을 직접 누른 경우 클릭 좌표와 장소 좌표가 거의 일치한다.
@@ -1642,6 +1688,7 @@ function setupCard(map, cfg) {
     if (!query) {
       showToast('호텔·숙소·장소 이름을 입력해 주세요.');
       searchInput.focus();
+      track('search_empty_rejected', { source: 'panel_search' });
       return;
     }
     searchClear.hidden = false;
@@ -1733,6 +1780,7 @@ async function initKakao(cfg) {
       el.onclick = () => {
         mapApi.panTo(place.lat, place.lng, 5);
         renderNearestHelp(state.userLocation || place, places);
+        track('help_marker_open', { type: place.type });
       };
       const overlay = new kakao.maps.CustomOverlay({
         position: new kakao.maps.LatLng(place.lat, place.lng),
@@ -1810,6 +1858,7 @@ async function initKakao(cfg) {
     else clusterer.removeMarkers(markers);
     document.getElementById('incident-legend').hidden = !incidentOn;
     relabelIncidents();
+    track('layer_toggle', { layer: 'incident', on: incidentOn });
   };
   relabelIncidents();
 
@@ -2007,6 +2056,7 @@ async function initKakao(cfg) {
           el.onclick = () => {
             mapApi.panTo(Number(place.y), Number(place.x), 5);
             showPoiDetail(type, place);
+            track('poi_marker_open', { type });
           };
           const ov = new kakao.maps.CustomOverlay({
             position: new kakao.maps.LatLng(Number(place.y), Number(place.x)),
@@ -2054,8 +2104,10 @@ async function initKakao(cfg) {
       const back = document.getElementById('back-btn');
       if (back) back.click();
       if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('full');
+      track('map_detail_dismiss', { engine: 'kakao' });
       return;
     }
+    track('map_click_lookup', { engine: 'kakao' });
     mapApi.inspectPoint(mouseEvent.latLng);
   });
   return 'kakao';
@@ -2103,6 +2155,7 @@ async function initLeaflet(cfg) {
       }).addTo(helpLayer).on('click', () => {
         mapApi.panTo(place.lat, place.lng, 5);
         renderNearestHelp(loc, places);
+        track('help_marker_open', { type: place.type, engine: 'osm' });
       });
     });
     helpLayer.addTo(map);
@@ -2118,6 +2171,7 @@ async function initLeaflet(cfg) {
     const on = this.classList.toggle('on');
     on ? incidentLayer.addTo(map) : map.removeLayer(incidentLayer);
     document.getElementById('incident-legend').hidden = !on;
+    track('layer_toggle', { layer: 'incident', on });
   };
   if (state.pop) {
     const style = popStyle(state.pop.regions);
@@ -2179,6 +2233,7 @@ async function initLeaflet(cfg) {
     wireChip('chip-pop', on => {
       if (on) { layer.addTo(map); relabelPop(); } else map.removeLayer(layer);
       document.getElementById('legend').hidden = !on;
+      track('layer_toggle', { layer: 'population', on });
     }, true);
     let placeMarker = null;
     const renderFallbackCard = loc => renderSafetyCard(loc, cfg, place => {
@@ -2207,10 +2262,15 @@ async function initLeaflet(cfg) {
       const go = () => {
         const input = document.getElementById('addr-input');
         const q = submitted || (input ? input.value.trim() : '');
-        if (!q) return;
+        if (!q) {
+          track('search_empty_submit', { source: 'card_form', query_length: 0 });
+          return;
+        }
+        if (!submitted) track('search_submit', { source: 'card_form', query_length: q.length });
         document.getElementById('card-result').textContent = '검색 중...';
         const matches = fallbackPlaceSearchResults(q);
         if (matches.length === 1) {
+          track('place_result_auto_select', { result_count: 1 });
           renderFallbackCard(matches[0]);
           return;
         }
@@ -2230,6 +2290,7 @@ async function initLeaflet(cfg) {
       if (!query) {
         showToast('호텔·숙소·장소 이름을 입력해 주세요.');
         searchInput.focus();
+        track('search_empty_rejected', { source: 'panel_search' });
         return;
       }
       searchClear.hidden = false;
@@ -2242,13 +2303,21 @@ async function initLeaflet(cfg) {
       format: 'image/png', transparent: true, version: '1.1.1',
       serviceKey: cfg.safemapKey, opacity: .45
     });
-    wireChip('chip-crime', on => { on ? wms.addTo(map) : map.removeLayer(wms); crimeUi(on); }, true);
+    wireChip('chip-crime', on => {
+      on ? wms.addTo(map) : map.removeLayer(wms);
+      crimeUi(on);
+      track('layer_toggle', { layer: 'crime_zone', on });
+    }, true);
     const lightWms = L.tileLayer.wms(LIGHT_WMS, {
       layers: 'A2SM_CMMNPOI_SECULIGHT',
       format: 'image/png', transparent: true, version: '1.1.1',
       serviceKey: cfg.safemapKey, opacity: .8
     });
-    wireChip('chip-light', on => { on ? lightWms.addTo(map) : map.removeLayer(lightWms); lightUi(on); }, false);
+    wireChip('chip-light', on => {
+      on ? lightWms.addTo(map) : map.removeLayer(lightWms);
+      lightUi(on);
+      track('layer_toggle', { layer: 'security_light', on });
+    }, false);
   }
   if (state.cctv) {
     const layer = L.layerGroup();
@@ -2266,6 +2335,7 @@ async function initLeaflet(cfg) {
         .on('click', event => {
           L.DomEvent.stopPropagation(event);
           showToast(`이 지점에 공공 CCTV ${count}대가 등록되어 있습니다. 목적: ${purpose || '미상'}`);
+          track('cctv_open', { engine: 'osm' });
         });
       return { marker, count, iconFor };
     });
@@ -2283,6 +2353,7 @@ async function initLeaflet(cfg) {
       cctvOn = on;
       relabelCctv();
       cctvUi(on);
+      track('layer_toggle', { layer: 'cctv', on });
     }, false);
   }
   map.on('click', () => {
@@ -2292,8 +2363,10 @@ async function initLeaflet(cfg) {
       const back = document.getElementById('back-btn');
       if (back) back.click();
       if (window.matchMedia('(max-width: 899px)').matches) panel.classList.remove('full');
+      track('map_detail_dismiss', { engine: 'osm' });
       return;
     }
+    track('map_click_lookup', { engine: 'osm' });
     openMapPlaceInspector('지도에서 누른 위치', '이 기본 지도는 화면에 그려진 건물·상호명을 클릭 데이터로 제공하지 않습니다. 상단 검색창에 호텔, 음식점, 카페, 해변 이름을 입력해 점검해 주세요.');
   });
   return 'osm';
