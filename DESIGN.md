@@ -21,7 +21,7 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 
 ## 4. Components
 
-- `SafetySearchBox`: full-width rounded input with icon, clear button, and CJK-safe placeholder text for hotel, accommodation, restaurant, cafe, beach, or attraction lookup. It is the primary conversion path and opens a shareable safety-check card, not a list filter.
+- `SafetySearchBox`: full-width rounded input with icon, clear button, and CJK-safe placeholder text for hotel, accommodation, restaurant, cafe, beach, or attraction lookup. It is the primary conversion path and opens one shared safety-check surface; broad queries show selectable place candidates before the shareable card is generated.
 - `PanelActions`: current location and map-reset buttons in a two-column grid.
 - `ResultMeta`: compact row that explains the safety-check search action while preserving the browsable incident/region list below.
 - `ResultItem`: list row with semantic color dot, primary label, secondary label, optional metric, and selected-state background.
@@ -33,7 +33,7 @@ The left search panel follows the supplied Geojimap-style reference: fixed deskt
 
 ## 5. States
 
-- Safety search submits on Enter, shows a loading state, pans the map to the matched place, and renders a shareable card with nearby incidents, regional crowding, and caveat copy.
+- Safety search submits on Enter, shows a loading state, lists multiple candidate places for broad searches such as hotel or restaurant, pans the map to the selected place, and renders a shareable card with nearby incidents, regional crowding, and caveat copy.
 - Empty state explains no matching item was found without replacing the search controls.
 - Current location button shows locating, success, unsupported, and permission/error states through label text and toast.
 - Return-to-Jeju stays hidden on the 제주 overview and appears after current-location or place-search navigation.

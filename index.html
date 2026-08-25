@@ -1204,30 +1204,41 @@ async function initLeaflet(cfg) {
     }, true);
     let placeMarker = null;
     const openFallbackSafetyCheck = query => {
+      const submitted = (query || '').trim();
       showDetail(`
-        <h2>내 숙소 안전 점검</h2>
-        <div class="card-input">
-          <input id="addr-input" type="text" placeholder="숙소 주소나 이름 (예: 제주공항, 협재)" enterkeyhint="search">
-          <button id="addr-go">확인</button>
-        </div>
+        <h2>장소 안전 점검</h2>
+        ${submitted ? '' : `
+          <div class="card-input">
+            <input id="addr-input" type="text" placeholder="호텔·식당·카페·해변 이름" enterkeyhint="search">
+            <button id="addr-go">확인</button>
+          </div>`}
         <div id="card-result" class="card-hint">카카오 장소검색을 쓸 수 없는 환경이라 제주 주요 장소와 읍면동 이름으로 점검합니다.</div>`);
-      const input = document.getElementById('addr-input');
       const go = () => {
-        const q = input.value.trim(); if (!q) return;
+        const input = document.getElementById('addr-input');
+        const q = submitted || (input ? input.value.trim() : '');
+        if (!q) return;
         document.getElementById('card-result').textContent = '검색 중...';
-        const loc = fallbackPlaceSearch(q);
-        if (!loc) { document.getElementById('card-result').textContent = '위치를 찾지 못했습니다. 제주공항, 협재, 애월처럼 주요 장소나 읍면동 이름으로 검색해보세요.'; return; }
-        renderSafetyCard(loc, cfg, place => {
+        const matches = fallbackPlaceSearchResults(q);
+        const renderFallbackCard = loc => renderSafetyCard(loc, cfg, place => {
           const icon = L.divIcon({ html: '<span class="user-loc-dot" aria-label="검색한 장소"></span>', className: '', iconSize: [18, 18] });
           if (!placeMarker) placeMarker = L.marker([place.lat, place.lng], { icon, zIndexOffset: 900 }).addTo(map);
           else placeMarker.setLatLng([place.lat, place.lng]);
           map.setView([place.lat, place.lng], 12);
         });
+        if (matches.length === 1) {
+          renderFallbackCard(matches[0]);
+          return;
+        }
+        renderPlaceResults(q, matches, renderFallbackCard);
       };
-      document.getElementById('addr-go').onclick = go;
-      input.onkeydown = e => { if (e.key === 'Enter') go(); };
-      input.value = query || '';
-      if (query) go(); else input.focus();
+      if (submitted) {
+        go();
+      } else {
+        const input = document.getElementById('addr-input');
+        document.getElementById('addr-go').onclick = go;
+        input.onkeydown = e => { if (e.key === 'Enter') go(); };
+        input.focus();
+      }
       gtag('event', 'card_open', { engine: 'osm' });
     };
     mapApi.checkPlace = query => {
