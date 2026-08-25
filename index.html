@@ -349,7 +349,7 @@ async function initKakao(cfg) {
   // 범죄주의구간 WMS: 화면 bbox 이미지를 CustomOverlay로 덮고 idle마다 갱신
   if (cfg.safemapKey) {
     const img = document.createElement('img');
-    img.style.cssText = 'opacity:.55;pointer-events:none;';
+    img.style.cssText = 'opacity:.72;pointer-events:none;';
     const overlay = new kakao.maps.CustomOverlay({ content: img, xAnchor: 0, yAnchor: 0, zIndex: 5 });
     let on = false;
     const refresh = () => {
@@ -365,7 +365,12 @@ async function initKakao(cfg) {
     };
     kakao.maps.event.addListener(map, 'idle', refresh);
     wireChip('chip-crime', v => {
-      on = v; on ? refresh() : overlay.setMap(null);
+      on = v;
+      if (on) {
+        // 격자가 도로 단위라 도 전체 축척에선 거의 안 보인다. 켜면 시내 축척으로 데려간다.
+        if (map.getLevel() >= 9) { map.setLevel(7); map.panTo(new kakao.maps.LatLng(33.505, 126.525)); }
+        refresh();
+      } else overlay.setMap(null);
       gtag('event', 'layer_toggle', { layer: 'crime_zone', on });
     });
   }
