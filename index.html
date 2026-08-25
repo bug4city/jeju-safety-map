@@ -22,8 +22,8 @@
 <meta property="og:url" content="https://jeju.kimyukah.com/">
 <meta property="og:title" content="제주안전맵 - 제주 여행 안심 지도">
 <meta property="og:description" content="내 숙소와 동선 주변의 CCTV·비상벨·보안등 위치를 공공데이터로 확인하고 더 안심하고 여행하세요.">
-<meta property="og:image" content="https://jeju.kimyukah.com/assets/og-image.png">
-<meta property="og:image:secure_url" content="https://jeju.kimyukah.com/assets/og-image.png">
+<meta property="og:image" content="https://jeju.kimyukah.com/assets/og-image.png?v=3">
+<meta property="og:image:secure_url" content="https://jeju.kimyukah.com/assets/og-image.png?v=3">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -33,13 +33,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="제주안전맵 - 제주 여행 안심 지도">
 <meta name="twitter:description" content="내 숙소와 동선 주변의 CCTV·비상벨·보안등 위치를 공공데이터로 확인하세요.">
-<meta name="twitter:image" content="https://jeju.kimyukah.com/assets/og-image.png">
+<meta name="twitter:image" content="https://jeju.kimyukah.com/assets/og-image.png?v=3">
 <meta name="twitter:image:alt" content="제주안전맵 - 제주 여행 안심 지도">
 <meta name="twitter:domain" content="jeju.kimyukah.com">
 <meta name="twitter:url" content="https://jeju.kimyukah.com/">
 <meta name="kakao:title" content="제주안전맵 - 제주 여행 안심 지도">
 <meta name="kakao:description" content="내 숙소와 동선 주변의 CCTV·비상벨·보안등 위치를 공공데이터로 확인하세요.">
-<meta name="kakao:image" content="https://jeju.kimyukah.com/assets/og-image.png">
+<meta name="kakao:image" content="https://jeju.kimyukah.com/assets/og-image.png?v=3">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -51,7 +51,7 @@
   "applicationCategory": "MapApplication",
   "operatingSystem": "Web",
   "inLanguage": "ko-KR",
-  "image": "https://jeju.kimyukah.com/assets/og-image.png",
+  "image": "https://jeju.kimyukah.com/assets/og-image.png?v=3",
   "creator": {
     "@type": "Person",
     "name": "김육아",
@@ -505,6 +505,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
 
 <div class="chips">
   <button class="chip" id="chip-cctv" hidden>공공 CCTV</button>
+  <button class="chip" id="chip-light" hidden>보안등</button>
   <button class="chip on" id="chip-pop" hidden>유동인구</button>
   <button class="chip" id="chip-incident">실종 사건</button>
   <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
@@ -569,7 +570,7 @@ body { font-family:-apple-system,"Apple SD Gothic Neo","Pretendard",sans-serif; 
   <div class="legend" id="cctv-legend" hidden>
     <b class="legend-title">공공 CCTV <small>행정안전부 표준데이터</small></b>
     <div><span class="legend-cctv-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h7A2.5 2.5 0 0 1 16 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 4 16.5v-9Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m16 10 4-2.5v9L16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>공공 CCTV 위치</div>
-    <div class="sub-note">방범·교통·시설물·재난 목적을 함께 표시합니다.</div>
+    <div class="sub-note">방범·교통·시설물·재난 목적을 함께 표시합니다.<br>지도를 확대하면 위치가 나타납니다.</div>
   </div>
   <button class="legend-toggle" id="legend-toggle" type="button" aria-expanded="true">ⓘ 범례</button>
 </div>
@@ -1191,11 +1192,11 @@ function renderSafetyCard(loc, cfg, moveToLocation) {
           <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
           <small>${incidents.nearby.length ? '최근접 ' + incidents.nearby[0].km.toFixed(1) + 'km' : '언론 보도 확인 기준'}</small></div>
       </div>
-      <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
-      <div class="row"><span>범죄주의구간 (최근 1년 신고 밀집)</span><b id="crime-row">확인 중…</b></div>
-      <div class="row"><span>도보권 편의점 (500m)</span><b id="cs-row">확인 중…</b></div>
       ${state.bells ? `<div class="row"><span>안전비상벨 (500m)</span><b>${nearbyPointCount(state.bells, loc, 0.5) || '없음'}${nearbyPointCount(state.bells, loc, 0.5) ? '개' : ''}</b></div>` : ''}
       ${state.lights ? `<div class="row"><span>보안등 (500m)</span><b>${nearbyPointCount(state.lights, loc, 0.5) || '없음'}${nearbyPointCount(state.lights, loc, 0.5) ? '개' : ''}</b></div>` : ''}
+      <div class="row"><span>도보권 편의점 (500m)</span><b id="cs-row">확인 중…</b></div>
+      <div class="row"><span>하루 유동인구 (${escapeHtml(region.name)})</span><b>약 ${region.total.toLocaleString()}명</b></div>
+      <div class="row"><span>범죄주의구간 (최근 1년 신고 밀집)</span><b id="crime-row">확인 중…</b></div>
       ${incidents.nearby.length ? `
       <details class="card-more">
         <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
@@ -1721,10 +1722,12 @@ async function initKakao(cfg) {
       });
       return { ov, el, count };
     });
+    // 1000개 넘는 오버레이를 도 전체 뷰에 다 그리면 모바일이 버벅여서, 확대했을 때만 표시
     const relabelCctv = () => {
+      const visible = cctvOn && map.getLevel() <= 9;
       const close = map.getLevel() <= 7;
       overlays.forEach(({ ov, el, count }) => {
-        if (cctvOn) ov.setMap(map);
+        ov.setMap(visible ? map : null);
         el.innerHTML = cctvIconHtml(count, close);
         el.classList.toggle('count', close);
       });

@@ -1,7 +1,7 @@
 {
   "name": "제주안전맵",
   "short_name": "제주안전맵",
-  "description": "제주 실종·범죄·안전 정보를 지도에서 확인하는 웹 서비스",
+  "description": "CCTV·비상벨·보안등 등 안전시설을 공공데이터로 확인하는 제주 여행 안심 지도",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
