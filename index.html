@@ -98,6 +98,7 @@ try {
   --blue-soft:#e0f2fe;
   --cctv:#0891b2;
   --cctv-soft:#e0f6fb;
+  --tour:#d97706;              /* 관광 명소 — 안전 판단 대상이 아닌 참고 정보라 별도 색 */
   --line-strong:#d1d1d6;
   --chip-dark:#111827; --chip-dark-hover:#1f2937;   /* 헤더 다크 필 버튼 전용 */
   --placeholder:#8a8f98;
@@ -118,7 +119,7 @@ try {
 html[data-theme="dark"] {
   --ink:#f1f5f9; --sub:#94a3b8; --card:#18202f; --line:#263043;
   /* 다크에서는 인터랙션·데이터 색을 한 단계 밝은 톤으로 — 라이트용 600대는 어두운 배경에서 탁해진다 */
-  --brand:#34d399; --blue:#38bdf8; --cctv:#22d3ee; --accent:#fb7185;
+  --brand:#34d399; --blue:#38bdf8; --cctv:#22d3ee; --accent:#fb7185; --tour:#fbbf24;
   --brand-soft:#0c3b2b;
   --panel-muted:#0d1524;
   --blue-soft:#0c2f4a;
@@ -280,6 +281,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .detail .status { display:inline-block; font-size:var(--fs-sub); font-weight:700; color:#fff; background:var(--accent); border-radius:var(--r-xs); padding:2px var(--sp-2); margin-bottom:var(--sp-2); }
 .detail h2 { font-size:var(--fs-title); margin-bottom:2px; }
 .detail .area { font-size:var(--fs-sub); color:var(--sub); margin-bottom:var(--sp-2); }
+.detail .detail-photo { display:block; width:100%; aspect-ratio:16/10; object-fit:cover; border-radius:var(--r-sm); margin-bottom:var(--sp-3); }
 .detail .summary { font-size:var(--fs-body); line-height:1.65; margin-bottom:var(--sp-3); }
 /* 숫자를 문장으로 풀어주는 요약 + 한 줄 인사이트 (북적북적 제주 패턴) */
 .summary-text { font-size:var(--fs-body); line-height:1.65; color:var(--ink); margin:var(--sp-3) 0 var(--sp-1); word-break:keep-all; }
@@ -375,6 +377,8 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
 .help-marker .hm-icon svg { display:block; }
 .help-marker .hm-icon.police { background:var(--blue); }
 .help-marker .hm-icon.hospital { background:var(--brand); }
+.help-marker .hm-icon.tour { background:var(--tour); border-radius:50%; }
+.help-marker.no-label .hm-label { display:none; }
 .help-marker .hm-label {
   max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   font-size:var(--fs-cap); font-weight:800; color:var(--ink); line-height:1.2;
@@ -644,6 +648,7 @@ body { font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Goth
   <button class="chip on" id="chip-pop" hidden>유동인구</button>
   <button class="chip" id="chip-crime" hidden>범죄주의구간</button>
   <button class="chip" id="chip-incident">실종 사건</button>
+  <button class="chip" id="chip-tour" hidden>관광 명소</button>
   <button class="chip" id="chip-police" hidden>경찰서</button>
   <button class="chip check-btn" id="check-btn" hidden>내 숙소 안전 점검</button>
   <button class="chip more-chip" id="chip-more" hidden aria-expanded="false" aria-controls="chips-more-menu" aria-label="레이어 더보기">⋯</button>
@@ -774,7 +779,7 @@ const FALLBACK_HELP_PLACES = [
   { type: 'hospital', name: '제주한라병원', addr: '제주시 도령로 65', lat: 33.489, lng: 126.486, phone: '119' },
   { type: 'hospital', name: '서귀포의료원', addr: '서귀포시 장수로 47', lat: 33.254, lng: 126.564, phone: '119' }
 ];
-const state = { data: null, pop: null, cctv: null, bells: null, lights: null, focus: null, query: '', userLocation: null, searchOrigin: null, listSort: 'near' };
+const state = { data: null, pop: null, cctv: null, bells: null, lights: null, tour: null, focus: null, query: '', userLocation: null, searchOrigin: null, listSort: 'near' };
 
 function loadScript(src) {
   return new Promise((ok, fail) => {
@@ -1201,6 +1206,55 @@ function showPoiDetail(type, place) {
     track('poi_external_open', { type, destination: 'kakao_place' });
   };
   track('poi_detail', { type });
+}
+function tourDetail(spot) {
+  // 관광 명소 상세: 위치 정보에 더해 이 지도의 본론인 주변 안심 정보를
+  // 지역 상세와 같은 문법(summary-text·context 박스·tagchip)으로 보여준다
+  const incidents = nearbyIncidentContext(spot, 8);
+  const cctv = nearbyCctvContext(spot, 1);
+  const bells = state.bells ? nearbyPointCount(state.bells, spot, 1) : null;
+  const lights = state.lights ? nearbyPointCount(state.lights, spot, 1) : null;
+  let pop = null, region = null;
+  if (state.pop) {
+    const style = popStyle(state.pop.regions);
+    const ranks = regionRanks(state.pop.regions);
+    region = state.pop.regions.reduce((a, r) => haversineKm(spot, r) < haversineKm(spot, a) ? r : a);
+    pop = regionPopulationContext(region, style, ranks);
+  }
+  showDetail(`
+    <span class="status" style="background:var(--tour)">관광 명소</span>
+    <h2>${escapeHtml(spot.name)}</h2>
+    <div class="area">${escapeHtml(spot.addr || '제주')}</div>
+    ${spot.img ? `<img class="detail-photo" src="${escapeHtml(spot.img)}" alt="${escapeHtml(spot.name)} 사진" loading="lazy">` : ''}
+    <p class="summary-text">${region ? `${escapeHtml(region.name)} 일대는 하루 약 <b>${region.total.toLocaleString()}명</b>이 오가는 <b>${pop.tag}</b> 지역이에요. ` : ''}1km 안에 공공 CCTV ${cctv && cctv.spots ? `<b>${cctv.cameras}대</b>가 있고` : '정보가 없고'}, 반경 8km 보도 확인 사건은 ${incidents.nearby.length ? `<b>${incidents.nearby.length}건</b>이에요` : '없어요'}.</p>
+    <div class="src-caption">한국관광공사 TourAPI · 통신사 빅데이터 · 행정안전부 표준데이터</div>
+    ${insightHtml({ incidents, pop, cctvCameras: cctv ? cctv.cameras : 0 })}
+    <div class="context">
+      ${pop ? `<div class="context-box"><span>지역 붐빔도 (${escapeHtml(region.name)})</span>
+        <b><span class="tagchip" style="background:${pop.color};color:${pop.ink}">${pop.tag}</span></b>
+        <small>${pop.totalRegions}곳 중 붐비는 순 ${pop.crowdRank}위</small></div>` : ''}
+      <div class="context-box"><span>공공 CCTV (1km)</span>
+        <b>${cctv ? (cctv.spots ? `${cctv.spots}곳 · ${cctv.cameras}대` : '없음') : '데이터 없음'}</b>
+        <small>${cctv && cctv.spots ? `생활방범 ${cctv.safety}대 · ${cctv.nearestM}m 거리` : '행정안전부 표준데이터 기준'}</small></div>
+      ${bells !== null || lights !== null ? `<div class="context-box"><span>비상벨·보안등 (1km)</span>
+        <b>${[bells !== null ? `비상벨 ${bells}개` : '', lights !== null ? `보안등 ${lights}개` : ''].filter(Boolean).join(' · ')}</b>
+        <small>행정안전부 표준데이터 기준</small></div>` : ''}
+      <div class="context-box"><span>보도 사건 (8km)</span>
+        <b style="color:${incidents.alert ? 'var(--accent)' : 'inherit'}">${incidents.nearby.length ? incidents.nearby.length + '건' : '없음'}</b>
+        <small>${incidents.nearby.length ? incidents.nearby[0].km.toFixed(1) + 'km 거리' : incidentDataBasisText() + ' 없음'}</small></div>
+    </div>
+    ${incidents.nearby.length ? `
+    <details class="card-more">
+      <summary>보도 확인 사건 ${incidents.nearby.length}건 자세히</summary>
+      ${incidents.nearby.map(({ i, km }) => `
+        <div class="mini-inc">
+          <b>${escapeHtml(i.title)}</b>
+          <span>${escapeHtml(i.area)} · ${escapeHtml(i.date)} · ${escapeHtml(i.status)} · ${km.toFixed(1)}km</span>
+          ${(i.sources || []).map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.name)}</a>`).join('')}
+        </div>`).join('')}
+    </details>` : ''}
+    <div class="card-hint">안전 판정이 아니라 공개 데이터를 한눈에 보는 참고 자료예요. 관광지 정보는 한국관광공사 TourAPI 제공.</div>`);
+  track('tour_detail', { spot: spot.id });
 }
 function incidentDetail(inc) {
   const fact = incidentFactText(inc);
@@ -2333,6 +2387,48 @@ async function initKakao(cfg) {
     }, false);
   }
 
+  // 관광 명소 레이어: TourAPI 큐레이션 정적 데이터. 안전 판단 대상이 아닌 위치 참고용이라
+  // 데이터 색과 분리된 --tour 색을 쓰고, 도 전역 뷰에서는 라벨 없이 점만 보여준다.
+  if (state.tour && state.tour.spots) {
+    let tourOn = false;
+    const tourIcon = '<svg viewBox="0 0 24 24" width="15" height="15" fill="#fff" aria-hidden="true"><path d="M6 2.5c.6 0 1 .4 1 1V4h10.6c.8 0 1.2.9.7 1.5L15.6 9l2.7 3.5c.5.6.1 1.5-.7 1.5H7v6.5c0 .6-.4 1-1 1s-1-.4-1-1v-17c0-.6.4-1 1-1z"/></svg>';
+    const overlays = state.tour.spots.map(spot => {
+      const el = document.createElement('button');
+      el.className = 'help-marker tour';
+      el.type = 'button';
+      el.innerHTML = `<span class="hm-icon tour" aria-hidden="true">${tourIcon}</span><span class="hm-label">${escapeHtml(spot.name)}</span>`;
+      el.setAttribute('aria-label', `관광 명소 ${spot.name}`);
+      el.onclick = () => {
+        mapApi.panTo(spot.lat, spot.lng, 7);
+        tourDetail(spot);
+        track('tour_marker_open');
+      };
+      const ov = new kakao.maps.CustomOverlay({
+        position: new kakao.maps.LatLng(spot.lat, spot.lng),
+        content: el,
+        yAnchor: .33,
+        zIndex: 25
+      });
+      return { ov, el };
+    });
+    const relabelTour = () => {
+      const withLabel = map.getLevel() <= 8;
+      overlays.forEach(({ ov, el }) => {
+        ov.setMap(tourOn ? map : null);
+        el.classList.toggle('no-label', !withLabel);
+      });
+    };
+    kakao.maps.event.addListener(map, 'zoom_changed', relabelTour);
+    wireChip('chip-tour', on => {
+      tourOn = on;
+      if (on) {
+        relabelTour();
+        showToast('한국관광공사 TourAPI의 주요 관광지를 표시합니다. 확대하면 이름이 보입니다.', 6000);
+      } else overlays.forEach(o => o.ov.setMap(null));
+      track('layer_toggle', { layer: 'tour', on });
+    }, false);
+  }
+
   // 생활안전지도 WMS 레이어(범죄주의구간·보안등): 화면 bbox 이미지를 CustomOverlay로 덮고 idle마다 갱신
   if (cfg.safemapKey) {
     const wmsChip = (chipId, wmsQuery, opts) => {
@@ -2538,6 +2634,30 @@ async function initLeaflet(cfg) {
     document.getElementById('incident-legend').hidden = !on;
     track('layer_toggle', { layer: 'incident', on });
   };
+  if (state.tour && state.tour.spots) {
+    const tourIcon = '<svg viewBox="0 0 24 24" width="15" height="15" fill="#fff" aria-hidden="true"><path d="M6 2.5c.6 0 1 .4 1 1V4h10.6c.8 0 1.2.9.7 1.5L15.6 9l2.7 3.5c.5.6.1 1.5-.7 1.5H7v6.5c0 .6-.4 1-1 1s-1-.4-1-1v-17c0-.6.4-1 1-1z"/></svg>';
+    const tourLayer = L.layerGroup();
+    state.tour.spots.forEach(spot => {
+      L.marker([spot.lat, spot.lng], {
+        icon: L.divIcon({
+          html: `<button class="help-marker tour" type="button" aria-label="관광 명소 ${escapeHtml(spot.name)}"><span class="hm-icon tour" aria-hidden="true">${tourIcon}</span><span class="hm-label">${escapeHtml(spot.name)}</span></button>`,
+          className: '', iconSize: [110, 46], iconAnchor: [55, 15]
+        })
+      }).addTo(tourLayer).on('click', event => {
+        L.DomEvent.stopPropagation(event);
+        mapApi.panTo(spot.lat, spot.lng, 7);
+        tourDetail(spot);
+        track('tour_marker_open');
+      });
+    });
+    const tourChip = document.getElementById('chip-tour');
+    tourChip.hidden = false;
+    tourChip.onclick = function () {
+      const on = this.classList.toggle('on');
+      on ? tourLayer.addTo(map) : map.removeLayer(tourLayer);
+      track('layer_toggle', { layer: 'tour', on });
+    };
+  }
   if (state.pop) {
     const style = popStyle(state.pop.regions);
     const ranks = regionRanks(state.pop.regions);
@@ -2744,6 +2864,7 @@ async function initLeaflet(cfg) {
   // 비상벨·보안등은 tools/build_safety.py로 생성 — 파일이 없으면 조용히 건너뛴다.
   try { const r = await fetch('data/bells.json'); if (r.ok) state.bells = await r.json(); } catch (e) {}
   try { const r = await fetch('data/lights.json'); if (r.ok) state.lights = await r.json(); } catch (e) {}
+  try { const r = await fetch('data/tour.json'); if (r.ok) state.tour = await r.json(); } catch (e) {}
   renderQuietTop();
   renderList();
   let cfg = {};

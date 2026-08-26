@@ -1,0 +1,326 @@
+{
+ "source": "한국관광공사 TourAPI 국문 관광정보 서비스(KorService2)",
+ "count": 40,
+ "spots": [
+  {
+   "id": "126446",
+   "name": "가파도",
+   "lat": 33.1664,
+   "lng": 126.27358,
+   "addr": "제주특별자치도 서귀포시 대정읍 가파로",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/68/3543168_image3_1.jpg"
+  },
+  {
+   "id": "127870",
+   "name": "곽지해수욕장",
+   "lat": 33.44854,
+   "lng": 126.3031,
+   "addr": "제주특별자치도 제주시 애월읍 곽지리 1565",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/30/3053130_image3_1.jpg"
+  },
+  {
+   "id": "2564158",
+   "name": "광치기해변",
+   "lat": 33.45151,
+   "lng": 126.92464,
+   "addr": "제주특별자치도 서귀포시 성산읍 고성리",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/00/4098400_image3_1.JPG"
+  },
+  {
+   "id": "129699",
+   "name": "금오름",
+   "lat": 33.35553,
+   "lng": 126.30591,
+   "addr": "제주특별자치도 제주시 한림읍 금악리",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/35/3352435_image3_1.jpg"
+  },
+  {
+   "id": "129400",
+   "name": "김녕해수욕장",
+   "lat": 33.55721,
+   "lng": 126.73655,
+   "addr": "제주특별자치도 제주시 구좌읍 구좌해안로 237",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/91/3480191_image3_1.jpg"
+  },
+  {
+   "id": "127053",
+   "name": "대포주상절리",
+   "lat": 33.23893,
+   "lng": 126.4265,
+   "addr": "제주특별자치도 서귀포시 이어도로 36-24 (중문동)",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/61/3535261_image3_1.jpg"
+  },
+  {
+   "id": "2738665",
+   "name": "도두봉",
+   "lat": 33.50679,
+   "lng": 126.46724,
+   "addr": "제주특별자치도 제주시 도두항길 4-17 (도두일동)",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/14/3523614_image3_1.jpg"
+  },
+  {
+   "id": "1013246",
+   "name": "동문재래시장",
+   "lat": 33.51156,
+   "lng": 126.52606,
+   "addr": "제주특별자치도 제주시 관덕로14길 20",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/38/2678438_image3_1.jpg"
+  },
+  {
+   "id": "126450",
+   "name": "마라도",
+   "lat": 33.11865,
+   "lng": 126.2671,
+   "addr": "제주특별자치도 서귀포시 대정읍 마라로101번길 46",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/83/3516583_image3_1.jpg"
+  },
+  {
+   "id": "126452",
+   "name": "만장굴 (제주도 국가지질공원)",
+   "lat": 33.52802,
+   "lng": 126.77066,
+   "addr": "제주특별자치도 제주시 구좌읍 만장굴길 182",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/55/3354155_image3_1.jpg"
+  },
+  {
+   "id": "2731801",
+   "name": "백약이오름",
+   "lat": 33.43721,
+   "lng": 126.79018,
+   "addr": "제주특별자치도 서귀포시 표선면 성읍리 산1",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/33/4078433_image3_1.jpg"
+  },
+  {
+   "id": "126472",
+   "name": "비자림",
+   "lat": 33.48622,
+   "lng": 126.80748,
+   "addr": "제주특별자치도 제주시 구좌읍 비자숲길 55",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/06/4075306_image3_1.jpg"
+  },
+  {
+   "id": "2414827",
+   "name": "사려니숲길",
+   "lat": 33.39894,
+   "lng": 126.67927,
+   "addr": "제주특별자치도 서귀포시 표선면 가시리",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/18/4072718_image3_1.jpg"
+  },
+  {
+   "id": "572973",
+   "name": "새별오름",
+   "lat": 33.3663,
+   "lng": 126.3576,
+   "addr": "제주특별자치도 제주시 애월읍 봉성리 산 59-8",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/28/4088628_image3_1.jpg"
+  },
+  {
+   "id": "127813",
+   "name": "섭지코지",
+   "lat": 33.43025,
+   "lng": 126.92807,
+   "addr": "제주특별자치도 서귀포시 성산읍 섭지코지로 107",
+   "img": ""
+  },
+  {
+   "id": "126435",
+   "name": "성산일출봉 [유네스코 세계자연유산]",
+   "lat": 33.45811,
+   "lng": 126.94152,
+   "addr": "제주특별자치도 서귀포시 성산읍 일출로 284-12",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/82/2944282_image3_1.bmp"
+  },
+  {
+   "id": "126672",
+   "name": "송악산",
+   "lat": 33.1989,
+   "lng": 126.2903,
+   "addr": "제주특별자치도 서귀포시 대정읍 송악관광로 421-1",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/29/3523429_image3_1.jpg"
+  },
+  {
+   "id": "129617",
+   "name": "쇠소깍",
+   "lat": 33.25428,
+   "lng": 126.62242,
+   "addr": "제주특별자치도 서귀포시 쇠소깍로 104 (하효동)",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/99/3536099_image3_1.jpg"
+  },
+  {
+   "id": "126434",
+   "name": "수월봉",
+   "lat": 33.29479,
+   "lng": 126.16342,
+   "addr": "제주특별자치도 제주시 한경면 고산리 3760",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/12/3354312_image3_1.jpg"
+  },
+  {
+   "id": "1351320",
+   "name": "아부오름",
+   "lat": 33.44733,
+   "lng": 126.77761,
+   "addr": "제주특별자치도 제주시 구좌읍 송당리",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/27/3011827_image3_1.jpg"
+  },
+  {
+   "id": "1146121",
+   "name": "에코랜드테마파크",
+   "lat": 33.45535,
+   "lng": 126.66885,
+   "addr": "제주특별자치도 제주시 조천읍 번영로 1278-169",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/43/3396943_image3_1.jpg"
+  },
+  {
+   "id": "2660802",
+   "name": "오설록 티뮤지엄",
+   "lat": 33.30608,
+   "lng": 126.28939,
+   "addr": "제주특별자치도 서귀포시 안덕면 신화역사로 15",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/57/3497257_image3_1.jpg"
+  },
+  {
+   "id": "126470",
+   "name": "외돌개(제주)",
+   "lat": 33.24026,
+   "lng": 126.54622,
+   "addr": "제주특별자치도 서귀포시 서흥동",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/75/3552175_image3_1.jpg"
+  },
+  {
+   "id": "228853",
+   "name": "용두암",
+   "lat": 33.51478,
+   "lng": 126.51251,
+   "addr": "제주특별자치도 제주시 용두암길 15 (용담이동)",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/68/3011868_image3_1.jpg"
+  },
+  {
+   "id": "228854",
+   "name": "용머리해안",
+   "lat": 33.2317,
+   "lng": 126.3151,
+   "addr": "제주특별자치도 서귀포시 안덕면 사계리",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/80/4055080_image3_1.jpg"
+  },
+  {
+   "id": "127336",
+   "name": "우도",
+   "lat": 33.5195,
+   "lng": 126.95103,
+   "addr": "제주특별자치도 제주시 삼양고수물길 1",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/71/3554771_image3_1.jpg"
+  },
+  {
+   "id": "1918639",
+   "name": "월정리해변(월정리해수욕장)",
+   "lat": 33.55505,
+   "lng": 126.79823,
+   "addr": "제주특별자치도 제주시 구좌읍 해맞이해안로 485",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/93/4075293_image3_1.jpg"
+  },
+  {
+   "id": "126448",
+   "name": "이호테우해변",
+   "lat": 33.49739,
+   "lng": 126.45314,
+   "addr": "제주특별자치도 제주시 도리로",
+   "img": ""
+  },
+  {
+   "id": "126437",
+   "name": "정방폭포",
+   "lat": 33.24475,
+   "lng": 126.57305,
+   "addr": "제주특별자치도 서귀포시 칠십리로214번길 37 (동홍동)",
+   "img": "https://tong.visitkorea.or.kr/cms/resource_photo/32/3052932_image3_1.jpg"
+  },
+  {
+   "id": "127861",
+   "name": "제주 서귀포 산방산",
+   "lat": 33.24243,
+   "lng": 126.31401,
+   "addr": "제주특별자치도 서귀포시 안덕면 사계리",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/61/3536261_image3_1.jpg"
+  },
+  {
+   "id": "127479",
+   "name": "제주절물자연휴양림",
+   "lat": 33.44008,
+   "lng": 126.62522,
+   "addr": "제주특별자치도 제주시 명림로 584",
+   "img": ""
+  },
+  {
+   "id": "126449",
+   "name": "중문색달해수욕장",
+   "lat": 33.24543,
+   "lng": 126.41121,
+   "addr": "제주특별자치도 서귀포시 색달동",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/13/3552513_image3_1.jpg"
+  },
+  {
+   "id": "126439",
+   "name": "천제연폭포",
+   "lat": 33.25266,
+   "lng": 126.41843,
+   "addr": "제주특별자치도 서귀포시 천제연로 132",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/56/3552156_image3_1.jpg"
+  },
+  {
+   "id": "126438",
+   "name": "천지연폭포",
+   "lat": 33.24472,
+   "lng": 126.55955,
+   "addr": "제주특별자치도 서귀포시 서홍동 666-1",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/43/4094043_image3_1.jpg"
+  },
+  {
+   "id": "741109",
+   "name": "카멜리아힐",
+   "lat": 33.28987,
+   "lng": 126.36825,
+   "addr": "제주특별자치도 서귀포시 안덕면 병악로 166",
+   "img": "https://tong.visitkorea.or.kr/cms/resource/84/4064284_image3_1.jpg"
+  },
+  {
+   "id": "128794",
+   "name": "표선해수욕장",
+   "lat": 33.32566,
+   "lng": 126.84242,
+   "addr": "제주특별자치도 서귀포시 표선면 민속해안로 592",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/01/3034601_image3_1.jpg"
+  },
+  {
+   "id": "127635",
+   "name": "한라산",
+   "lat": 33.3618,
+   "lng": 126.53,
+   "addr": "제주특별자치도 서귀포시 토평동",
+   "img": "https://tong.visitkorea.or.kr/cms/resource_photo/41/3460441_image3_1.jpg"
+  },
+  {
+   "id": "126455",
+   "name": "한림공원",
+   "lat": 33.38867,
+   "lng": 126.24156,
+   "addr": "제주특별자치도 제주시 한림읍 한림로 300",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/83/3553983_image3_1.jpg"
+  },
+  {
+   "id": "126451",
+   "name": "함덕해수욕장 (함덕 서우봉 해변)",
+   "lat": 33.5439,
+   "lng": 126.66836,
+   "addr": "제주특별자치도 제주시 조천읍 조함해안로 519-10",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/00/3354600_image3_1.jpg"
+  },
+  {
+   "id": "127490",
+   "name": "협재해수욕장",
+   "lat": 33.39378,
+   "lng": 126.23944,
+   "addr": "제주특별자치도 제주시 한림읍 한림로 329-10",
+   "img": "http://tong.visitkorea.or.kr/cms/resource/66/3096066_image3_1.jpg"
+  }
+ ]
+}
