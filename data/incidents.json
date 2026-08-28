@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-25",
+  "updated": "2026-08-28",
   "note": "좌표는 피해자 보호를 위해 읍면 중심 수준으로 뭉갠 값이다. 정확한 지점이 아니다.",
   "stats": {
     "unresolvedAdultMissing": 15,
@@ -63,11 +63,12 @@
       "lng": 126.331,
       "date": "2026-08",
       "fatalities": 1,
-      "confirmedAt": "2026-08-24 오전",
+      "confirmedAt": "2026-08-25 09:35",
       "status": "사망 확인",
-      "summary": "실종 신고가 접수돼 있던 실종자가 8월 24일 오전 애월읍 계곡 인근에서 숨진 채 발견됐다.",
+      "summary": "실종 신고가 접수돼 있던 실종자가 8월 25일 오전 9시35분께 애월읍 계곡 인근에서 수색 중이던 경찰에 의해 숨진 채 발견됐다.",
       "sources": [
-        {"name": "서울신문", "url": "https://www.seoul.co.kr/news/society/accident/2026/08/24/20260824500104"}
+        {"name": "서울신문", "url": "https://www.seoul.co.kr/news/society/accident/2026/08/24/20260824500104"},
+        {"name": "제주의소리(다음)", "url": "https://v.daum.net/v/20260825104048988"}
       ]
     }
   ]
